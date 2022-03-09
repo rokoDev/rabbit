@@ -1,0 +1,59 @@
+version: 2.1
+
+jobs:
+  build:
+    docker:
+      - image: rokodev/ubuntu2004clang11ninja:1.1
+        user: root
+        auth:
+          username: $DOCKERHUB_LOGIN
+          password: $DOCKERHUB_PASSWORD
+    steps:
+      - run: printenv
+      - run:
+          name: "checkout sources"
+          command: |
+            CLONE_URL="https://github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}.git"
+            echo "CLONE_URL: ${CLONE_URL}"
+            SOURCE_PATH=`pwd`"/${CIRCLE_PROJECT_REPONAME}"
+            echo "SOURCE_PATH: ${SOURCE_PATH}"
+            if [ -n "$CIRCLE_PULL_REQUEST" ]; then
+              PR_NUMBER=$(basename ${CIRCLE_PULL_REQUEST})
+            else
+              PR_NUMBER="nopr"
+            fi
+            if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" -eq "$PR_NUMBER" ] 2>/dev/null; then
+              echo "This is pull request: ${PR_NUMBER}"
+              git clone ${CLONE_URL}
+              cd $SOURCE_PATH
+              BRANCH=pr${PR_NUMBER}
+              git fetch origin "pull/${PR_NUMBER}/head:${BRANCH}"
+            else
+              echo "This is simple branch: ${CIRCLE_BRANCH}"
+              BRANCH=${CIRCLE_BRANCH}
+              git clone -b ${BRANCH} --single-branch ${CLONE_URL}
+              cd $SOURCE_PATH
+            fi
+            git checkout --recurse-submodules ${BRANCH}
+            git submodule foreach --recursive git checkout master
+            git submodule update --init --recursive
+      - run:
+          name: "configure build test Ninja Debug"
+          command: |
+            SOURCE_PATH=`pwd`"/${CIRCLE_PROJECT_REPONAME}"
+            python3 $SOURCE_PATH/scripts/circle_linux_configure_build_test.py --build_type Debug -source_dir "$SOURCE_PATH"
+      - run:
+          name: "configure build test Ninja Release"
+          command: |
+            SOURCE_PATH=`pwd`"/${CIRCLE_PROJECT_REPONAME}"
+            python3 $SOURCE_PATH/scripts/circle_linux_configure_build_test.py --build_type Release -source_dir "$SOURCE_PATH"
+workflows:
+  version: 2
+  run-all:
+    jobs:
+      - build:
+          filters:
+            branches:
+              only:
+                - master
+                - develop
