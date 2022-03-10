@@ -38,6 +38,8 @@ endmacro()
 package_add_test(${ProjectName}
 	src/main_tests.cpp
 	src/rabbit_tests.cpp
+  src/bin_ops_tests.cpp
+  src/endian_tests.cpp
 	)
 
 # If use IDE add gtest, gmock, gtest_main and gmock_main targets into deps/googletest group

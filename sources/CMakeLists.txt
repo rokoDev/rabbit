@@ -46,6 +46,9 @@ message(STATUS "ALL_CXX_FLAGS: ${ALL_CXX_FLAGS}")
 target_sources(rabbit
 	PRIVATE
     include/rabbit/rabbit.h
+    include/rabbit/endian.h
+    include/rabbit/bin_ops.h
+    include/rabbit/utils.h
 
     src/rabbit.cpp
   )
