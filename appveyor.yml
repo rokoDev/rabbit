@@ -6,6 +6,7 @@ image:
 branches:
   only:
     - master
+    - develop
 
 # set clone depth
 clone_depth: 5

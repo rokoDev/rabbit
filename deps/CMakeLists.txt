@@ -15,7 +15,7 @@ FetchContent_Declare(
 FetchContent_Declare(
 	VersionHelper
     GIT_REPOSITORY https://github.com/rokoDev/VersionHelper.git
-    GIT_TAG        cea7d1349d5f5167c045b90d12e91d2fefdc99b6
+    GIT_TAG        b8f512ee783abdb44ebe3ea2fb59bec9f32b2e31
 )
 
 FetchContent_Declare(
@@ -27,7 +27,7 @@ FetchContent_Declare(
 FetchContent_Declare(
 	strong_type
 	GIT_REPOSITORY https://github.com/rokoDev/strong_type.git
-	GIT_TAG        065f7be922977a8e5a12277088974915446018a1
+	GIT_TAG        b208d560ea79013dbb0eca12740e666dab063777
 )
 
 # If necessary it's possible to use VersionHelper from different location instead of downloaded from GitHub
@@ -35,6 +35,7 @@ FetchContent_Declare(
 # set(FETCHCONTENT_SOURCE_DIR_${UP_VersionHelper} ${CMAKE_CURRENT_LIST_DIR}/../../VersionHelper)
 
 FetchContent_MakeAvailable(fmt VersionHelper boost_pfr strong_type)
+target_link_libraries(rabbit INTERFACE strong_type)
 
 # If use IDE add fmt target into deps source group
 set_target_properties(fmt strong_type PROPERTIES FOLDER deps)
@@ -46,4 +47,6 @@ m_generate_version_info(PROJECT_NAME ${ProjectName}
 	                    CPP_NAMESPACE "rabbit"
 	                    BUILD_TYPES Debug Release
 	                    IDE_SRC_GROUP "generated"
-	                    TARGET_NAME "rabbit")
+	                    TARGET_NAME "rabbit"
+                        HEADER_ONLY
+	                    )
