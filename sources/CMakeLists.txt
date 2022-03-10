@@ -43,6 +43,13 @@ endif()
 
 message(STATUS "ALL_CXX_FLAGS: ${ALL_CXX_FLAGS}")
 
+if(WIN32)
+  # turn off RTTI and Exceptions (including in STL)
+  string(REGEX REPLACE "/GR" "/GR-" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+  string(REGEX REPLACE "/EHsc" "/EHs-c-" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+  add_definitions(-D_HAS_EXCEPTIONS=0) # for STL
+endif()
+
 target_sources(rabbit
 	PRIVATE
     include/rabbit/rabbit.h
