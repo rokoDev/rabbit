@@ -1,8 +1,5 @@
-#ifndef ndt_utils_h
-#define ndt_utils_h
-
-#include <fmt/core.h>
-#include <fmt/format.h>
+#ifndef rabbit_utils_h
+#define rabbit_utils_h
 
 #include <array>
 #include <chrono>
@@ -12,7 +9,7 @@
 #include <type_traits>
 #include <unordered_map>
 
-namespace ndt
+namespace rabbit
 {
 template <typename T>
 struct is_std_array : std::false_type
@@ -314,6 +311,6 @@ struct shifted_sequence<N, std::index_sequence<I...>>
 };
 template <std::size_t N, typename Seq>
 using shifted_sequence_t = typename shifted_sequence<N, Seq>::type;
-}  // namespace ndt
+}  // namespace rabbit
 
-#endif /* ndt_utils_h */
+#endif /* rabbit_utils_h */

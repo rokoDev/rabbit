@@ -56,6 +56,7 @@ target_sources(rabbit
     include/rabbit/endian.h
     include/rabbit/bin_ops.h
     include/rabbit/utils.h
+    include/rabbit/details.h
 
     src/rabbit.cpp
   )
@@ -70,7 +71,7 @@ target_compile_definitions(rabbit PRIVATE $<UPPER_CASE:$<CONFIG>>)
 target_compile_options(rabbit PRIVATE ${ALL_CXX_FLAGS})
 set_target_properties(rabbit PROPERTIES POSITION_INDEPENDENT_CODE ON)
 set_property(TARGET rabbit APPEND PROPERTY SRC_DIRS "${CMAKE_CURRENT_LIST_DIR}/include" "${CMAKE_CURRENT_SOURCE_DIR}/src")
-target_link_libraries(rabbit PUBLIC fmt boost_pfr strong_type)
+target_link_libraries(rabbit PUBLIC boost_pfr strong_type)
 target_include_directories(rabbit PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>

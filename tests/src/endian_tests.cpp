@@ -5,5 +5,6 @@
 
 TEST(EndianTest, AssumedEndianEqualActual)
 {
-    ASSERT_EQ(ndt::kEndian /*assumed endian*/, ndt::endian() /*actual endian*/);
+    ASSERT_EQ(rabbit::kEndian /*assumed endian*/,
+              rabbit::endian() /*actual endian*/);
 }

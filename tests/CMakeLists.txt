@@ -23,7 +23,7 @@ endif (WIN32)
 macro(package_add_test TESTNAME)
   add_executable(${TESTNAME} "")
   target_sources(${TESTNAME} PRIVATE ${ARGN})
-  target_link_libraries(${TESTNAME} gtest gmock gtest_main rabbit)
+  target_link_libraries(${TESTNAME} gtest gmock gtest_main rabbit fmt)
   add_test(NAME ${TESTNAME} COMMAND ${TESTNAME})
   set_target_properties(${TESTNAME} PROPERTIES FOLDER tests)
 

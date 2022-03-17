@@ -1,5 +1,5 @@
-#ifndef ndt_endian_h
-#define ndt_endian_h
+#ifndef rabbit_endian_h
+#define rabbit_endian_h
 
 #include <climits>
 #include <cstdint>
@@ -8,7 +8,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace ndt
+namespace rabbit
 {
 enum class eEndian
 {
@@ -113,7 +113,7 @@ constexpr decltype(auto) toNet(T&& aValue) noexcept
     }
     else
     {
-        return aValue;
+        return std::forward<T>(aValue);
     }
 }
 
@@ -122,6 +122,6 @@ constexpr decltype(auto) toHost(T&& aValue) noexcept
 {
     return toNet(std::forward<T>(aValue));
 }
-}  // namespace ndt
+}  // namespace rabbit
 
-#endif /* ndt_endian_h */
+#endif /* rabbit_endian_h */
