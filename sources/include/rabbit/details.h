@@ -2,6 +2,7 @@
 #define rabbit_details_h
 
 #include "endian.h"
+#include "utils.h"
 
 namespace rabbit
 {
