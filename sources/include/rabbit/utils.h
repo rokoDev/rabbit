@@ -132,7 +132,6 @@ inline constexpr auto kNumBitsTable = details::make_num_bits_table();
 
 namespace utils
 {
-bool memvcmp(const void* memptr, unsigned char val, const std::size_t size);
 
 constexpr uint8_t bits_count(const uint64_t aValue)
 {

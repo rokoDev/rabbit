@@ -15,7 +15,7 @@ FetchContent_Declare(
 FetchContent_Declare(
 	VersionHelper
     GIT_REPOSITORY https://github.com/rokoDev/VersionHelper.git
-    GIT_TAG        cea7d1349d5f5167c045b90d12e91d2fefdc99b6
+    GIT_TAG        6c320971d149ddec8f4648596bfccf2b19b66f45
 )
 
 FetchContent_Declare(
@@ -46,4 +46,6 @@ m_generate_version_info(PROJECT_NAME ${ProjectName}
 	                    CPP_NAMESPACE "rabbit"
 	                    BUILD_TYPES Debug Release
 	                    IDE_SRC_GROUP "generated"
-	                    TARGET_NAME "rabbit")
+	                    TARGET_NAME "rabbit"
+                        HEADER_ONLY
+	                    )

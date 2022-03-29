@@ -25,7 +25,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Create library
-add_library(rabbit "")
+add_library(rabbit INTERFACE)
 
 # Add dependencies
 add_subdirectory(deps)
@@ -36,7 +36,7 @@ add_subdirectory(sources)
 # Create groups in the IDE which mirrors directory structure on the hard disk
 get_target_property(rabbit_sources rabbit SOURCES)
 source_group(
-  TREE   ${CMAKE_CURRENT_SOURCE_DIR}/sources
+  TREE   ${CMAKE_CURRENT_SOURCE_DIR}/sources/include/rabbit
   FILES  ${rabbit_sources}
 )
 
