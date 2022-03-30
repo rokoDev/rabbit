@@ -1366,3 +1366,137 @@ TEST_F(N1TwoBufsTest, AddLowBits8)
     dst_[0] = bin_op::addLowBits(*dst_.data(), *src_.data(), 8);
     ASSERT_EQ(dst_[0], uint8_t{0b01101110});
 }
+
+TEST_F(N32BinOpsTest, AddValue63Of64At5Offset)
+{
+    constexpr uint64_t kValue =
+        0b11101111'00010111'00001111'00110011'10101010'01111110'10000001'10011001;
+    constexpr rabbit::DstBitOffset kOffset(5);
+    constexpr rabbit::NumBits kNBits(63);
+    rawData_[0] = 0b10101010;
+    rawData_[8] = 0b11001001;
+
+    rabbit::BinOps::addValue(rawData_.data(), kOffset, kValue, kNBits);
+
+    ASSERT_EQ(rawData_[0], uint8_t{0b10101110});
+    ASSERT_EQ(rawData_[1], uint8_t{0b11110001});
+    ASSERT_EQ(rawData_[2], uint8_t{0b01110000});
+    ASSERT_EQ(rawData_[3], uint8_t{0b11110011});
+    ASSERT_EQ(rawData_[4], uint8_t{0b00111010});
+    ASSERT_EQ(rawData_[5], uint8_t{0b10100111});
+    ASSERT_EQ(rawData_[6], uint8_t{0b11101000});
+    ASSERT_EQ(rawData_[7], uint8_t{0b00011001});
+    ASSERT_EQ(rawData_[8], uint8_t{0b10011001});
+}
+
+TEST_F(N32BinOpsTest, AddValue3Of64At3Offset)
+{
+    constexpr uint64_t kValue =
+        0b11101111'00010111'00001111'00110011'10101010'01111110'10000001'10011001;
+    constexpr rabbit::DstBitOffset kOffset(3);
+    constexpr rabbit::NumBits kNBits(3);
+    rawData_[0] = 0b10101010;
+    rawData_[8] = 0b11001001;
+
+    rabbit::BinOps::addValue(rawData_.data(), kOffset, kValue, kNBits);
+
+    ASSERT_EQ(rawData_[0], uint8_t{0b10100110});
+    ASSERT_EQ(rawData_[1], uint8_t{0b00000000});
+    ASSERT_EQ(rawData_[2], uint8_t{0b00000000});
+    ASSERT_EQ(rawData_[3], uint8_t{0b00000000});
+    ASSERT_EQ(rawData_[4], uint8_t{0b00000000});
+    ASSERT_EQ(rawData_[5], uint8_t{0b00000000});
+    ASSERT_EQ(rawData_[6], uint8_t{0b00000000});
+    ASSERT_EQ(rawData_[7], uint8_t{0b00000000});
+    ASSERT_EQ(rawData_[8], uint8_t{0b11001001});
+}
+
+TEST_F(N32BinOpsTest, AddValue10Of64At2Offset)
+{
+    constexpr uint64_t kValue =
+        0b11101111'00010111'00001111'00110011'10101010'01111110'10000001'10011001;
+    constexpr rabbit::DstBitOffset kOffset(2);
+    constexpr rabbit::NumBits kNBits(10);
+    rawData_[0] = 0b10101010;
+    rawData_[8] = 0b11001001;
+
+    rabbit::BinOps::addValue(rawData_.data(), kOffset, kValue, kNBits);
+
+    ASSERT_EQ(rawData_[0], uint8_t{0b10011001});
+    ASSERT_EQ(rawData_[1], uint8_t{0b10010000});
+    ASSERT_EQ(rawData_[2], uint8_t{0b00000000});
+    ASSERT_EQ(rawData_[3], uint8_t{0b00000000});
+    ASSERT_EQ(rawData_[4], uint8_t{0b00000000});
+    ASSERT_EQ(rawData_[5], uint8_t{0b00000000});
+    ASSERT_EQ(rawData_[6], uint8_t{0b00000000});
+    ASSERT_EQ(rawData_[7], uint8_t{0b00000000});
+    ASSERT_EQ(rawData_[8], uint8_t{0b11001001});
+}
+
+TEST_F(N32BinOpsTest, AddValue10Of64)
+{
+    constexpr uint64_t kValue =
+        0b11101111'00010111'00001111'00110011'10101010'01111110'10000001'10011001;
+    constexpr rabbit::NumBits kNBits(10);
+    rawData_[0] = 0b10101010;
+    rawData_[1] = 0b11001001;
+
+    rabbit::BinOps::addValue(rawData_.data(), kValue, kNBits);
+
+    ASSERT_EQ(rawData_[0], uint8_t{0b01100110});
+    ASSERT_EQ(rawData_[1], uint8_t{0b01001001});
+    ASSERT_EQ(rawData_[2], uint8_t{0b00000000});
+}
+
+TEST_F(N4BinOpsTest, AddValueOf16Bits)
+{
+    constexpr uint16_t kValue = 0b10000001'10011001;
+    rawData_[0] = 0b10101010;
+    rawData_[1] = 0b11001001;
+
+    rabbit::BinOps::addValue(rawData_.data(), kValue);
+
+    ASSERT_EQ(rawData_[0], uint8_t{0b10000001});
+    ASSERT_EQ(rawData_[1], uint8_t{0b10011001});
+    ASSERT_EQ(rawData_[2], uint8_t{0b00000000});
+}
+
+TEST_F(N8BinOpsTest, AddValue3Of32At3Offset)
+{
+    constexpr uint32_t kValue = 0b10101010'01111110'10000001'10011001;
+    constexpr rabbit::DstBitOffset kOffset(3);
+    constexpr rabbit::NumBits kNBits(3);
+    rawData_[0] = 0b10101010;
+    rawData_[7] = 0b11001001;
+
+    rabbit::BinOps::addValue(rawData_.data(), kOffset, kValue, kNBits);
+
+    ASSERT_EQ(rawData_[0], uint8_t{0b10100110});
+    ASSERT_EQ(rawData_[1], uint8_t{0b00000000});
+    ASSERT_EQ(rawData_[2], uint8_t{0b00000000});
+    ASSERT_EQ(rawData_[3], uint8_t{0b00000000});
+    ASSERT_EQ(rawData_[4], uint8_t{0b00000000});
+    ASSERT_EQ(rawData_[5], uint8_t{0b00000000});
+    ASSERT_EQ(rawData_[6], uint8_t{0b00000000});
+    ASSERT_EQ(rawData_[7], uint8_t{0b11001001});
+}
+
+TEST_F(N8BinOpsTest, AddValue10Of32At2Offset)
+{
+    constexpr uint32_t kValue = 0b10101010'01111110'10000001'10011001;
+    constexpr rabbit::DstBitOffset kOffset(2);
+    constexpr rabbit::NumBits kNBits(10);
+    rawData_[0] = 0b10101010;
+    rawData_[7] = 0b11001001;
+
+    rabbit::BinOps::addValue(rawData_.data(), kOffset, kValue, kNBits);
+
+    ASSERT_EQ(rawData_[0], uint8_t{0b10011001});
+    ASSERT_EQ(rawData_[1], uint8_t{0b10010000});
+    ASSERT_EQ(rawData_[2], uint8_t{0b00000000});
+    ASSERT_EQ(rawData_[3], uint8_t{0b00000000});
+    ASSERT_EQ(rawData_[4], uint8_t{0b00000000});
+    ASSERT_EQ(rawData_[5], uint8_t{0b00000000});
+    ASSERT_EQ(rawData_[6], uint8_t{0b00000000});
+    ASSERT_EQ(rawData_[7], uint8_t{0b11001001});
+}
