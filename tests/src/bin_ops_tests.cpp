@@ -762,7 +762,7 @@ TEST_F(N4BinOpsTest, AddZeroLeastSignificantBytes)
     ASSERT_EQ(rawData_[3], uint8_t{0b00000000});
 }
 
-TEST_F(N2BinOpsTest, Add0BitsAt0Offset)
+TEST_F(N2BinOpsTest, addBits_DstOffset_0_SrcOffset_0_NBits_0)
 {
     std::array<uint8_t, 2> source{0b10101111, 0b10101111};
     constexpr rabbit::DstBitOffset kDstOffset{0};
@@ -774,7 +774,7 @@ TEST_F(N2BinOpsTest, Add0BitsAt0Offset)
     ASSERT_EQ(rawData_[1], uint8_t{0b00000000});
 }
 
-TEST_F(N2BinOpsTest, Add1BitsAt0Offset)
+TEST_F(N2BinOpsTest, addBits_DstOffset_0_SrcOffset_0_NBits_1)
 {
     std::array<uint8_t, 2> source{0b10101111, 0b01111110};
     constexpr rabbit::DstBitOffset kDstOffset{0};
@@ -787,7 +787,7 @@ TEST_F(N2BinOpsTest, Add1BitsAt0Offset)
     ASSERT_EQ(rawData_[1], uint8_t{0b00000000});
 }
 
-TEST_F(N2BinOpsTest, Add2BitsAt0Offset)
+TEST_F(N2BinOpsTest, addBits_DstOffset_0_SrcOffset_0_NBits_2)
 {
     std::array<uint8_t, 2> source{0b11101111, 0b01111110};
     constexpr rabbit::DstBitOffset kDstOffset{0};
@@ -800,7 +800,7 @@ TEST_F(N2BinOpsTest, Add2BitsAt0Offset)
     ASSERT_EQ(rawData_[1], uint8_t{0b00000000});
 }
 
-TEST_F(N2BinOpsTest, Add5BitsAt0Offset)
+TEST_F(N2BinOpsTest, addBits_DstOffset_0_SrcOffset_0_NBits_5)
 {
     std::array<uint8_t, 2> source{0b11101111, 0b01111110};
     constexpr rabbit::DstBitOffset kDstOffset{0};
@@ -813,7 +813,7 @@ TEST_F(N2BinOpsTest, Add5BitsAt0Offset)
     ASSERT_EQ(rawData_[1], uint8_t{0b00000000});
 }
 
-TEST_F(N2BinOpsTest, Add8BitsAt0Offset)
+TEST_F(N2BinOpsTest, addBits_DstOffset_0_SrcOffset_0_NBits_8)
 {
     std::array<uint8_t, 2> source{0b10011001, 0b01111110};
     constexpr rabbit::DstBitOffset kDstOffset{0};
@@ -826,7 +826,7 @@ TEST_F(N2BinOpsTest, Add8BitsAt0Offset)
     ASSERT_EQ(rawData_[1], uint8_t{0b00000000});
 }
 
-TEST_F(N2BinOpsTest, Add9BitsAt0Offset)
+TEST_F(N2BinOpsTest, addBits_DstOffset_0_SrcOffset_0_NBits_9)
 {
     std::array<uint8_t, 2> source{0b10011001, 0b10101010};
     constexpr rabbit::DstBitOffset kDstOffset{0};
@@ -840,7 +840,7 @@ TEST_F(N2BinOpsTest, Add9BitsAt0Offset)
     ASSERT_EQ(rawData_[1], uint8_t{0b10110011});
 }
 
-TEST_F(N2BinOpsTest, Add15BitsAt0Offset)
+TEST_F(N2BinOpsTest, addBits_DstOffset_0_SrcOffset_0_NBits_15)
 {
     std::array<uint8_t, 2> source{0b10011001, 0b10101010};
     constexpr rabbit::DstBitOffset kDstOffset{0};
@@ -854,7 +854,7 @@ TEST_F(N2BinOpsTest, Add15BitsAt0Offset)
     ASSERT_EQ(rawData_[1], uint8_t{0b10101011});
 }
 
-TEST_F(N2BinOpsTest, Add16BitsAt0Offset)
+TEST_F(N2BinOpsTest, addBits_DstOffset_0_SrcOffset_0_NBits_16)
 {
     std::array<uint8_t, 2> source{0b10011001, 0b10101010};
     constexpr rabbit::DstBitOffset kDstOffset{0};
@@ -920,7 +920,7 @@ TEST(BinOpsTest, highNBitsWith12Offset)
     ASSERT_EQ(high4Bits, U{0b00000000'00001001});
 }
 
-TEST_F(N2BinOpsTest, Add1BitsAt1Offset)
+TEST_F(N2BinOpsTest, addBits_DstOffset_1_SrcOffset_0_NBits_1)
 {
     std::array<uint8_t, 2> source{0b10101111, 0b01111110};
     constexpr rabbit::DstBitOffset kDstOffset{1};
@@ -933,7 +933,7 @@ TEST_F(N2BinOpsTest, Add1BitsAt1Offset)
     ASSERT_EQ(rawData_[1], uint8_t{0b00000000});
 }
 
-TEST_F(N2BinOpsTest, Add2BitsAt1Offset)
+TEST_F(N2BinOpsTest, addBits_DstOffset_1_SrcOffset_0_NBits_2)
 {
     std::array<uint8_t, 2> source{0b10101111, 0b01111110};
     constexpr rabbit::DstBitOffset kDstOffset{1};
@@ -946,7 +946,7 @@ TEST_F(N2BinOpsTest, Add2BitsAt1Offset)
     ASSERT_EQ(rawData_[1], uint8_t{0b00000000});
 }
 
-TEST_F(N2BinOpsTest, Add7BitsAt1Offset)
+TEST_F(N2BinOpsTest, addBits_DstOffset_1_SrcOffset_0_NBits_7)
 {
     std::array<uint8_t, 2> source{0b10101101, 0b01111110};
     constexpr rabbit::DstBitOffset kDstOffset{1};
@@ -959,7 +959,7 @@ TEST_F(N2BinOpsTest, Add7BitsAt1Offset)
     ASSERT_EQ(rawData_[1], uint8_t{0b00000000});
 }
 
-TEST_F(N2BinOpsTest, Add0BitsAt1Offset)
+TEST_F(N2BinOpsTest, addBits_DstOffset_1_SrcOffset_0_NBits_0)
 {
     std::array<uint8_t, 2> source{0b10101101, 0b01111110};
     constexpr rabbit::DstBitOffset kDstOffset{1};
@@ -972,7 +972,7 @@ TEST_F(N2BinOpsTest, Add0BitsAt1Offset)
     ASSERT_EQ(rawData_[1], uint8_t{0b00000000});
 }
 
-TEST_F(N2BinOpsTest, Add8BitsAt1Offset)
+TEST_F(N2BinOpsTest, addBits_DstOffset_1_SrcOffset_0_NBits_8)
 {
     std::array<uint8_t, 2> source{0b10101101, 0b01111110};
     constexpr rabbit::DstBitOffset kDstOffset{1};
@@ -986,7 +986,7 @@ TEST_F(N2BinOpsTest, Add8BitsAt1Offset)
     ASSERT_EQ(rawData_[1], uint8_t{0b10100011});
 }
 
-TEST_F(N2BinOpsTest, Add10BitsAt3Offset)
+TEST_F(N2BinOpsTest, addBits_DstOffset_3_SrcOffset_0_NBits_10)
 {
     std::array<uint8_t, 2> source{0b10101101, 0b01111110};
     constexpr rabbit::DstBitOffset kDstOffset{3};
@@ -1000,7 +1000,7 @@ TEST_F(N2BinOpsTest, Add10BitsAt3Offset)
     ASSERT_EQ(rawData_[1], uint8_t{0b10101011});
 }
 
-TEST_F(N2BinOpsTest, Add13BitsAt3Offset)
+TEST_F(N2BinOpsTest, addBits_DstOffset_3_SrcOffset_0_NBits_13)
 {
     std::array<uint8_t, 2> source{0b10101101, 0b01111110};
     constexpr rabbit::DstBitOffset kDstOffset{3};
@@ -1014,7 +1014,7 @@ TEST_F(N2BinOpsTest, Add13BitsAt3Offset)
     ASSERT_EQ(rawData_[1], uint8_t{0b10101111});
 }
 
-TEST_F(N3BinOpsTest, Add13BitsAt5Offset)
+TEST_F(N3BinOpsTest, addBits_DstOffset_5_SrcOffset_0_NBits_13)
 {
     std::array<uint8_t, 2> source{0b10101101, 0b01111110};
     constexpr rabbit::DstBitOffset kDstOffset{5};
@@ -1030,7 +1030,7 @@ TEST_F(N3BinOpsTest, Add13BitsAt5Offset)
     ASSERT_EQ(rawData_[2], uint8_t{0b11100011});
 }
 
-TEST_F(N4BinOpsTest, Add23BitsAt7Offset)
+TEST_F(N4BinOpsTest, addBits_DstOffset_7_SrcOffset_0_NBits_23)
 {
     std::array<uint8_t, 4> source{0b00001111, 0b00110011, 0b10101010,
                                   0b01111110};
@@ -1049,7 +1049,7 @@ TEST_F(N4BinOpsTest, Add23BitsAt7Offset)
     ASSERT_EQ(rawData_[3], uint8_t{0b01010100});
 }
 
-TEST_F(N8BinOpsTest, Add35BitsAt5Offset)
+TEST_F(N8BinOpsTest, addBits_DstOffset_5_SrcOffset_0_NBits_35)
 {
     std::array<uint8_t, 8> source{0b10101111, 0b00010111, 0b00001111,
                                   0b00110011, 0b10101010, 0b01111110,
@@ -1077,7 +1077,7 @@ TEST_F(N8BinOpsTest, Add35BitsAt5Offset)
     ASSERT_EQ(rawData_[7], uint8_t{0b00111100});
 }
 
-TEST_F(N1BinOpsTest, Add3BitsFrom5To2Offset)
+TEST_F(N1BinOpsTest, addBits_DstOffset_2_SrcOffset_5_NBits_3)
 {
     std::array<uint8_t, 1> source{0b10101101};
     constexpr rabbit::DstBitOffset kDstOffset{2};
@@ -1089,7 +1089,7 @@ TEST_F(N1BinOpsTest, Add3BitsFrom5To2Offset)
     ASSERT_EQ(rawData_[0], uint8_t{0b10101011});
 }
 
-TEST_F(N1BinOpsTest, Add4BitsFrom1To3Offset)
+TEST_F(N1BinOpsTest, addBits_DstOffset_3_SrcOffset_1_NBits_4)
 {
     std::array<uint8_t, 1> source{0b01101000};
     constexpr rabbit::DstBitOffset kDstOffset{3};
@@ -1100,7 +1100,7 @@ TEST_F(N1BinOpsTest, Add4BitsFrom1To3Offset)
     ASSERT_EQ(rawData_[0], uint8_t{0b00011010});
 }
 
-TEST_F(N2BinOpsTest, Add5BitsFrom2To4Offset)
+TEST_F(N2BinOpsTest, addBits_DstOffset_4_SrcOffset_2_NBits_5)
 {
     std::array<uint8_t, 1> source{0b01100110};
     constexpr rabbit::DstBitOffset kDstOffset{4};
@@ -1114,7 +1114,7 @@ TEST_F(N2BinOpsTest, Add5BitsFrom2To4Offset)
     ASSERT_EQ(rawData_[1], uint8_t{0b10100010});
 }
 
-TEST_F(N2BinOpsTest, Add10BitsFrom10To5Offset)
+TEST_F(N2BinOpsTest, addBits_DstOffset_5_SrcOffset_2_NBits_10)
 {
     std::array<uint8_t, 3> source{0b01100110, 0b10011001};
     constexpr rabbit::DstBitOffset kDstOffset{5};
@@ -1186,7 +1186,7 @@ TEST_F(N4BinOpsTest, GetUInt32From4Bytes)
     ASSERT_EQ(value, uint32_t{0b10101111'10000001'10011001'00111100});
 }
 
-TEST_F(N8BinOpsTest, Add55BitsAt5Offset)
+TEST_F(N8BinOpsTest, addBits_DstOffset_5_SrcOffset_7_NBits_55)
 {
     std::array<uint8_t, 8> source{0b10101111, 0b00010111, 0b00001111,
                                   0b00110011, 0b10101010, 0b01111110,
