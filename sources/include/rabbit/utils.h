@@ -38,7 +38,7 @@ inline constexpr std::size_t std_array_size_v =
     std::tuple_size_v<std::decay_t<T>>;
 
 template <typename T>
-using std_array_data_t = typename std::tuple_element_t<0, std::decay_t<T>>;
+using std_array_data_t = typename std::decay_t<T>::value_type;
 
 template <typename A1, typename A2>
 inline constexpr bool is_same_data_std_arrays =
@@ -83,6 +83,19 @@ constexpr auto concatenate_arrays(A1&& aArray1, A2&& aArray2,
         std::forward<RestArrays>(aArrays)...);
 }
 
+template <typename T, std::size_t I>
+constexpr decltype(auto) make_element_for_index(T&& aValue) noexcept
+{
+    return std::forward<T>(aValue);
+}
+
+template <typename T, std::size_t... I>
+constexpr std::array<T, sizeof...(I)> make_zero_array_impl(
+    std::index_sequence<I...>) noexcept
+{
+    return {make_element_for_index<T, I>(T{})...};
+}
+
 template <std::size_t... I>
 constexpr uint8_t numBitSet(uint8_t aValue, std::index_sequence<I...>) noexcept
 {
@@ -108,6 +121,14 @@ constexpr auto make_num_bits_table() noexcept
         std::make_index_sequence<std::numeric_limits<uint8_t>::max() + 1>;
     return make_num_bits_table_impl(Indices{});
 }
+
+template <class T, std::size_t... I>
+constexpr bool is_equal_arrays_impl(const std::array<T, sizeof...(I)>& lhs,
+                                    const std::array<T, sizeof...(I)>& rhs,
+                                    std::index_sequence<I...>)
+{
+    return (... && (lhs[I] == rhs[I]));
+}
 }  //  namespace details
 
 template <typename Array, typename... RestArrays>
@@ -120,12 +141,31 @@ constexpr auto concatenate_arrays(Array&& aArray,
                                        std::forward<RestArrays>(aArrays)...);
 }
 
-template <typename... T>
-constexpr auto make_array(T&&... aArgs) -> std::array<
-    typename std::decay<typename std::common_type<T...>::type>::type,
-    sizeof...(T)>
+template <typename... T,
+          typename CommonT = std::decay_t<std::common_type_t<T...>>>
+constexpr auto make_array(T&&... aArgs) -> std::array<CommonT, sizeof...(T)>
 {
     return {std::forward<T>(aArgs)...};
+}
+
+template <typename CommonT>
+constexpr auto make_array()
+{
+    return std::array<CommonT, 0>{};
+}
+
+template <typename T, std::size_t N>
+constexpr std::array<T, N> make_zero_array()
+{
+    return details::make_zero_array_impl<T>(std::make_index_sequence<N>{});
+}
+
+template <class T, std::size_t N>
+constexpr bool is_equal_arrays(const std::array<T, N>& lhs,
+                               const std::array<T, N>& rhs)
+{
+    return details::is_equal_arrays_impl<T>(lhs, rhs,
+                                            std::make_index_sequence<N>{});
 }
 
 inline constexpr auto kNumBitsTable = details::make_num_bits_table();

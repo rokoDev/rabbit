@@ -4,6 +4,7 @@
 #include <strong_type/strong_type.h>
 
 #include <string_view>
+#include <utility>
 
 #include "rabbit/bin_ops.h"
 #include "rabbit/endian.h"
@@ -59,7 +60,19 @@ template <std::size_t BufSize>
 class Buffer
 {
    public:
+    template <typename T, typename... U>
+    constexpr Buffer(T &&aFirstArg, U &&... aRestArgs) noexcept
+        : array_{rabbit::concatenate_arrays(
+              rabbit::make_array(static_cast<uint8_t>(aFirstArg),
+                                 static_cast<uint8_t>(aRestArgs)...),
+              rabbit::make_zero_array<uint8_t,
+                                      BufSize - sizeof...(aRestArgs) - 1>())}
+    {
+    }
+
     void print() { fmt::print("{}\n", to_string()); }
+
+    Buffer() = default;
 
     std::string to_string() const noexcept
     {
@@ -97,6 +110,16 @@ class TwoBufsTest : public ::testing::Test
     Buffer<BufSize> src_;
 };
 
+template <>
+class TwoBufsTest<32> : public ::testing::Test
+{
+   protected:
+    Buffer<32> dst_ =
+        Buffer<32>(0b10101111, 0b00010111, 0b00001111, 0b00110011, 0b10101010,
+                   0b01111110, 0b10000001, 0b10011001, 0b10111101, 0b00111100);
+    Buffer<32> src_;
+};
+
 template <std::size_t BufSize>
 class BinOpsTest : public ::testing::Test
 {
@@ -123,6 +146,187 @@ class BinOpsTest : public ::testing::Test
     static constexpr std::string_view formatStr_{formatDataArray_.data(),
                                                  formatDataArray_.size()};
 };
+
+class Converter
+{
+   public:
+    template <std::size_t NBits, typename T>
+    static constexpr decltype(auto) to_uint8_array(T &&aBitStr) noexcept
+    {
+        constexpr std::size_t NBytes =
+            NBits / CHAR_BIT + (NBits % CHAR_BIT ? 1 : 0);
+        return to_uint8_array_impl<NBits>(aBitStr,
+                                          std::make_index_sequence<NBytes>{});
+    }
+
+    template <std::size_t N, typename T>
+    static constexpr decltype(auto) to_uint8_array(T (&aBitStr)[N]) noexcept
+    {
+        static_assert(N > 0, "Condition N > 0 must be satisfied.");
+        return to_uint8_array<N - 1>(aBitStr);
+    }
+
+   private:
+    template <std::size_t ByteIndex, typename RandAccessContainerT,
+              std::size_t... I>
+    static constexpr uint8_t to_uint8_impl(RandAccessContainerT &&aBitStr,
+                                           std::index_sequence<I...>) noexcept
+    {
+        static_assert(sizeof...(I) > 0, "Bits count cannot be zero.");
+        static_assert(sizeof...(I) <= CHAR_BIT,
+                      "Bits count cannot be more than bits in a byte.");
+        return static_cast<uint8_t>(
+            (... | ((aBitStr[ByteIndex * CHAR_BIT + I] == '0')
+                        ? 0
+                        : (1 << (CHAR_BIT - I - 1)))));
+    }
+
+    template <std::size_t NBits, typename RandAccessContainerT,
+              std::size_t... I>
+    static constexpr decltype(auto) to_uint8_array_impl(
+        RandAccessContainerT &&aBitStr, std::index_sequence<I...>) noexcept
+    {
+        return rabbit::make_array<uint8_t>(to_uint8_impl<I>(
+            aBitStr,
+            std::make_index_sequence<(((I + 1) * CHAR_BIT) <= NBits
+                                          ? CHAR_BIT
+                                          : (NBits - I * CHAR_BIT))>{})...);
+    }
+};
+
+class BitStrOps
+{
+   public:
+    template <std::size_t DstOffset, std::size_t SrcOffset, std::size_t NDst,
+              std::size_t NSrc, std::size_t NBits>
+    static constexpr decltype(auto) bitArrayAfterAddBits(
+        std::string_view aDst, std::string_view aSrc) noexcept
+    {
+        static_assert(DstOffset + NBits <= NDst, "Invalid input parameters.");
+        static_assert(SrcOffset + NBits <= NSrc, "Invalid input parameters.");
+        using namespace rabbit;
+
+        const auto kPrefixArray =
+            subarray(aDst, std::make_index_sequence<DstOffset>{});
+
+        const auto kNBitsStr = aSrc.substr(SrcOffset, NBits);
+        const auto kNBitsArray =
+            subarray(std::move(kNBitsStr), std::make_index_sequence<NBits>{});
+
+        const auto kSuffixStr =
+            aDst.substr(DstOffset + NBits, NDst - DstOffset - NBits);
+        const auto kSuffixArray =
+            subarray(std::move(kSuffixStr),
+                     std::make_index_sequence<NDst - DstOffset - NBits>{});
+
+        const auto kResultStr =
+            concatenate_arrays(std::move(kPrefixArray), std::move(kNBitsArray),
+                               std::move(kSuffixArray));
+        return Converter::to_uint8_array<NDst>(std::move(kResultStr));
+    }
+
+   private:
+    template <typename ArrT, std::size_t... I>
+    static constexpr decltype(auto) subarray(ArrT &&aArray,
+                                             std::index_sequence<I...>) noexcept
+    {
+        using namespace rabbit;
+        return std::array<typename std::decay_t<ArrT>::value_type,
+                          sizeof...(I)>{aArray[I]...};
+    }
+};
+
+TEST(Converter, EmptyStringToUint8Array)
+{
+    constexpr auto kResultArray = Converter::to_uint8_array("");
+    constexpr std::array<uint8_t, 0> kExpectedArray{};
+    static_assert(rabbit::is_equal_arrays(kResultArray, kExpectedArray),
+                  "kResultArray must be equal to kExpectedArray");
+}
+
+TEST(Converter, String_1_ToUint8Array)
+{
+    constexpr auto kResultArray = Converter::to_uint8_array("1");
+    constexpr std::array<uint8_t, 1> kExpectedArray{0b10000000};
+    static_assert(rabbit::is_equal_arrays(kResultArray, kExpectedArray),
+                  "kResultArray must be equal to kExpectedArray");
+}
+
+TEST(Converter, String_0_ToUint8Array)
+{
+    constexpr auto kResultArray = Converter::to_uint8_array("0");
+    constexpr std::array<uint8_t, 1> kExpectedArray{0b00000000};
+    static_assert(rabbit::is_equal_arrays(kResultArray, kExpectedArray),
+                  "kResultArray must be equal to kExpectedArray");
+}
+
+TEST(Converter, String_101_ToUint8Array)
+{
+    constexpr auto kResultArray = Converter::to_uint8_array("101");
+    constexpr std::array<uint8_t, 1> kExpectedArray{0b10100000};
+    static_assert(rabbit::is_equal_arrays(kResultArray, kExpectedArray),
+                  "kResultArray must be equal to kExpectedArray");
+}
+
+TEST(Converter, String_10100101_ToUint8Array)
+{
+    constexpr auto kResultArray = Converter::to_uint8_array("10100101");
+    constexpr std::array<uint8_t, 1> kExpectedArray{0b10100101};
+    static_assert(rabbit::is_equal_arrays(kResultArray, kExpectedArray),
+                  "kResultArray must be equal to kExpectedArray");
+}
+
+TEST(Converter, String_101001011_ToUint8Array)
+{
+    constexpr auto kResultArray = Converter::to_uint8_array("101001011");
+    constexpr std::array<uint8_t, 2> kExpectedArray{0b10100101, 0b10000000};
+    static_assert(rabbit::is_equal_arrays(kResultArray, kExpectedArray),
+                  "kResultArray must be equal to kExpectedArray");
+}
+
+TEST(Converter, String_10101010011111100100001_ToUint8Array)
+{
+    constexpr auto kResultArray =
+        Converter::to_uint8_array("10101010011111100100001");
+    constexpr std::array<uint8_t, 3> kExpectedArray{0b10101010, 0b01111110,
+                                                    0b01000010};
+    static_assert(rabbit::is_equal_arrays(kResultArray, kExpectedArray),
+                  "kResultArray must be equal to kExpectedArray");
+}
+
+TEST(Converter, String_1010101001111110110000111_ToUint8Array)
+{
+    constexpr auto kResultArray =
+        Converter::to_uint8_array("1010101001111110110000111");
+    constexpr std::array<uint8_t, 4> kExpectedArray{0b10101010, 0b01111110,
+                                                    0b11000011, 0b10000000};
+    static_assert(rabbit::is_equal_arrays(kResultArray, kExpectedArray),
+                  "kResultArray must be equal to kExpectedArray");
+}
+
+TEST(BitStrOps, BitArrayAfterAddBits)
+{
+    constexpr std::size_t DstOffset = 0;
+    constexpr std::size_t SrcOffset = 3;
+    constexpr std::size_t NBits = 10;
+
+    using namespace std::literals;
+    constexpr auto kDst = "10101010011"sv;
+    constexpr auto kSrc = "11111100100001"sv;
+
+    constexpr auto kExcpected =
+        BitStrOps::bitArrayAfterAddBits<DstOffset, SrcOffset, kDst.size(),
+                                        kSrc.size(), NBits>(kDst, kSrc);
+
+    auto dstBuf = Converter::to_uint8_array<kDst.size()>(kDst);
+    constexpr auto kSrcBuf = Converter::to_uint8_array<kSrc.size()>(kSrc);
+    constexpr rabbit::DstBitOffset kDstOffset{DstOffset};
+    constexpr rabbit::SrcBitOffset kSrcOffset{SrcOffset};
+    constexpr rabbit::NumBits kNBits{NBits};
+    rabbit::BinOps::addBits(dstBuf.data(), kDstOffset, kSrcBuf.data(),
+                            kSrcOffset, kNBits);
+    ASSERT_TRUE(rabbit::is_equal_arrays(dstBuf, kExcpected));
+}
 
 using N1BinOpsTest = BinOpsTest<sizeof(uint8_t)>;
 using N2BinOpsTest = BinOpsTest<sizeof(uint16_t)>;

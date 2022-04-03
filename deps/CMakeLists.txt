@@ -15,7 +15,7 @@ FetchContent_Declare(
 FetchContent_Declare(
 	VersionHelper
     GIT_REPOSITORY https://github.com/rokoDev/VersionHelper.git
-    GIT_TAG        6c320971d149ddec8f4648596bfccf2b19b66f45
+    GIT_TAG        b8f512ee783abdb44ebe3ea2fb59bec9f32b2e31
 )
 
 FetchContent_Declare(
