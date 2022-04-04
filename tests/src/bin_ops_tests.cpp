@@ -166,6 +166,28 @@ class Converter
         return to_uint8_array<N - 1>(aBitStr);
     }
 
+    template <std::size_t NBits, typename ArrayT>
+    static constexpr decltype(auto) to_symbol_array(ArrayT &&aArray) noexcept
+    {
+        using namespace rabbit;
+        static_assert(std::is_same_v<std_array_data_t<ArrayT>, uint8_t>,
+                      "Elements of aArray must belong to uint8_t type.");
+        constexpr std::size_t kMaxNBytes = std_array_size_v<ArrayT>;
+        static_assert(NBits <= kMaxNBytes * CHAR_BIT, "NBits is too large.");
+        constexpr std::size_t kNBytes =
+            NBits / CHAR_BIT + ((NBits % CHAR_BIT) ? 1 : 0);
+        return to_symbol_array_impl<NBits>(std::forward<ArrayT>(aArray),
+                                           std::make_index_sequence<kNBytes>{});
+    }
+
+    template <typename ArrayT>
+    static constexpr decltype(auto) to_symbol_array(ArrayT &&aArray) noexcept
+    {
+        constexpr std::size_t kNBytes = rabbit::std_array_size_v<ArrayT>;
+        return to_symbol_array<kNBytes * CHAR_BIT>(
+            std::forward<ArrayT>(aArray));
+    }
+
    private:
     template <std::size_t ByteIndex, typename RandAccessContainerT,
               std::size_t... I>
@@ -191,6 +213,28 @@ class Converter
             std::make_index_sequence<(((I + 1) * CHAR_BIT) <= NBits
                                           ? CHAR_BIT
                                           : (NBits - I * CHAR_BIT))>{})...);
+    }
+
+    template <std::size_t... I>
+    static constexpr decltype(auto) to_symbol_array(
+        const uint8_t aValue, std::index_sequence<I...>) noexcept
+    {
+        static_assert(sizeof...(I) <= CHAR_BIT, "Bit count is too large.");
+        return std::array<char, sizeof...(I)>{
+            ((aValue & (1 << (CHAR_BIT - 1 - I))) ? '1' : '0')...};
+    }
+
+    template <std::size_t NBits, typename ArrayT, std::size_t... I>
+    static constexpr decltype(auto) to_symbol_array_impl(
+        ArrayT &&aArray, std::index_sequence<I...>) noexcept
+    {
+        return rabbit::concatenate_arrays(
+            rabbit::make_array<char>(),
+            to_symbol_array(
+                aArray[I],
+                std::make_index_sequence<(((I + 1) * CHAR_BIT <= NBits)
+                                              ? CHAR_BIT
+                                              : NBits % CHAR_BIT)>{})...);
     }
 };
 
@@ -302,6 +346,68 @@ TEST(Converter, String_1010101001111110110000111_ToUint8Array)
                                                     0b11000011, 0b10000000};
     static_assert(rabbit::is_equal_arrays(kResultArray, kExpectedArray),
                   "kResultArray must be equal to kExpectedArray");
+}
+
+TEST(Converter, Uint8Array_1010101001111110110000111_ToString)
+{
+    constexpr std::array<uint8_t, 4> kBitsArray{0b10101010, 0b01111110,
+                                                0b11000011, 0b10000000};
+    static constexpr auto kSymbols =
+        Converter::to_symbol_array(std::move(kBitsArray));
+    constexpr std::string_view kResult{kSymbols.data(), kSymbols.size()};
+    constexpr std::string_view kExpected = "10101010011111101100001110000000";
+    static_assert(kResult == kExpected, "Invalid kResult.");
+}
+
+TEST(Converter, Uint8Array_1010101001111110110000111_ToString_Shorten)
+{
+    constexpr std::array<uint8_t, 4> kBitsArray{0b10101010, 0b01111110,
+                                                0b11000011, 0b10000000};
+    static constexpr auto kSymbols =
+        Converter::to_symbol_array<25>(std::move(kBitsArray));
+    constexpr std::string_view kResult{kSymbols.data(), kSymbols.size()};
+    constexpr std::string_view kExpected = "1010101001111110110000111";
+    static_assert(kResult == kExpected, "Invalid kResult.");
+}
+
+TEST(Converter, Empty_Uint8Array_ToString)
+{
+    constexpr std::array<uint8_t, 0> kBitsArray{};
+    static constexpr auto kSymbols =
+        Converter::to_symbol_array(std::move(kBitsArray));
+    constexpr std::string_view kResult{kSymbols.data(), kSymbols.size()};
+    constexpr std::string_view kExpected = "";
+    static_assert(kResult == kExpected, "Invalid kResult.");
+}
+
+TEST(Converter, Uint8Array_1_ToString)
+{
+    constexpr std::array<uint8_t, 1> kBitsArray{0b10000000};
+    static constexpr auto kSymbols =
+        Converter::to_symbol_array(std::move(kBitsArray));
+    constexpr std::string_view kResult{kSymbols.data(), kSymbols.size()};
+    constexpr std::string_view kExpected = "10000000";
+    static_assert(kResult == kExpected, "Invalid kResult.");
+}
+
+TEST(Converter, Uint8Array_1_ToString_Shorten)
+{
+    constexpr std::array<uint8_t, 1> kBitsArray{0b10001100};
+    static constexpr auto kSymbols =
+        Converter::to_symbol_array<1>(std::move(kBitsArray));
+    constexpr std::string_view kResult{kSymbols.data(), kSymbols.size()};
+    constexpr std::string_view kExpected = "1";
+    static_assert(kResult == kExpected, "Invalid kResult.");
+}
+
+TEST(Converter, Uint8Array_10001100_ToString_Shorten)
+{
+    constexpr std::array<uint8_t, 1> kBitsArray{0b10001100};
+    static constexpr auto kSymbols =
+        Converter::to_symbol_array<5>(std::move(kBitsArray));
+    constexpr std::string_view kResult{kSymbols.data(), kSymbols.size()};
+    constexpr std::string_view kExpected = "10001";
+    static_assert(kResult == kExpected, "Invalid kResult.");
 }
 
 TEST(BitStrOps, BitArrayAfterAddBits)
