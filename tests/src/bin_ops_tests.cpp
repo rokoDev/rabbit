@@ -3,6 +3,8 @@
 #include <gtest/gtest.h>
 #include <strong_type/strong_type.h>
 
+#include <random>
+#include <string>
 #include <string_view>
 #include <utility>
 
@@ -280,6 +282,33 @@ class BitStrOps
     }
 };
 
+std::string random_bit_sequence(const std::size_t aNBits)
+{
+    std::random_device rd;
+    std::mt19937 mt(rd());
+    std::uniform_int_distribution<uint32_t> dist(0, 1);
+
+    std::string result;
+    result.reserve(aNBits);
+    for (std::size_t i = 0; i < aNBits; ++i)
+    {
+        result += dist(mt) ? '1' : '0';
+    }
+    return result;
+}
+
+TEST(Converter, TestDataSet)
+{
+    using namespace std::string_view_literals;
+    constexpr auto src256 =
+        "1001100111011010001010110010000101001100101100110111110001010100111101010101111011101010100101001100110000011110100100001111110100110010110010101010101110101001100111001001101011101100000111001000001110111001110101110111011111110000001001001010100111100101"sv;
+    static_assert(src256.size() == 256, "Invalid src256 size.");
+
+    constexpr auto dst256 =
+        "0011011100100111101001100110010011010010000110101011001001101101000110000000011101000111011111101100001001010010011111100101110011100001101011010110111101011011011010111010100111001110101100000000010110001000010111110000110100100101111111100011000111000010"sv;
+    static_assert(dst256.size() == 256, "Invalid src256 size.");
+}
+
 TEST(Converter, EmptyStringToUint8Array)
 {
     constexpr auto kResultArray = Converter::to_uint8_array("");
@@ -416,7 +445,7 @@ TEST(BitStrOps, BitArrayAfterAddBits)
     constexpr std::size_t SrcOffset = 3;
     constexpr std::size_t NBits = 10;
 
-    using namespace std::literals;
+    using namespace std::string_view_literals;
     constexpr auto kDst = "10101010011"sv;
     constexpr auto kSrc = "11111100100001"sv;
 
