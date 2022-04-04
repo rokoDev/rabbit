@@ -199,7 +199,7 @@ class BitStrOps
    public:
     template <std::size_t DstOffset, std::size_t SrcOffset, std::size_t NDst,
               std::size_t NSrc, std::size_t NBits>
-    static constexpr decltype(auto) bitArrayAfterAddBits(
+    static constexpr decltype(auto) addBitsResult(
         std::string_view aDst, std::string_view aSrc) noexcept
     {
         static_assert(DstOffset + NBits <= NDst, "Invalid input parameters.");
@@ -315,8 +315,8 @@ TEST(BitStrOps, BitArrayAfterAddBits)
     constexpr auto kSrc = "11111100100001"sv;
 
     constexpr auto kExcpected =
-        BitStrOps::bitArrayAfterAddBits<DstOffset, SrcOffset, kDst.size(),
-                                        kSrc.size(), NBits>(kDst, kSrc);
+        BitStrOps::addBitsResult<DstOffset, SrcOffset, kDst.size(), kSrc.size(),
+                                 NBits>(kDst, kSrc);
 
     auto dstBuf = Converter::to_uint8_array<kDst.size()>(kDst);
     constexpr auto kSrcBuf = Converter::to_uint8_array<kSrc.size()>(kSrc);
