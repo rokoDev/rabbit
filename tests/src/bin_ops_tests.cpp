@@ -297,6 +297,58 @@ std::string random_bit_sequence(const std::size_t aNBits)
     return result;
 }
 
+class BinOpsAddBits : public ::testing::Test
+{
+   public:
+    static constexpr std::string_view kSrc256{
+        "1001100111011010001010110010000101001100101100110111110001010100111101"
+        "0101011110111010101001010011001100000111101001000011111101001100101100"
+        "1010101010111010100110011100100110101110110000011100100000111011100111"
+        "0101110111011111110000001001001010100111100101"};
+
+    static constexpr std::string_view kDst256{
+        "0011011100100111101001100110010011010010000110101011001001101101000110"
+        "0000000111010001110111111011000010010100100111111001011100111000011010"
+        "1101011011110101101101101011101010011100111010110000000001011000100001"
+        "0111110000110100100101111111100011000111000010"};
+
+   protected:
+    static constexpr std::size_t minBytesCount(
+        const std::size_t aOffset, const std::size_t aNBits) noexcept
+    {
+        const std::size_t kAllBits = aOffset + aNBits;
+        return kAllBits / CHAR_BIT + (kAllBits % CHAR_BIT ? 1 : 0);
+    }
+};
+
+// TEST_F(BinOpsAddBits, Test1Bits)
+//{
+//    constexpr std::size_t SrcOffset = 3;
+//    constexpr std::size_t DstOffset = 0;
+//    constexpr std::size_t NBits = 10;
+//
+//    constexpr std::size_t kBitsInSrc = minBytesCount(SrcOffset, NBits);
+//    constexpr std::size_t kBitsInDst = minBytesCount(DstOffset, NBits);
+//
+//    using namespace std::string_view_literals;
+//    constexpr auto kSrc = kDst256.substr(0, kBitsInSrc);
+//    constexpr auto kDst = kDst256.substr(0, kBitsInDst);
+//
+//    constexpr auto kExcpected =
+//        BitStrOps::addBitsResult<DstOffset, SrcOffset, kDst.size(),
+//        kSrc.size(),
+//                                 NBits>(kDst, kSrc);
+//
+//    auto dstBuf = Converter::to_uint8_array<kDst.size()>(kDst);
+//    constexpr auto kSrcBuf = Converter::to_uint8_array<kSrc.size()>(kSrc);
+//    constexpr rabbit::DstBitOffset kDstOffset{DstOffset};
+//    constexpr rabbit::SrcBitOffset kSrcOffset{SrcOffset};
+//    constexpr rabbit::NumBits kNBits{NBits};
+//    rabbit::BinOps::addBits(dstBuf.data(), kDstOffset, kSrcBuf.data(),
+//                            kSrcOffset, kNBits);
+//    ASSERT_TRUE(rabbit::is_equal_arrays(dstBuf, kExcpected));
+//}
+
 TEST(Converter, TestDataSet)
 {
     using namespace std::string_view_literals;
