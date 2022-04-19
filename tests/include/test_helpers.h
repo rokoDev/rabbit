@@ -207,6 +207,34 @@ class test_helpers
         to_uint8_buf(result.data(), resultStr);
         return result;
     }
+
+    template <typename T>
+    constexpr static T getValueExpected(std::string_view aSrcBitStr,
+                                        SrcBitOffset aSrcOffset,
+                                        NumBits aNBits) noexcept
+    {
+        static_assert(rabbit::is_uint_v<T>, "Invalid T");
+        constexpr auto kBitsInValue = rabbit::utils::num_bits<T>();
+        assert(aNBits.get() <= kBitsInValue);
+        assert(aSrcOffset.get() <= CHAR_BIT);
+        assert(aSrcOffset.get() + aNBits.get() <= aSrcBitStr.size());
+
+        auto valueBitsArr = make_array<char, kBitsInValue>('0');
+        std::string_view valueBitStr{aSrcBitStr.data() + aSrcOffset.get(),
+                                     aNBits.get()};
+
+        for (std::size_t i = 0; i < valueBitStr.size(); ++i)
+        {
+            valueBitsArr[kBitsInValue - aNBits.get() + i] = valueBitStr[i];
+        }
+        std::string_view allValueBitsStr{valueBitsArr.data(),
+                                         valueBitsArr.size()};
+
+        std::array<uint8_t, sizeof(T)> resultByteArray =
+            to_uint8_array<kBitsInValue>(allValueBitsStr);
+        T result = details::uint8_buf_to_value<T>(resultByteArray.data());
+        return result;
+    }
 };
 }  // namespace rabbit
 

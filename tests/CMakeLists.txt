@@ -38,6 +38,7 @@ macro(package_add_test TESTNAME)
     include/test_helpers.h
     include/add_bits_tests.h
     include/add_value_tests.h
+    include/get_value_tests.h
     ${ARGN})
   target_include_directories(${TESTNAME} PUBLIC include)
   set_target_properties(${TESTNAME} PROPERTIES XCODE_GENERATE_SCHEME ON)
@@ -64,6 +65,7 @@ package_add_test(${ProjectName}
   src/test_helpers.cpp
   src/add_bits_tests.cpp
   src/add_value_tests.cpp
+  src/get_value_tests.cpp
 	)
 
 # If use IDE add gtest, gmock, gtest_main and gmock_main targets into deps/googletest group

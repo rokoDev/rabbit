@@ -81,7 +81,6 @@ constexpr auto to_uint8_array(U &&aValue) noexcept
     {
         for (std::size_t i = 0; i < sizeof(T); ++i)
         {
-            using namespace rabbit::details;
             valueAsBytes[Index<T>(i)] =
                 static_cast<uint8_t>(aValue >> i * CHAR_BIT);
         }
@@ -92,6 +91,31 @@ constexpr auto to_uint8_array(U &&aValue) noexcept
         std::memcpy(valueAsBytes.data(), &netOrdered, sizeof(T));
     }
     return valueAsBytes;
+}
+
+template <typename T>
+constexpr T uint8_buf_to_value(uint8_t const *const aBuf,
+                               const std::size_t aNBytes = sizeof(T)) noexcept
+{
+    static_assert(is_uint_v<T>,
+                  "T must be unsigned integer type and not bool.");
+    assert(aNBytes <= sizeof(T));
+    T result{};
+    if (__builtin_is_constant_evaluated())
+    {
+        for (std::size_t i = 0; i < aNBytes; ++i)
+        {
+            result |= static_cast<T>(static_cast<T>(aBuf[i])
+                                     << Index<T>(i) * CHAR_BIT);
+        }
+    }
+    else
+    {
+        assert(aBuf);
+        std::memcpy(&result, aBuf, aNBytes);
+        result = rabbit::toHost(result);
+    }
+    return result;
 }
 
 enum class eAlign : bool
@@ -113,6 +137,8 @@ static constexpr void copy(T *const aDst, T const *const aSrc,
     }
     else
     {
+        assert(aDst);
+        assert(aSrc);
         std::memcpy(aDst, aSrc, NBytes);
     }
 }

@@ -89,10 +89,10 @@ constexpr decltype(auto) make_element_for_index(T&& aValue) noexcept
 }
 
 template <typename T, std::size_t... I>
-constexpr std::array<T, sizeof...(I)> make_zero_array_impl(
-    std::index_sequence<I...>) noexcept
+constexpr std::array<T, sizeof...(I)> make_array_with_value_impl(
+    T aValue, std::index_sequence<I...>) noexcept
 {
-    return {make_element_for_index<T, I>(T{})...};
+    return {make_element_for_index<T, I>(std::move(aValue))...};
 }
 
 template <std::size_t... I>
@@ -143,6 +143,13 @@ template <typename CommonT>
 constexpr auto make_array()
 {
     return std::array<CommonT, 0>{};
+}
+
+template <typename T, std::size_t N>
+constexpr auto make_array(T aValue)
+{
+    return details::make_array_with_value_impl<T>(
+        aValue, std::make_index_sequence<N>{});
 }
 
 template <auto Begin, auto End, auto Step = 1,
@@ -209,7 +216,8 @@ constexpr decltype(auto) sv_to_array(const std::string_view aSV) noexcept
 template <typename T, std::size_t N>
 constexpr std::array<T, N> make_zero_array()
 {
-    return details::make_zero_array_impl<T>(std::make_index_sequence<N>{});
+    return details::make_array_with_value_impl<T>(
+        T{}, std::make_index_sequence<N>{});
 }
 
 template <class T, std::size_t N>

@@ -6,6 +6,7 @@
 #include <cstdint>
 
 #include "details.h"
+#include "endian.h"
 #include "utils.h"
 
 namespace rabbit
@@ -188,13 +189,13 @@ class BinOps final
     static constexpr void addValue(uint8_t *const aDst, DstBitOffset aOffset,
                                    T &&aValue, NumBits aNBits) noexcept
     {
-        using UIntT = std::decay_t<T>;
-        static_assert(is_uint_v<UIntT>,
-                      "UIntT must be unsigned integer type and not bool.");
-        if (aNBits == NumBits(0))
+        if (!aNBits)
         {
             return;
         }
+        using UIntT = std::decay_t<T>;
+        static_assert(is_uint_v<UIntT>,
+                      "UIntT must be unsigned integer type and not bool.");
 
         assert(aDst != nullptr && "Invalid aDst");
         assert(aOffset < CHAR_BIT && "Invalid aOffset");
@@ -222,6 +223,73 @@ class BinOps final
                       "UIntT must be unsigned integer type and not bool.");
         using Indices = std::make_index_sequence<sizeof(UIntT)>;
         details::addValue(aDst, std::forward<T>(aValue), Indices{});
+    }
+
+    template <typename T>
+    static constexpr T getValue(uint8_t const *const aSrc,
+                                SrcBitOffset aSrcOffset,
+                                NumBits aNBits) noexcept
+    {
+        static_assert(is_uint_v<T>,
+                      "T must be unsigned integer type and not bool.");
+        T result{};
+        if (!aNBits)
+        {
+            return result;
+        }
+
+        assert(aSrc != nullptr && "Invalid aSrc");
+        assert(aSrcOffset < CHAR_BIT && "Invalid aSrcOffset");
+
+        constexpr auto kBitsInT = utils::num_bits<T>();
+        assert(aNBits <= kBitsInT && "Invalid aNBits");
+
+        const auto kNBytesToRead =
+            details::bytesCount(aSrcOffset.get(), aNBits.get());
+        const auto kMin = std::min(kNBytesToRead, sizeof(T));
+
+        result = details::uint8_buf_to_value<T>(aSrc, kMin);
+        const auto rOffset = kBitsInT - aNBits.get();
+        result = static_cast<T>(static_cast<T>(result << aSrcOffset.get()) >>
+                                rOffset);
+
+        if (kNBytesToRead > sizeof(T))
+        {
+            const auto kOneByteOffset =
+                kBitsInT + CHAR_BIT - aSrcOffset.get() - aNBits.get();
+            result |= static_cast<T>(aSrc[sizeof(T)] >> kOneByteOffset);
+        }
+
+        return result;
+    }
+
+    template <typename T>
+    static constexpr T getValue(uint8_t const *const aSrc,
+                                NumBits aNBits) noexcept
+    {
+        static_assert(is_uint_v<T>,
+                      "T must be unsigned integer type and not bool.");
+        T result{};
+        if (!aNBits)
+        {
+            return result;
+        }
+
+        assert(aSrc != nullptr && "Invalid aSrc");
+        assert(aNBits <= utils::num_bits<T>() && "Invalid aNBits");
+        const auto kNBytesToRead = details::bytesCount(aNBits.get());
+        result = details::uint8_buf_to_value<T>(aSrc, kNBytesToRead);
+        result >>= utils::num_bits<T>() - aNBits.get();
+        return result;
+    }
+
+    template <typename T>
+    static constexpr T getValue(uint8_t const *const aSrc) noexcept
+    {
+        static_assert(is_uint_v<T>,
+                      "T must be unsigned integer type and not bool.");
+        assert(aSrc != nullptr && "Invalid aSrc");
+        return details::uint8_buf_to_value<T>(aSrc);
     }
 };
 }  // namespace rabbit

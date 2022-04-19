@@ -30,6 +30,16 @@ namespace
 {
 using namespace std::string_view_literals;
 using helpers = rabbit::test_helpers;
+using ::testing::Test;
+using SrcBitOffset = rabbit::SrcBitOffset;
+using NumBits = rabbit::NumBits;
+
+class GetValueExpected : public Test
+{
+   protected:
+    static inline constexpr auto k72SrcBitStr =
+        "110011101101000101011001000010100110010110011011111000101010011111110101"sv;
+};
 
 TEST(ConvertBitStringView, ToBinArray1)
 {
@@ -173,5 +183,148 @@ TEST(ConvertBinArray, ToBitStringView6)
     constexpr std::string_view kResult{kSymbols.data(), kSymbols.size()};
     constexpr std::string_view kExpected = "10001";
     static_assert(kResult == kExpected, "Invalid kResult.");
+}
+
+TEST_F(GetValueExpected, UInt8kOffset0kNBits0)
+{
+    using U = uint8_t;
+    const U kExpected{0b00000000};
+    const auto kActual =
+        helpers::getValueExpected<U>(k72SrcBitStr, SrcBitOffset{0}, NumBits{0});
+    static_assert(std::is_same_v<decltype(kActual), decltype(kExpected)>,
+                  "kActual has incorrect type.");
+    ASSERT_EQ(kActual, kExpected);
+}
+
+TEST_F(GetValueExpected, UInt8kOffset0kNBits3)
+{
+    using U = uint8_t;
+    const U kExpected{0b00000110};
+    const auto kActual =
+        helpers::getValueExpected<U>(k72SrcBitStr, SrcBitOffset{0}, NumBits{3});
+    static_assert(std::is_same_v<decltype(kActual), decltype(kExpected)>,
+                  "kActual has incorrect type.");
+    ASSERT_EQ(kActual, kExpected);
+}
+
+TEST_F(GetValueExpected, ConstexprUInt8kOffset3kNBits2)
+{
+    using U = uint8_t;
+    constexpr U kExpected{0b00000001};
+    constexpr SrcBitOffset kOffset{3};
+    constexpr NumBits kNBits{2};
+    constexpr auto kActual =
+        helpers::getValueExpected<U>(k72SrcBitStr, kOffset, kNBits);
+    static_assert(std::is_same_v<decltype(kActual), decltype(kExpected)>,
+                  "kActual has incorrect type.");
+    static_assert(kActual == kExpected, "Invalid kActual.");
+}
+
+TEST_F(GetValueExpected, ConstexprUInt8kOffset7kNBits8)
+{
+    using U = uint8_t;
+    constexpr U kExpected{0b01101000};
+    constexpr SrcBitOffset kOffset{7};
+    constexpr NumBits kNBits{8};
+    constexpr auto kActual =
+        helpers::getValueExpected<U>(k72SrcBitStr, kOffset, kNBits);
+    static_assert(std::is_same_v<decltype(kActual), decltype(kExpected)>,
+                  "kActual has incorrect type.");
+    static_assert(kActual == kExpected, "Invalid kActual.");
+}
+
+TEST_F(GetValueExpected, ConstexprUInt32kOffset7kNBits1)
+{
+    using U = uint32_t;
+    constexpr U kExpected{0b00000000'00000000'00000000'00000000};
+    constexpr SrcBitOffset kOffset{7};
+    constexpr NumBits kNBits{1};
+    constexpr auto kActual =
+        helpers::getValueExpected<U>(k72SrcBitStr, kOffset, kNBits);
+    static_assert(std::is_same_v<decltype(kActual), decltype(kExpected)>,
+                  "kActual has incorrect type.");
+    static_assert(kActual == kExpected, "Invalid kActual.");
+}
+
+TEST_F(GetValueExpected, ConstexprUInt32kOffset7kNBits21)
+{
+    using U = uint32_t;
+    constexpr U kExpected{0b00000000'00001101'00010101'10010000};
+    constexpr SrcBitOffset kOffset{7};
+    constexpr NumBits kNBits{21};
+    constexpr auto kActual =
+        helpers::getValueExpected<U>(k72SrcBitStr, kOffset, kNBits);
+    static_assert(std::is_same_v<decltype(kActual), decltype(kExpected)>,
+                  "kActual has incorrect type.");
+    static_assert(kActual == kExpected, "Invalid kActual.");
+}
+
+TEST_F(GetValueExpected, UInt32kOffset7kNBits21)
+{
+    using U = uint32_t;
+    const U kExpected{0b00000000'00001101'00010101'10010000};
+    const SrcBitOffset kOffset{7};
+    const NumBits kNBits{21};
+    const auto kActual =
+        helpers::getValueExpected<U>(k72SrcBitStr, kOffset, kNBits);
+    static_assert(std::is_same_v<decltype(kActual), decltype(kExpected)>,
+                  "kActual has incorrect type.");
+    ASSERT_EQ(kActual, kExpected);
+}
+
+TEST_F(GetValueExpected, UInt64kOffset6kNBits2)
+{
+    using U = uint64_t;
+    const U kExpected{
+        0b00000000'00000000'00000000'00000000'00000000'00000000'00000000'00000010};
+    const SrcBitOffset kOffset{6};
+    const NumBits kNBits{2};
+    const auto kActual =
+        helpers::getValueExpected<U>(k72SrcBitStr, kOffset, kNBits);
+    static_assert(std::is_same_v<decltype(kActual), decltype(kExpected)>,
+                  "kActual has incorrect type.");
+    ASSERT_EQ(kActual, kExpected);
+}
+
+TEST_F(GetValueExpected, ConstexprUInt64kOffset6kNBits2)
+{
+    using U = uint64_t;
+    constexpr U kExpected{
+        0b00000000'00000000'00000000'00000000'00000000'00000000'00000000'00000010};
+    constexpr SrcBitOffset kOffset{6};
+    constexpr NumBits kNBits{2};
+    constexpr auto kActual =
+        helpers::getValueExpected<U>(k72SrcBitStr, kOffset, kNBits);
+    static_assert(std::is_same_v<decltype(kActual), decltype(kExpected)>,
+                  "kActual has incorrect type.");
+    static_assert(kActual == kExpected, "Invalid kActual.");
+}
+
+TEST_F(GetValueExpected, UInt64kOffset5kNBits64)
+{
+    using U = uint64_t;
+    const U kExpected{
+        0b11011010'00101011'00100001'01001100'10110011'01111100'01010100'11111110};
+    const SrcBitOffset kOffset{5};
+    const NumBits kNBits{64};
+    const auto kActual =
+        helpers::getValueExpected<U>(k72SrcBitStr, kOffset, kNBits);
+    static_assert(std::is_same_v<decltype(kActual), decltype(kExpected)>,
+                  "kActual has incorrect type.");
+    ASSERT_EQ(kActual, kExpected);
+}
+
+TEST_F(GetValueExpected, ConstexprUInt64kOffset5kNBits64)
+{
+    using U = uint64_t;
+    constexpr U kExpected{
+        0b11011010'00101011'00100001'01001100'10110011'01111100'01010100'11111110};
+    constexpr SrcBitOffset kOffset{5};
+    constexpr NumBits kNBits{64};
+    constexpr auto kActual =
+        helpers::getValueExpected<U>(k72SrcBitStr, kOffset, kNBits);
+    static_assert(std::is_same_v<decltype(kActual), decltype(kExpected)>,
+                  "kActual has incorrect type.");
+    static_assert(kActual == kExpected, "Invalid kActual.");
 }
 }  // namespace

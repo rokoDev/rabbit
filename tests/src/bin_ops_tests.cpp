@@ -14,6 +14,7 @@
 #include "add_value_tests.h"
 #include "buffer_tests.h"
 #include "data_formatters_tests.h"
+#include "get_value_tests.h"
 #include "rabbit/bin_ops.h"
 #include "rabbit/endian.h"
 #include "rabbit/utils.h"
@@ -76,6 +77,7 @@ using ::testing::ValuesIn;
 
 using AddBitsWith5ArgsCompileTimeArgs =
     add_bits_types_t<7_uz, 8_uz, 9_uz, 63_uz, 64_uz, 70_uz>;
+// constexpr addBits tests instantiation
 INSTANTIATE_TYPED_TEST_SUITE_P(Rabbit, AddBitsCompileTime,
                                AddBitsWith5ArgsCompileTimeArgs, );
 
@@ -90,6 +92,7 @@ constexpr auto kNBitsArray =
 
 const auto kTestDatas = TestDataFactory::presetData();
 
+// addBits tests instantiation
 INSTANTIATE_TEST_SUITE_P(
     Rabbit, AddBitsWith5Args,
     Combine(ValuesIn(kTestDatas), ValuesIn(kNBitsArray),
@@ -125,7 +128,9 @@ INSTANTIATE_TEST_SUITE_P(
         return fmt::format("{}kNBits{}", kTestData->name(), kNumBits.get());
     });
 
-static inline constexpr auto kDstBits =
+static inline constexpr auto k80SrcBits =
+    "11001110110100010101100100001010011001011001101111100010101001111111010101100110"sv;
+static inline constexpr auto k72DstBits =
     "101010100100101010101101111001000110100000000111011111110001011011110101"sv;
 static inline constexpr auto kDstOffsets =
     rabbit::make_array_from_range<0_uf8, 7_uf8, 1_uf8, DstBitOffset>();
@@ -148,6 +153,7 @@ static inline constexpr uint64_t kValue64 =
 static inline constexpr auto kNBitsArray64 =
     rabbit::make_array_from_range<0_uz, 64_uz, 1_uz, NumBits>();
 
+// addValue tests instantiation
 template <typename T>
 std::string FourArgsDataName(
     const testing::TestParamInfo<typename T::ParamType> &aInfo)
@@ -160,24 +166,24 @@ std::string FourArgsDataName(
 }
 
 INSTANTIATE_TEST_SUITE_P(Rabbit, Args4UInt8,
-                         Combine(Values(kDstBits), Values(kValue8),
+                         Combine(Values(k72DstBits), Values(kValue8),
                                  ValuesIn(kDstOffsets), ValuesIn(kNBitsArray8)),
                          &FourArgsDataName<Args4UInt8>);
 
 INSTANTIATE_TEST_SUITE_P(Rabbit, Args4UInt16,
-                         Combine(Values(kDstBits), Values(kValue16),
+                         Combine(Values(k72DstBits), Values(kValue16),
                                  ValuesIn(kDstOffsets),
                                  ValuesIn(kNBitsArray16)),
                          &FourArgsDataName<Args4UInt16>);
 
 INSTANTIATE_TEST_SUITE_P(Rabbit, Args4UInt32,
-                         Combine(Values(kDstBits), Values(kValue32),
+                         Combine(Values(k72DstBits), Values(kValue32),
                                  ValuesIn(kDstOffsets),
                                  ValuesIn(kNBitsArray32)),
                          &FourArgsDataName<Args4UInt32>);
 
 INSTANTIATE_TEST_SUITE_P(Rabbit, Args4UInt64,
-                         Combine(Values(kDstBits), Values(kValue64),
+                         Combine(Values(k72DstBits), Values(kValue64),
                                  ValuesIn(kDstOffsets),
                                  ValuesIn(kNBitsArray64)),
                          &FourArgsDataName<Args4UInt64>);
@@ -192,22 +198,22 @@ std::string ThreeArgsDataName(
 }
 
 INSTANTIATE_TEST_SUITE_P(Rabbit, Args3UInt8,
-                         Combine(Values(kDstBits), Values(kValue8),
+                         Combine(Values(k72DstBits), Values(kValue8),
                                  ValuesIn(kNBitsArray8)),
                          &ThreeArgsDataName<Args3UInt8>);
 
 INSTANTIATE_TEST_SUITE_P(Rabbit, Args3UInt16,
-                         Combine(Values(kDstBits), Values(kValue16),
+                         Combine(Values(k72DstBits), Values(kValue16),
                                  ValuesIn(kNBitsArray16)),
                          &ThreeArgsDataName<Args3UInt16>);
 
 INSTANTIATE_TEST_SUITE_P(Rabbit, Args3UInt32,
-                         Combine(Values(kDstBits), Values(kValue32),
+                         Combine(Values(k72DstBits), Values(kValue32),
                                  ValuesIn(kNBitsArray32)),
                          &ThreeArgsDataName<Args3UInt32>);
 
 INSTANTIATE_TEST_SUITE_P(Rabbit, Args3UInt64,
-                         Combine(Values(kDstBits), Values(kValue64),
+                         Combine(Values(k72DstBits), Values(kValue64),
                                  ValuesIn(kNBitsArray64)),
                          &ThreeArgsDataName<Args3UInt64>);
 
@@ -220,20 +226,87 @@ std::string TwoArgsDataName(
 }
 
 INSTANTIATE_TEST_SUITE_P(Rabbit, Args2UInt8,
-                         Combine(Values(kDstBits), Values(kValue8)),
+                         Combine(Values(k72DstBits), Values(kValue8)),
                          &TwoArgsDataName<Args2UInt8>);
 
 INSTANTIATE_TEST_SUITE_P(Rabbit, Args2UInt16,
-                         Combine(Values(kDstBits), Values(kValue16)),
+                         Combine(Values(k72DstBits), Values(kValue16)),
                          &TwoArgsDataName<Args2UInt16>);
 
 INSTANTIATE_TEST_SUITE_P(Rabbit, Args2UInt32,
-                         Combine(Values(kDstBits), Values(kValue32)),
+                         Combine(Values(k72DstBits), Values(kValue32)),
                          &TwoArgsDataName<Args2UInt32>);
 
 INSTANTIATE_TEST_SUITE_P(Rabbit, Args2UInt64,
-                         Combine(Values(kDstBits), Values(kValue64)),
+                         Combine(Values(k72DstBits), Values(kValue64)),
                          &TwoArgsDataName<Args2UInt64>);
+
+// getValue tests instantiation
+template <typename T>
+std::string GetValue3ArgsDataName(
+    const testing::TestParamInfo<typename T::ParamType> &aInfo)
+{
+    const auto kSrcOffset = std::get<1>(aInfo.param);
+    const auto kNumBits = std::get<2>(aInfo.param);
+    return fmt::format("kSrcOffset{}kNBits{}", kSrcOffset.get(),
+                       kNumBits.get());
+}
+
+INSTANTIATE_TEST_SUITE_P(Rabbit, Args3U8,
+                         Combine(Values(k80SrcBits),
+                                 ValuesIn(kSrcBitOffsetsArray),
+                                 ValuesIn(kNBitsArray8)),
+                         &GetValue3ArgsDataName<Args3U8>);
+
+INSTANTIATE_TEST_SUITE_P(Rabbit, Args3U16,
+                         Combine(Values(k80SrcBits),
+                                 ValuesIn(kSrcBitOffsetsArray),
+                                 ValuesIn(kNBitsArray16)),
+                         &GetValue3ArgsDataName<Args3U16>);
+
+INSTANTIATE_TEST_SUITE_P(Rabbit, Args3U32,
+                         Combine(Values(k80SrcBits),
+                                 ValuesIn(kSrcBitOffsetsArray),
+                                 ValuesIn(kNBitsArray32)),
+                         &GetValue3ArgsDataName<Args3U32>);
+
+INSTANTIATE_TEST_SUITE_P(Rabbit, Args3U64,
+                         Combine(Values(k80SrcBits),
+                                 ValuesIn(kSrcBitOffsetsArray),
+                                 ValuesIn(kNBitsArray64)),
+                         &GetValue3ArgsDataName<Args3U64>);
+
+template <typename T>
+std::string GetValue2ArgsDataName(
+    const testing::TestParamInfo<typename T::ParamType> &aInfo)
+{
+    const auto kNumBits = std::get<1>(aInfo.param);
+    return fmt::format("kNBits{}", kNumBits.get());
+}
+
+INSTANTIATE_TEST_SUITE_P(Rabbit, Args2U8,
+                         Combine(Values(k80SrcBits), ValuesIn(kNBitsArray8)),
+                         &GetValue2ArgsDataName<Args2U8>);
+
+INSTANTIATE_TEST_SUITE_P(Rabbit, Args2U16,
+                         Combine(Values(k80SrcBits), ValuesIn(kNBitsArray16)),
+                         &GetValue2ArgsDataName<Args2U16>);
+
+INSTANTIATE_TEST_SUITE_P(Rabbit, Args2U32,
+                         Combine(Values(k80SrcBits), ValuesIn(kNBitsArray32)),
+                         &GetValue2ArgsDataName<Args2U32>);
+
+INSTANTIATE_TEST_SUITE_P(Rabbit, Args2U64,
+                         Combine(Values(k80SrcBits), ValuesIn(kNBitsArray64)),
+                         &GetValue2ArgsDataName<Args2U64>);
+
+INSTANTIATE_TEST_SUITE_P(Rabbit, Args1U8, Combine(Values(k80SrcBits)));
+
+INSTANTIATE_TEST_SUITE_P(Rabbit, Args1U16, Combine(Values(k80SrcBits)));
+
+INSTANTIATE_TEST_SUITE_P(Rabbit, Args1U32, Combine(Values(k80SrcBits)));
+
+INSTANTIATE_TEST_SUITE_P(Rabbit, Args1U64, Combine(Values(k80SrcBits)));
 
 TEST(BinOpsTest, Mask1)
 {
