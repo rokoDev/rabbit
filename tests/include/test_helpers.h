@@ -153,12 +153,12 @@ class test_helpers
         std::size_t bitIndex_{};
     };
 
-    static constexpr void addBitsExpected(uint8_t *const aResult,
-                                          std::string_view aDst,
-                                          const DstBitOffset aDstOffset,
-                                          std::string_view aSrc,
-                                          const SrcBitOffset aSrcOffset,
-                                          const NumBits aNBits) noexcept
+    static constexpr void copyBitsExpected(uint8_t *const aResult,
+                                           std::string_view aDst,
+                                           const DstBitOffset aDstOffset,
+                                           std::string_view aSrc,
+                                           const SrcBitOffset aSrcOffset,
+                                           const NumBits aNBits) noexcept
     {
         assert(aDstOffset.get() + aNBits.get() <= aDst.size() &&
                "Invalid arguments.");

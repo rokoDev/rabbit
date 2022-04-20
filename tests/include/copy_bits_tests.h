@@ -1,5 +1,5 @@
-#ifndef add_bits_tests_h
-#define add_bits_tests_h
+#ifndef copy_bits_tests_h
+#define copy_bits_tests_h
 
 #include <gtest/gtest.h>
 
@@ -119,17 +119,17 @@ class TestDataFactory
     }
 };
 
-using AddBits5TestDataT =
+using CopyBits5TestDataT =
     std::tuple<std::shared_ptr<TestData>, NumBits, DstBitOffset, SrcBitOffset>;
-using AddBits4TestDataT =
+using CopyBits4TestDataT =
     std::tuple<std::shared_ptr<TestData>, NumBits, BitOffset>;
-using AddBits3TestDataT = std::tuple<std::shared_ptr<TestData>, NumBits>;
+using CopyBits3TestDataT = std::tuple<std::shared_ptr<TestData>, NumBits>;
 using BytesInDstSrcT = std::tuple<std::size_t, std::size_t>;
 
-class AddBitsBase
+class CopyBitsBase
 {
    protected:
-    void arrangeExpectedActual(const AddBits5TestDataT& aParam)
+    void arrangeExpectedActual(const CopyBits5TestDataT& aParam)
     {
         const auto [kData, kNBits, kDstOffset, kSrcOffset] = aParam;
         const std::size_t kDstNBytes =
@@ -138,8 +138,8 @@ class AddBitsBase
 
         // expected
         expected_.assign(kDstNBytes, 0_u8);
-        helpers::addBitsExpected(expected_.data(), dstBits, kDstOffset,
-                                 kData->srcBitsStr(), kSrcOffset, kNBits);
+        helpers::copyBitsExpected(expected_.data(), dstBits, kDstOffset,
+                                  kData->srcBitsStr(), kSrcOffset, kNBits);
 
         // actual
         actual_.assign(kDstNBytes, 0_u8);
@@ -149,12 +149,12 @@ class AddBitsBase
     std::vector<uint8_t> actual_;
 };
 
-class AddBitsWith5Args
-    : public AddBitsBase
-    , public TestWithParam<AddBits5TestDataT>
+class CopyBitsWith5Args
+    : public CopyBitsBase
+    , public TestWithParam<CopyBits5TestDataT>
 {
    protected:
-    static BytesInDstSrcT bytesInDstSrc(const AddBits5TestDataT& aParam)
+    static BytesInDstSrcT bytesInDstSrc(const CopyBits5TestDataT& aParam)
     {
         const auto [kData, kNBits, kDstOffset, kSrcOffset] = aParam;
         const std::size_t kDstNBytes =
@@ -165,24 +165,24 @@ class AddBitsWith5Args
     }
 };
 
-class AddBitsWith4Args
-    : public AddBitsBase
-    , public TestWithParam<AddBits4TestDataT>
+class CopyBitsWith4Args
+    : public CopyBitsBase
+    , public TestWithParam<CopyBits4TestDataT>
 {
    protected:
-    static std::size_t bytesInDstSrc(const AddBits4TestDataT& aParam)
+    static std::size_t bytesInDstSrc(const CopyBits4TestDataT& aParam)
     {
         auto [kData, kNBits, kOffset] = aParam;
         return rabbit::details::bytesCount(kOffset.get(), kNBits.get());
     }
 };
 
-class AddBitsWith3Args
-    : public AddBitsBase
-    , public TestWithParam<AddBits3TestDataT>
+class CopyBitsWith3Args
+    : public CopyBitsBase
+    , public TestWithParam<CopyBits3TestDataT>
 {
    protected:
-    static std::size_t bytesInDstSrc(const AddBits3TestDataT& aParam)
+    static std::size_t bytesInDstSrc(const CopyBits3TestDataT& aParam)
     {
         auto [kData, kNBits] = aParam;
         return rabbit::details::bytesCount(kNBits.get());
@@ -191,4 +191,4 @@ class AddBitsWith3Args
 }  // namespace test
 }  // namespace rabbit
 
-#endif /* add_bits_tests_h */
+#endif /* copy_bits_tests_h */

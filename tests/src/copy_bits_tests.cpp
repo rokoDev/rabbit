@@ -1,4 +1,4 @@
-#include "add_bits_tests.h"
+#include "copy_bits_tests.h"
 
 #include <algorithm>
 #include <cstring>
@@ -13,7 +13,7 @@ namespace
 {
 using namespace rabbit::test;
 
-TEST_P(AddBitsWith5Args, TestFor)
+TEST_P(CopyBitsWith5Args, TestFor)
 {
     const auto [kData, kNBits, kDstOffset, kSrcOffset] = GetParam();
     const auto [kDstNBytes, kSrcNBytes] = bytesInDstSrc(GetParam());
@@ -24,16 +24,16 @@ TEST_P(AddBitsWith5Args, TestFor)
     arrangeExpectedActual(GetParam());
 
     // act
-    rabbit::BinOps::addBits(actual_.data(), kDstOffset, kData->srcBits().data(),
-                            kSrcOffset, kNBits);
+    rabbit::BinOps::copyBits(actual_.data(), kDstOffset,
+                             kData->srcBits().data(), kSrcOffset, kNBits);
 
     // assert
     EXPECT_EQ(std::memcmp(actual_.data(), expected_.data(), expected_.size()),
               0);
 }
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AddBitsWith5Args);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(CopyBitsWith5Args);
 
-TEST_P(AddBitsWith4Args, TestFor)
+TEST_P(CopyBitsWith4Args, TestFor)
 {
     auto [kData, kNBits, kOffset] = GetParam();
     const auto kNBytes = bytesInDstSrc(GetParam());
@@ -41,21 +41,21 @@ TEST_P(AddBitsWith4Args, TestFor)
     ASSERT_LE(kNBytes, kData->maxBytesInSrc());
 
     // arrange
-    const AddBits5TestDataT kParams{kData, kNBits, DstBitOffset(kOffset.get()),
-                                    SrcBitOffset(kOffset.get())};
+    const CopyBits5TestDataT kParams{kData, kNBits, DstBitOffset(kOffset.get()),
+                                     SrcBitOffset(kOffset.get())};
     arrangeExpectedActual(kParams);
 
     // act
-    rabbit::BinOps::addBits(actual_.data(), kData->srcBits().data(), kOffset,
-                            kNBits);
+    rabbit::BinOps::copyBits(actual_.data(), kData->srcBits().data(), kOffset,
+                             kNBits);
 
     // assert
     EXPECT_EQ(std::memcmp(actual_.data(), expected_.data(), expected_.size()),
               0);
 }
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AddBitsWith4Args);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(CopyBitsWith4Args);
 
-TEST_P(AddBitsWith3Args, TestFor)
+TEST_P(CopyBitsWith3Args, TestFor)
 {
     auto [kData, kNBits] = GetParam();
     const auto kNBytes = bytesInDstSrc(GetParam());
@@ -63,16 +63,16 @@ TEST_P(AddBitsWith3Args, TestFor)
     ASSERT_LE(kNBytes, kData->maxBytesInSrc());
 
     // arrange
-    const AddBits5TestDataT kParams{kData, kNBits, DstBitOffset(0),
-                                    SrcBitOffset(0)};
+    const CopyBits5TestDataT kParams{kData, kNBits, DstBitOffset(0),
+                                     SrcBitOffset(0)};
     arrangeExpectedActual(kParams);
 
     // act
-    rabbit::BinOps::addBits(actual_.data(), kData->srcBits().data(), kNBits);
+    rabbit::BinOps::copyBits(actual_.data(), kData->srcBits().data(), kNBits);
 
     // assert
     EXPECT_EQ(std::memcmp(actual_.data(), expected_.data(), expected_.size()),
               0);
 }
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AddBitsWith3Args);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(CopyBitsWith3Args);
 }  // namespace

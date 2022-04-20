@@ -1,5 +1,5 @@
-#ifndef add_bits_constexpr_tests_h
-#define add_bits_constexpr_tests_h
+#ifndef copy_bits_constexpr_tests_h
+#define copy_bits_constexpr_tests_h
 #include <gtest/gtest.h>
 
 #include <string>
@@ -17,7 +17,7 @@ namespace test
 using namespace std::string_view_literals;
 
 template <typename T>
-class AddBitsCompileTime : public ::testing::Test
+class CopyBitsCompileTime : public ::testing::Test
 {
     using SrcBitOffset = rabbit::SrcBitOffset;
     using DstBitOffset = rabbit::DstBitOffset;
@@ -53,8 +53,8 @@ class AddBitsCompileTime : public ::testing::Test
         auto dstBuf = std::array<uint8_t, kDstNBytes>{};
         auto dstBits = aDstData.substr(0, kDstNBytes * CHAR_BIT);
 
-        helpers::addBitsExpected(dstBuf.data(), dstBits, DstOffset, aSrcData,
-                                 SrcOffset, NBits);
+        helpers::copyBitsExpected(dstBuf.data(), dstBits, DstOffset, aSrcData,
+                                  SrcOffset, NBits);
 
         return dstBuf;
     }
@@ -70,16 +70,16 @@ class AddBitsCompileTime : public ::testing::Test
 
         helpers::to_uint8_buf(dstBuf.data(), dstBits);
 
-        rabbit::BinOps::addBits(dstBuf.data(), DstOffset, aSrcBuf, SrcOffset,
-                                NBits);
+        rabbit::BinOps::copyBits(dstBuf.data(), DstOffset, aSrcBuf, SrcOffset,
+                                 NBits);
 
         return dstBuf;
     }
 };
 
-TYPED_TEST_SUITE_P(AddBitsCompileTime);
+TYPED_TEST_SUITE_P(CopyBitsCompileTime);
 
-TYPED_TEST_P(AddBitsCompileTime, With5ArgsNBitsDstOffsetSrcOffset)
+TYPED_TEST_P(CopyBitsCompileTime, With5ArgsNBitsDstOffsetSrcOffset)
 {
     constexpr auto kActual = TestFixture::actual();
     constexpr auto kExpected = TestFixture::expected();
@@ -87,7 +87,7 @@ TYPED_TEST_P(AddBitsCompileTime, With5ArgsNBitsDstOffsetSrcOffset)
     static_assert(kSuccess, "Unexpected kResult.");
 }
 
-REGISTER_TYPED_TEST_SUITE_P(AddBitsCompileTime,
+REGISTER_TYPED_TEST_SUITE_P(CopyBitsCompileTime,
                             With5ArgsNBitsDstOffsetSrcOffset);
 
 template <typename TypeList>
@@ -113,7 +113,7 @@ using SrcOffsetsT =
                               static_cast<src_offset_t>(CHAR_BIT - 1)>;
 
 template <auto... NBitVals>
-struct add_bits_types
+struct copy_bits_types
 {
     using NumBits = rabbit::values<NBitVals...>;
     using Combinations =
@@ -122,8 +122,8 @@ struct add_bits_types
 };
 
 template <auto... NBitVals>
-using add_bits_types_t = typename add_bits_types<NBitVals...>::type;
+using copy_bits_types_t = typename copy_bits_types<NBitVals...>::type;
 }  // namespace test
 }  // namespace rabbit
 
-#endif /* add_bits_constexpr_tests_h */
+#endif /* copy_bits_constexpr_tests_h */

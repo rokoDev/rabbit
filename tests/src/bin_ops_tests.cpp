@@ -9,10 +9,10 @@
 #include <string_view>
 #include <utility>
 
-#include "add_bits_constexpr_tests.h"
-#include "add_bits_tests.h"
 #include "add_value_tests.h"
 #include "buffer_tests.h"
+#include "copy_bits_constexpr_tests.h"
+#include "copy_bits_tests.h"
 #include "data_formatters_tests.h"
 #include "get_value_tests.h"
 #include "rabbit/bin_ops.h"
@@ -75,11 +75,11 @@ using ::testing::Combine;
 using ::testing::Values;
 using ::testing::ValuesIn;
 
-using AddBitsWith5ArgsCompileTimeArgs =
-    add_bits_types_t<7_uz, 8_uz, 9_uz, 63_uz, 64_uz, 70_uz>;
-// constexpr addBits tests instantiation
-INSTANTIATE_TYPED_TEST_SUITE_P(Rabbit, AddBitsCompileTime,
-                               AddBitsWith5ArgsCompileTimeArgs, );
+using CopyBitsWith5ArgsCompileTimeArgs =
+    copy_bits_types_t<7_uz, 8_uz, 9_uz, 63_uz, 64_uz, 70_uz>;
+// constexpr copyBits tests instantiation
+INSTANTIATE_TYPED_TEST_SUITE_P(Rabbit, CopyBitsCompileTime,
+                               CopyBitsWith5ArgsCompileTimeArgs, );
 
 constexpr auto kDstBitOffsetsArray =
     rabbit::make_array_from_range<0_uf8, 7_uf8, 1_uf8, DstBitOffset>();
@@ -92,12 +92,12 @@ constexpr auto kNBitsArray =
 
 const auto kTestDatas = TestDataFactory::presetData();
 
-// addBits tests instantiation
+// copyBits tests instantiation
 INSTANTIATE_TEST_SUITE_P(
-    Rabbit, AddBitsWith5Args,
+    Rabbit, CopyBitsWith5Args,
     Combine(ValuesIn(kTestDatas), ValuesIn(kNBitsArray),
             ValuesIn(kDstBitOffsetsArray), ValuesIn(kSrcBitOffsetsArray)),
-    [](const testing::TestParamInfo<AddBitsWith5Args::ParamType> &aInfo) {
+    [](const testing::TestParamInfo<CopyBitsWith5Args::ParamType> &aInfo) {
         const auto kTestData = std::get<0>(aInfo.param);
         const auto kNumBits = std::get<1>(aInfo.param);
         const auto kDstOffset = std::get<2>(aInfo.param);
@@ -108,10 +108,10 @@ INSTANTIATE_TEST_SUITE_P(
     });
 
 INSTANTIATE_TEST_SUITE_P(
-    Rabbit, AddBitsWith4Args,
+    Rabbit, CopyBitsWith4Args,
     Combine(ValuesIn(kTestDatas), ValuesIn(kNBitsArray),
             ValuesIn(kBitOffsetsArray)),
-    [](const testing::TestParamInfo<AddBitsWith4Args::ParamType> &aInfo) {
+    [](const testing::TestParamInfo<CopyBitsWith4Args::ParamType> &aInfo) {
         const auto kTestData = std::get<0>(aInfo.param);
         const auto kNumBits = std::get<1>(aInfo.param);
         const auto kOffset = std::get<2>(aInfo.param);
@@ -120,9 +120,9 @@ INSTANTIATE_TEST_SUITE_P(
     });
 
 INSTANTIATE_TEST_SUITE_P(
-    Rabbit, AddBitsWith3Args,
+    Rabbit, CopyBitsWith3Args,
     Combine(ValuesIn(kTestDatas), ValuesIn(kNBitsArray)),
-    [](const testing::TestParamInfo<AddBitsWith3Args::ParamType> &aInfo) {
+    [](const testing::TestParamInfo<CopyBitsWith3Args::ParamType> &aInfo) {
         const auto kTestData = std::get<0>(aInfo.param);
         const auto kNumBits = std::get<1>(aInfo.param);
         return fmt::format("{}kNBits{}", kTestData->name(), kNumBits.get());

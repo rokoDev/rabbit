@@ -32,11 +32,11 @@ macro(package_add_test TESTNAME)
   add_executable(${TESTNAME} "")
   target_sources(${TESTNAME}
     PRIVATE
-    include/add_bits_constexpr_tests.h
+    include/copy_bits_constexpr_tests.h
     include/data_formatters_tests.h
     include/buffer_tests.h
     include/test_helpers.h
-    include/add_bits_tests.h
+    include/copy_bits_tests.h
     include/add_value_tests.h
     include/get_value_tests.h
     ${ARGN})
@@ -61,9 +61,9 @@ package_add_test(${ProjectName}
   src/rabbit_tests.cpp
   src/bin_ops_tests.cpp
   src/endian_tests.cpp
-  src/add_bits_constexpr_tests.cpp
+  src/copy_bits_constexpr_tests.cpp
   src/test_helpers.cpp
-  src/add_bits_tests.cpp
+  src/copy_bits_tests.cpp
   src/add_value_tests.cpp
   src/get_value_tests.cpp
 	)

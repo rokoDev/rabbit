@@ -35,9 +35,9 @@ using NumBits =
 class BinOps final
 {
    public:
-    static constexpr void addBits(uint8_t *const aDst,
-                                  uint8_t const *const aSrc,
-                                  NumBits aNBits) noexcept
+    static constexpr void copyBits(uint8_t *const aDst,
+                                   uint8_t const *const aSrc,
+                                   NumBits aNBits) noexcept
     {
         if (!aNBits)
         {
@@ -60,9 +60,9 @@ class BinOps final
         }
     }
 
-    static constexpr void addBits(uint8_t *const aDst,
-                                  uint8_t const *const aSrc, BitOffset aOffset,
-                                  NumBits aNBits) noexcept
+    static constexpr void copyBits(uint8_t *const aDst,
+                                   uint8_t const *const aSrc, BitOffset aOffset,
+                                   NumBits aNBits) noexcept
     {
         if (!aNBits)
         {
@@ -87,13 +87,13 @@ class BinOps final
                 return;
             }
         }
-        addBits(aDst + byteOffset, aSrc + byteOffset, aNBits);
+        copyBits(aDst + byteOffset, aSrc + byteOffset, aNBits);
     }
 
-    static constexpr void addBits(uint8_t *const aDst, DstBitOffset aDstOffset,
-                                  uint8_t const *const aSrc,
-                                  SrcBitOffset aSrcOffset,
-                                  NumBits aNBits) noexcept
+    static constexpr void copyBits(uint8_t *const aDst, DstBitOffset aDstOffset,
+                                   uint8_t const *const aSrc,
+                                   SrcBitOffset aSrcOffset,
+                                   NumBits aNBits) noexcept
     {
         if (!aNBits)
         {
@@ -181,7 +181,7 @@ class BinOps final
         }
         else
         {
-            addBits(aDst, aSrc, BitOffset(aDstOffset.get()), aNBits);
+            copyBits(aDst, aSrc, BitOffset(aDstOffset.get()), aNBits);
         }
     }
 
@@ -205,7 +205,7 @@ class BinOps final
             aValue << (sizeof(UIntT) * CHAR_BIT - aNBits.get()));
         const auto kByteArray =
             details::to_uint8_array(std::move(kLeftAligned));
-        addBits(aDst, aOffset, kByteArray.data(), SrcBitOffset(0), aNBits);
+        copyBits(aDst, aOffset, kByteArray.data(), SrcBitOffset(0), aNBits);
     }
 
     template <typename T>
