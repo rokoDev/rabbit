@@ -17,6 +17,7 @@ using ::testing::TestWithParam;
 using helpers = rabbit::test_helpers;
 using SrcBitOffset = rabbit::SrcBitOffset;
 using NumBits = rabbit::NumBits;
+using Src = rabbit::Src;
 
 using ThreeArgsT = std::tuple<std::string_view, SrcBitOffset, NumBits>;
 using TwoArgsT = std::tuple<std::string_view, NumBits>;

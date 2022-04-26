@@ -20,6 +20,7 @@ struct NecessaryOps
     , strong::convertible_to_bool<StrongT>
     , strong::modulo<StrongT>
     , strong::comparisons<StrongT>
+    , strong::implicitly_convertible_to_underlying<StrongT>
 {
 };
 
@@ -32,12 +33,22 @@ using BitOffset =
 using NumBits =
     strong::strong_type<struct NumBitsTag, std::size_t, NecessaryOps>;
 
+template <typename StrongT>
+struct DataPtrOps
+    : strong::indirection<StrongT>
+    , strong::subscription<StrongT>
+    , strong::comparisons<StrongT>
+    , strong::implicitly_convertible_to_underlying<StrongT>
+{
+};
+
+using Src = strong::strong_type<struct SrcTag, uint8_t const *, DataPtrOps>;
+using Dst = strong::strong_type<struct DstTag, uint8_t *, DataPtrOps>;
+
 class BinOps final
 {
    public:
-    static constexpr void copyBits(uint8_t *const aDst,
-                                   uint8_t const *const aSrc,
-                                   NumBits aNBits) noexcept
+    static constexpr void copyBits(Dst aDst, Src aSrc, NumBits aNBits) noexcept
     {
         if (!aNBits)
         {
@@ -49,7 +60,7 @@ class BinOps final
         const std::size_t kWhole = aNBits.get() / CHAR_BIT;
         if (kWhole)
         {
-            rabbit::details::copy(aDst, aSrc, kWhole);
+            rabbit::details::copy(aDst.get(), aSrc.get(), kWhole);
         }
 
         const uint_fast8_t kFraction = aNBits.get() % CHAR_BIT;
@@ -60,8 +71,7 @@ class BinOps final
         }
     }
 
-    static constexpr void copyBits(uint8_t *const aDst,
-                                   uint8_t const *const aSrc, BitOffset aOffset,
+    static constexpr void copyBits(Dst aDst, Src aSrc, BitOffset aOffset,
                                    NumBits aNBits) noexcept
     {
         if (!aNBits)
@@ -83,15 +93,15 @@ class BinOps final
             }
             else
             {
-                details::addBits<1>(aDst, aOffset.get(), aNBits.get(), *aSrc);
+                details::addBits<1>(aDst.get(), aOffset.get(), aNBits.get(),
+                                    *aSrc);
                 return;
             }
         }
-        copyBits(aDst + byteOffset, aSrc + byteOffset, aNBits);
+        copyBits(Dst(aDst + byteOffset), Src(aSrc + byteOffset), aNBits);
     }
 
-    static constexpr void copyBits(uint8_t *const aDst, DstBitOffset aDstOffset,
-                                   uint8_t const *const aSrc,
+    static constexpr void copyBits(Dst aDst, DstBitOffset aDstOffset, Src aSrc,
                                    SrcBitOffset aSrcOffset,
                                    NumBits aNBits) noexcept
     {
@@ -186,8 +196,8 @@ class BinOps final
     }
 
     template <typename T>
-    static constexpr void addValue(uint8_t *const aDst, DstBitOffset aOffset,
-                                   T &&aValue, NumBits aNBits) noexcept
+    static constexpr void addValue(Dst aDst, DstBitOffset aOffset, T &&aValue,
+                                   NumBits aNBits) noexcept
     {
         if (!aNBits)
         {
@@ -205,18 +215,19 @@ class BinOps final
             aValue << (sizeof(UIntT) * CHAR_BIT - aNBits.get()));
         const auto kByteArray =
             details::to_uint8_array(std::move(kLeftAligned));
-        copyBits(aDst, aOffset, kByteArray.data(), SrcBitOffset(0), aNBits);
+        copyBits(Dst(aDst), aOffset, Src(kByteArray.data()), SrcBitOffset(0),
+                 aNBits);
     }
 
     template <typename T>
-    static constexpr void addValue(uint8_t *const aDst, T &&aValue,
+    static constexpr void addValue(Dst aDst, T &&aValue,
                                    NumBits aNBits) noexcept
     {
         addValue(aDst, DstBitOffset(0), std::forward<T>(aValue), aNBits);
     }
 
     template <typename T>
-    static constexpr void addValue(uint8_t *const aDst, T &&aValue) noexcept
+    static constexpr void addValue(Dst aDst, T &&aValue) noexcept
     {
         using UIntT = std::remove_cv_t<std::remove_reference_t<T>>;
         static_assert(is_uint_v<UIntT>,
@@ -226,8 +237,7 @@ class BinOps final
     }
 
     template <typename T>
-    static constexpr T getValue(uint8_t const *const aSrc,
-                                SrcBitOffset aSrcOffset,
+    static constexpr T getValue(Src aSrc, SrcBitOffset aSrcOffset,
                                 NumBits aNBits) noexcept
     {
         static_assert(is_uint_v<T>,
@@ -264,8 +274,7 @@ class BinOps final
     }
 
     template <typename T>
-    static constexpr T getValue(uint8_t const *const aSrc,
-                                NumBits aNBits) noexcept
+    static constexpr T getValue(Src aSrc, NumBits aNBits) noexcept
     {
         static_assert(is_uint_v<T>,
                       "T must be unsigned integer type and not bool.");
@@ -284,7 +293,7 @@ class BinOps final
     }
 
     template <typename T>
-    static constexpr T getValue(uint8_t const *const aSrc) noexcept
+    static constexpr T getValue(Src aSrc) noexcept
     {
         static_assert(is_uint_v<T>,
                       "T must be unsigned integer type and not bool.");

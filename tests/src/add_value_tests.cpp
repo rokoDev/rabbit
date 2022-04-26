@@ -10,7 +10,7 @@ TEST_P(Args4UInt8, addValue)
 
     const auto [aDstBitStr, aValue, aOffset, aNBits] = GetParam();
     auto result = arrangeDst(aDstBitStr);
-    rabbit::BinOps::addValue(result.data(), aOffset, aValue, aNBits);
+    rabbit::BinOps::addValue(Dst(result.data()), aOffset, aValue, aNBits);
 
     ASSERT_EQ(result, kExpected);
 }
@@ -22,7 +22,7 @@ TEST_P(Args4UInt16, addValue)
 
     const auto [aDstBitStr, aValue, aOffset, aNBits] = GetParam();
     auto result = arrangeDst(aDstBitStr);
-    rabbit::BinOps::addValue(result.data(), aOffset, aValue, aNBits);
+    rabbit::BinOps::addValue(Dst(result.data()), aOffset, aValue, aNBits);
 
     ASSERT_EQ(result, kExpected);
 }
@@ -34,7 +34,7 @@ TEST_P(Args4UInt32, addValue)
 
     const auto [aDstBitStr, aValue, aOffset, aNBits] = GetParam();
     auto result = arrangeDst(aDstBitStr);
-    rabbit::BinOps::addValue(result.data(), aOffset, aValue, aNBits);
+    rabbit::BinOps::addValue(Dst(result.data()), aOffset, aValue, aNBits);
 
     ASSERT_EQ(result, kExpected);
 }
@@ -46,7 +46,7 @@ TEST_P(Args4UInt64, addValue)
 
     const auto [aDstBitStr, aValue, aOffset, aNBits] = GetParam();
     auto result = arrangeDst(aDstBitStr);
-    rabbit::BinOps::addValue(result.data(), aOffset, aValue, aNBits);
+    rabbit::BinOps::addValue(Dst(result.data()), aOffset, aValue, aNBits);
 
     ASSERT_EQ(result, kExpected);
 }
@@ -60,7 +60,7 @@ TEST_P(Args3UInt8, AddValue)
     const auto kExpected = helpers::addValueExpected(kParam);
 
     auto result = arrangeDst(aDstBitStr);
-    rabbit::BinOps::addValue(result.data(), aValue, aNBits);
+    rabbit::BinOps::addValue(Dst(result.data()), aValue, aNBits);
 
     ASSERT_EQ(result, kExpected);
 }
@@ -74,7 +74,7 @@ TEST_P(Args3UInt16, AddValue)
     const auto kExpected = helpers::addValueExpected(kParam);
 
     auto result = arrangeDst(aDstBitStr);
-    rabbit::BinOps::addValue(result.data(), aValue, aNBits);
+    rabbit::BinOps::addValue(Dst(result.data()), aValue, aNBits);
 
     ASSERT_EQ(result, kExpected);
 }
@@ -88,7 +88,7 @@ TEST_P(Args3UInt32, AddValue)
     const auto kExpected = helpers::addValueExpected(kParam);
 
     auto result = arrangeDst(aDstBitStr);
-    rabbit::BinOps::addValue(result.data(), aValue, aNBits);
+    rabbit::BinOps::addValue(Dst(result.data()), aValue, aNBits);
 
     ASSERT_EQ(result, kExpected);
 }
@@ -102,7 +102,7 @@ TEST_P(Args3UInt64, AddValue)
     const auto kExpected = helpers::addValueExpected(kParam);
 
     auto result = arrangeDst(aDstBitStr);
-    rabbit::BinOps::addValue(result.data(), aValue, aNBits);
+    rabbit::BinOps::addValue(Dst(result.data()), aValue, aNBits);
 
     ASSERT_EQ(result, kExpected);
 }
@@ -120,7 +120,7 @@ TEST_P(Args2UInt8, AddValue)
     const auto kExpected = helpers::addValueExpected(kParam);
 
     auto result = arrangeDst(aDstBitStr);
-    rabbit::BinOps::addValue(result.data(), aValue);
+    rabbit::BinOps::addValue(Dst(result.data()), aValue);
 
     ASSERT_EQ(result, kExpected);
 }
@@ -138,7 +138,7 @@ TEST_P(Args2UInt16, AddValue)
     const auto kExpected = helpers::addValueExpected(kParam);
 
     auto result = arrangeDst(aDstBitStr);
-    rabbit::BinOps::addValue(result.data(), aValue);
+    rabbit::BinOps::addValue(Dst(result.data()), aValue);
 
     ASSERT_EQ(result, kExpected);
 }
@@ -156,7 +156,7 @@ TEST_P(Args2UInt32, AddValue)
     const auto kExpected = helpers::addValueExpected(kParam);
 
     auto result = arrangeDst(aDstBitStr);
-    rabbit::BinOps::addValue(result.data(), aValue);
+    rabbit::BinOps::addValue(Dst(result.data()), aValue);
 
     ASSERT_EQ(result, kExpected);
 }
@@ -174,7 +174,7 @@ TEST_P(Args2UInt64, AddValue)
     const auto kExpected = helpers::addValueExpected(kParam);
 
     auto result = arrangeDst(aDstBitStr);
-    rabbit::BinOps::addValue(result.data(), aValue);
+    rabbit::BinOps::addValue(Dst(result.data()), aValue);
 
     ASSERT_EQ(result, kExpected);
 }

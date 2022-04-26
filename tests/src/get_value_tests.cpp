@@ -12,7 +12,8 @@ TEST_P(Args3U8, getValue)
     const auto [kSrc, kSrcOffset, kNBits] = getArgs();
 
     // act
-    const auto kActual = rabbit::BinOps::getValue<U>(kSrc, kSrcOffset, kNBits);
+    const auto kActual =
+        rabbit::BinOps::getValue<U>(Src(kSrc), kSrcOffset, kNBits);
 
     // assert
     static_assert(std::is_same_v<decltype(kActual), decltype(kExpected)>,
@@ -29,7 +30,8 @@ TEST_P(Args3U16, getValue)
     const auto [kSrc, kSrcOffset, kNBits] = getArgs();
 
     // act
-    const auto kActual = rabbit::BinOps::getValue<U>(kSrc, kSrcOffset, kNBits);
+    const auto kActual =
+        rabbit::BinOps::getValue<U>(Src(kSrc), kSrcOffset, kNBits);
 
     // assert
     static_assert(std::is_same_v<decltype(kActual), decltype(kExpected)>,
@@ -46,7 +48,8 @@ TEST_P(Args3U32, getValue)
     const auto [kSrc, kSrcOffset, kNBits] = getArgs();
 
     // act
-    const auto kActual = rabbit::BinOps::getValue<U>(kSrc, kSrcOffset, kNBits);
+    const auto kActual =
+        rabbit::BinOps::getValue<U>(Src(kSrc), kSrcOffset, kNBits);
 
     // assert
     static_assert(std::is_same_v<decltype(kActual), decltype(kExpected)>,
@@ -63,7 +66,8 @@ TEST_P(Args3U64, getValue)
     const auto [kSrc, kSrcOffset, kNBits] = getArgs();
 
     // act
-    const auto kActual = rabbit::BinOps::getValue<U>(kSrc, kSrcOffset, kNBits);
+    const auto kActual =
+        rabbit::BinOps::getValue<U>(Src(kSrc), kSrcOffset, kNBits);
 
     // assert
     static_assert(std::is_same_v<decltype(kActual), decltype(kExpected)>,
@@ -80,7 +84,7 @@ TEST_P(Args2U8, getValue)
     const auto [kSrc, kNBits] = getArgs();
 
     // act
-    const auto kActual = rabbit::BinOps::getValue<U>(kSrc, kNBits);
+    const auto kActual = rabbit::BinOps::getValue<U>(Src(kSrc), kNBits);
 
     // assert
     static_assert(std::is_same_v<decltype(kActual), decltype(kExpected)>,
@@ -97,7 +101,7 @@ TEST_P(Args2U16, getValue)
     const auto [kSrc, kNBits] = getArgs();
 
     // act
-    const auto kActual = rabbit::BinOps::getValue<U>(kSrc, kNBits);
+    const auto kActual = rabbit::BinOps::getValue<U>(Src(kSrc), kNBits);
 
     // assert
     static_assert(std::is_same_v<decltype(kActual), decltype(kExpected)>,
@@ -114,7 +118,7 @@ TEST_P(Args2U32, getValue)
     const auto [kSrc, kNBits] = getArgs();
 
     // act
-    const auto kActual = rabbit::BinOps::getValue<U>(kSrc, kNBits);
+    const auto kActual = rabbit::BinOps::getValue<U>(Src(kSrc), kNBits);
 
     // assert
     static_assert(std::is_same_v<decltype(kActual), decltype(kExpected)>,
@@ -131,7 +135,7 @@ TEST_P(Args2U64, getValue)
     const auto [kSrc, kNBits] = getArgs();
 
     // act
-    const auto kActual = rabbit::BinOps::getValue<U>(kSrc, kNBits);
+    const auto kActual = rabbit::BinOps::getValue<U>(Src(kSrc), kNBits);
 
     // assert
     static_assert(std::is_same_v<decltype(kActual), decltype(kExpected)>,
@@ -148,7 +152,7 @@ TEST_P(Args1U8, getValue)
     const auto [kSrc] = getArgs();
 
     // act
-    const auto kActual = rabbit::BinOps::getValue<U>(kSrc);
+    const auto kActual = rabbit::BinOps::getValue<U>(Src(kSrc));
 
     // assert
     static_assert(std::is_same_v<decltype(kActual), decltype(kExpected)>,
@@ -165,7 +169,7 @@ TEST_P(Args1U16, getValue)
     const auto [kSrc] = getArgs();
 
     // act
-    const auto kActual = rabbit::BinOps::getValue<U>(kSrc);
+    const auto kActual = rabbit::BinOps::getValue<U>(Src(kSrc));
 
     // assert
     static_assert(std::is_same_v<decltype(kActual), decltype(kExpected)>,
@@ -182,7 +186,7 @@ TEST_P(Args1U32, getValue)
     const auto [kSrc] = getArgs();
 
     // act
-    const auto kActual = rabbit::BinOps::getValue<U>(kSrc);
+    const auto kActual = rabbit::BinOps::getValue<U>(Src(kSrc));
 
     // assert
     static_assert(std::is_same_v<decltype(kActual), decltype(kExpected)>,
@@ -199,7 +203,7 @@ TEST_P(Args1U64, getValue)
     const auto [kSrc] = getArgs();
 
     // act
-    const auto kActual = rabbit::BinOps::getValue<U>(kSrc);
+    const auto kActual = rabbit::BinOps::getValue<U>(Src(kSrc));
 
     // assert
     static_assert(std::is_same_v<decltype(kActual), decltype(kExpected)>,

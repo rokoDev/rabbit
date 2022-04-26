@@ -23,6 +23,8 @@ using NumBits = rabbit::NumBits;
 using BitOffset = rabbit::BitOffset;
 using DataCount =
     strong::strong_type<struct DataCountTag, std::size_t, rabbit::NecessaryOps>;
+using Src = rabbit::Src;
+using Dst = rabbit::Dst;
 using helpers = rabbit::test_helpers;
 
 class TestData

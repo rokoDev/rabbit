@@ -17,6 +17,7 @@ using ::testing::TestWithParam;
 using helpers = rabbit::test_helpers;
 using DstBitOffset = rabbit::DstBitOffset;
 using NumBits = rabbit::NumBits;
+using Dst = rabbit::Dst;
 
 template <typename DataT>
 class AddValueBase : public TestWithParam<DataT>

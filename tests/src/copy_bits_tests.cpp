@@ -24,8 +24,8 @@ TEST_P(CopyBitsWith5Args, TestFor)
     arrangeExpectedActual(GetParam());
 
     // act
-    rabbit::BinOps::copyBits(actual_.data(), kDstOffset,
-                             kData->srcBits().data(), kSrcOffset, kNBits);
+    rabbit::BinOps::copyBits(Dst(actual_.data()), kDstOffset,
+                             Src(kData->srcBits().data()), kSrcOffset, kNBits);
 
     // assert
     EXPECT_EQ(std::memcmp(actual_.data(), expected_.data(), expected_.size()),
@@ -46,8 +46,8 @@ TEST_P(CopyBitsWith4Args, TestFor)
     arrangeExpectedActual(kParams);
 
     // act
-    rabbit::BinOps::copyBits(actual_.data(), kData->srcBits().data(), kOffset,
-                             kNBits);
+    rabbit::BinOps::copyBits(Dst(actual_.data()), Src(kData->srcBits().data()),
+                             kOffset, kNBits);
 
     // assert
     EXPECT_EQ(std::memcmp(actual_.data(), expected_.data(), expected_.size()),
@@ -68,7 +68,8 @@ TEST_P(CopyBitsWith3Args, TestFor)
     arrangeExpectedActual(kParams);
 
     // act
-    rabbit::BinOps::copyBits(actual_.data(), kData->srcBits().data(), kNBits);
+    rabbit::BinOps::copyBits(Dst(actual_.data()), Src(kData->srcBits().data()),
+                             kNBits);
 
     // assert
     EXPECT_EQ(std::memcmp(actual_.data(), expected_.data(), expected_.size()),
