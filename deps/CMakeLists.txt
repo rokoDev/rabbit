@@ -9,7 +9,7 @@ set(FETCHCONTENT_BASE_DIR ${deps_content})
 FetchContent_Declare(
 	fmt
 	GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-	GIT_TAG        0cef1f819e9811209a6b110ae37fe65e70aa79b0
+	GIT_TAG        7e4ad40171aa552d38cb99a5c181a0d7b150facc
 )
 
 FetchContent_Declare(
