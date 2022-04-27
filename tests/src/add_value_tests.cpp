@@ -1,7 +1,5 @@
 #include "add_value_tests.h"
 
-namespace
-{
 using namespace rabbit::test;
 
 TEST_P(Args4UInt8, addValue)
@@ -179,4 +177,3 @@ TEST_P(Args2UInt64, AddValue)
     ASSERT_EQ(result, kExpected);
 }
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(Args2UInt64);
-}  // namespace

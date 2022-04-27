@@ -9,8 +9,6 @@
 
 #include "rabbit/user_literals.h"
 
-namespace
-{
 using namespace rabbit::test;
 
 TEST_P(CopyBitsWith5Args, TestFor)
@@ -76,4 +74,3 @@ TEST_P(CopyBitsWith3Args, TestFor)
               0);
 }
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(CopyBitsWith3Args);
-}  // namespace

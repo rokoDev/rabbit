@@ -26,8 +26,6 @@ std::string test_helpers::random_bit_sequence(const std::size_t aNBits)
 }
 }  // namespace rabbit
 
-namespace
-{
 using namespace std::string_view_literals;
 using helpers = rabbit::test_helpers;
 using ::testing::Test;
@@ -327,4 +325,3 @@ TEST_F(GetValueExpected, ConstexprUInt64kOffset5kNBits64)
                   "kActual has incorrect type.");
     static_assert(kActual == kExpected, "Invalid kActual.");
 }
-}  // namespace

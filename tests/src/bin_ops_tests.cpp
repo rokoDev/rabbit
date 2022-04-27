@@ -68,8 +68,6 @@ using N32TwoBufsTest = TwoBufsTest<32>;
 
 namespace bin_op = rabbit::details;
 
-namespace
-{
 using namespace rabbit::test;
 using ::testing::Combine;
 using ::testing::Values;
@@ -903,4 +901,3 @@ TEST_F(N1TwoBufsTest, AddLowBits8)
     dst_[0] = bin_op::addLowBits(*dst_.data(), *src_.data(), 8);
     ASSERT_EQ(dst_[0], uint8_t{0b01101110});
 }
-}  // namespace
