@@ -27,7 +27,7 @@ FetchContent_Declare(
 FetchContent_Declare(
 	strong_type
 	GIT_REPOSITORY https://github.com/rokoDev/strong_type.git
-	GIT_TAG        770362d27d4a0b928cb7bee2b39cf0c19a1ff669
+	GIT_TAG        1300d48fdfe71404e98addd948921fb96e6f7a8e
 )
 
 # If necessary it's possible to use VersionHelper from different location instead of downloaded from GitHub

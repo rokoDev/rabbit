@@ -16,7 +16,7 @@ FetchContent_Declare(
 FetchContent_Declare(
   type_name
   GIT_REPOSITORY https://github.com/rokoDev/type_name.git
-  GIT_TAG        ec3c027298ccf94d95ae3ad4745b92f6c77d54e2
+  GIT_TAG        7c3c2c700c71891908a6b8140013ae7ce5043af6
   )
 
 FetchContent_MakeAvailable(googletest type_name)
