@@ -65,7 +65,7 @@ target_sources(rabbit
 include(TestBigEndian)
 test_big_endian(HOST_BIG_ENDIAN)
 if(HOST_BIG_ENDIAN)
-  target_compile_definitions(rabbit PRIVATE HOST_BIG_ENDIAN)
+  target_compile_definitions(rabbit INTERFACE HOST_BIG_ENDIAN)
 endif()
 
 target_compile_definitions(rabbit INTERFACE $<UPPER_CASE:$<CONFIG>>)
