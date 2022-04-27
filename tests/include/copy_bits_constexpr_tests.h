@@ -105,16 +105,15 @@ using testing_type_t = typename testing_type<TypeList>::type;
 using dst_offset_t = rabbit::DstBitOffset::value_type;
 using src_offset_t = rabbit::DstBitOffset::value_type;
 
-using DstOffsetsT =
-    rabbit::values_in_range_t<static_cast<dst_offset_t>(0),
-                              static_cast<dst_offset_t>(CHAR_BIT - 1)>;
-using SrcOffsetsT =
-    rabbit::values_in_range_t<static_cast<src_offset_t>(0),
-                              static_cast<src_offset_t>(CHAR_BIT - 1)>;
-
 template <auto... NBitVals>
 struct copy_bits_types
 {
+    using DstOffsetsT =
+        rabbit::values_in_range_t<static_cast<dst_offset_t>(0),
+                                  static_cast<dst_offset_t>(CHAR_BIT - 1)>;
+    using SrcOffsetsT =
+        rabbit::values_in_range_t<static_cast<src_offset_t>(0),
+                                  static_cast<src_offset_t>(CHAR_BIT - 1)>;
     using NumBits = rabbit::values<NBitVals...>;
     using Combinations =
         rabbit::cartesian_product_t<NumBits, DstOffsetsT, SrcOffsetsT>;

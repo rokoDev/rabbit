@@ -98,7 +98,7 @@ constexpr std::array<T, sizeof...(I)> make_array_with_value_impl(
 template <std::size_t... I>
 constexpr uint8_t numBitSet(uint8_t aValue, std::index_sequence<I...>) noexcept
 {
-    return (... + ((aValue >> I) & 1));
+    return static_cast<uint8_t>((... + ((aValue >> I) & 1)));
 }
 
 constexpr uint8_t getNumBits(uint8_t aValue)
@@ -245,7 +245,8 @@ namespace utils
 
 constexpr uint8_t bits_count(const uint64_t aValue)
 {
-    return (aValue == 0) ? 0 : 1 + bits_count(aValue >> 1);
+    const auto result = (aValue == 0) ? 0 : 1 + bits_count(aValue >> 1);
+    return static_cast<uint8_t>(result);
 }
 
 template <uint8_t BitsCount>
@@ -290,7 +291,8 @@ template <uint8_t BitsCount>
 using uint_from_nbits_t = typename uint_from_nbits<BitsCount>::type;
 
 template <uint8_t BytesCount>
-using uint_from_nbytes_t = utils::uint_from_nbits_t<BytesCount * CHAR_BIT>;
+using uint_from_nbytes_t =
+    utils::uint_from_nbits_t<static_cast<uint8_t>(BytesCount* CHAR_BIT)>;
 
 template <typename T>
 struct enum_properties
@@ -343,7 +345,8 @@ using fast_uint_from_nbits_t = typename fast_uint_from_nbits<BitsCount>::type;
 
 template <uint8_t BytesCount>
 using fast_uint_from_nbytes_t =
-    typename fast_uint_from_nbits<BytesCount * CHAR_BIT>::type;
+    typename fast_uint_from_nbits<static_cast<uint8_t>(
+        BytesCount* CHAR_BIT)>::type;
 
 template <typename T>
 constexpr std::size_t num_bits()
@@ -408,7 +411,7 @@ template <uint8_t NBytes>
 using UInt = utils::uint_from_nbytes_t<NBytes>;
 
 template <std::size_t NBytes>
-using FastUInt = utils::fast_uint_from_nbytes_t<NBytes>;
+using FastUInt = utils::fast_uint_from_nbytes_t<static_cast<uint8_t>(NBytes)>;
 
 template <std::size_t N, typename Seq>
 struct shifted_sequence;

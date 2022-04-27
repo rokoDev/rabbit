@@ -57,7 +57,7 @@ class BinOps final
         assert(aDst != nullptr && "Invalid aDst");
         assert(aSrc != nullptr && "Invalid aSrc");
 
-        const std::size_t kWhole = aNBits.get() / CHAR_BIT;
+        const uintptr_t kWhole = aNBits.get() / CHAR_BIT;
         if (kWhole)
         {
             rabbit::details::copy(aDst.get(), aSrc.get(), kWhole);
@@ -81,10 +81,11 @@ class BinOps final
         assert(aDst != nullptr && "Invalid aDst");
         assert(aSrc != nullptr && "Invalid aSrc");
         assert(aOffset < CHAR_BIT && "Invalid aOffset");
-        std::size_t byteOffset = 0;
+        uintptr_t byteOffset = 0;
         if (aOffset)
         {
-            const uint_fast8_t kBitsToByteBorder = CHAR_BIT - aOffset.get();
+            const uint_fast8_t kBitsToByteBorder =
+                static_cast<uint_fast8_t>(CHAR_BIT - aOffset.get());
             if (aNBits >= kBitsToByteBorder)
             {
                 *aDst = details::addLowBits(*aDst, *aSrc, kBitsToByteBorder);
@@ -118,16 +119,17 @@ class BinOps final
 
         if (aDstOffset != aSrcOffset)
         {
-            std::size_t bytesWritten{};
-            std::size_t bytesRead{};
+            uintptr_t bytesWritten{};
+            uintptr_t bytesRead{};
             if (aDstOffset)
             {
                 const uint_fast8_t kDstBitsToByteBorder =
-                    CHAR_BIT - aDstOffset.get();
+                    static_cast<uint_fast8_t>(CHAR_BIT - aDstOffset.get());
                 const uint_fast8_t kBitsToAdd =
                     std::min(kDstBitsToByteBorder,
                              static_cast<uint_fast8_t>(aNBits.get()));
-                const uint_fast8_t kSrcNBits = aSrcOffset.get() + kBitsToAdd;
+                const uint_fast8_t kSrcNBits =
+                    static_cast<uint_fast8_t>(aSrcOffset.get() + kBitsToAdd);
 
                 const uint_fast8_t kNBytesToRead = kSrcNBits > CHAR_BIT ? 2 : 1;
                 constexpr std::size_t kNBytesToWrite = 1;
@@ -135,8 +137,8 @@ class BinOps final
                 uint16_t value =
                     details::get<uint16_t, eAlign::kRight>(aSrc, kNBytesToRead);
                 using FastUIntT = FastUInt<kNBytesToWrite>;
-                const std::size_t kROffset =
-                    kNBytesToRead * CHAR_BIT - kSrcNBits;
+                const std::size_t kROffset = static_cast<std::size_t>(
+                    kNBytesToRead * CHAR_BIT - kSrcNBits);
                 const std::size_t kLOffset = sizeof(FastUIntT) * CHAR_BIT -
                                              aDstOffset.get() - kBitsToAdd;
                 const auto kValue =

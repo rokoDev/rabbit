@@ -152,14 +152,14 @@ constexpr T mask(std::size_t aOffset, std::size_t aNBits) noexcept
     constexpr T kBits = static_cast<T>(~T{});
     const T kLAlignedMask =
         static_cast<T>(kBits << (sizeof(T) * CHAR_BIT - aNBits));
-    const T kMask = kLAlignedMask >> aOffset;
+    const T kMask = static_cast<T>(kLAlignedMask >> aOffset);
     return kMask;
 }
 
 template <typename T>
 constexpr T invertedMask(uint_fast8_t aOffset, uint_fast8_t aNBits) noexcept
 {
-    return ~mask<T>(aOffset, aNBits);
+    return static_cast<T>(~mask<T>(aOffset, aNBits));
 }
 
 template <typename T>
@@ -242,8 +242,9 @@ constexpr decltype(auto) highNBitsWithOffset(T &&aValue, uint_fast8_t aNBits,
     assert((aOffset + aNBits <= CHAR_BIT * sizeof(UIntT)) &&
            "UIntT cannot contain <aOffset + aNBits> bits");
     const auto kOffset = CHAR_BIT * sizeof(UIntT) - aNBits;
-    const UIntT lowBitsErased = aValue >> kOffset;
-    const UIntT result = static_cast<UIntT>(lowBitsErased << kOffset - aOffset);
+    const UIntT lowBitsErased = static_cast<UIntT>(aValue >> kOffset);
+    const UIntT result =
+        static_cast<UIntT>(lowBitsErased << (kOffset - aOffset));
     return result;
 }
 
@@ -254,7 +255,7 @@ constexpr decltype(auto) highNBits(T &&aValue, uint_fast8_t aNBits) noexcept
     static_assert(is_uint_v<UIntT>, "UIntT must be unsigned integer type.");
     assert((aNBits <= CHAR_BIT * sizeof(UIntT)) && "Invalid aNBits");
     const auto kOffset = CHAR_BIT * sizeof(UIntT) - aNBits;
-    const UIntT lowBitsErased = aValue >> kOffset;
+    const UIntT lowBitsErased = static_cast<UIntT>(aValue >> kOffset);
     const UIntT result = static_cast<UIntT>(lowBitsErased << kOffset);
     return result;
 }
@@ -267,7 +268,7 @@ constexpr decltype(auto) lowNBits(T &&aValue, uint_fast8_t aNBits) noexcept
     assert((aNBits <= CHAR_BIT * sizeof(UIntT)) && "Invalid aNBits");
     const auto kOffset = CHAR_BIT * sizeof(UIntT) - aNBits;
     const UIntT highBitsErased = static_cast<UIntT>(aValue << kOffset);
-    const UIntT result = highBitsErased >> kOffset;
+    const UIntT result = static_cast<UIntT>(highBitsErased >> kOffset);
     return result;
 }
 
@@ -337,7 +338,7 @@ constexpr decltype(auto) composition(T1 &&aDst, T2 &&aSrc, T3 &&aMask) noexcept
         "UIntT must be unsigned integer type. And bool is forbidden.");
     static_assert(std::is_same_v<UIntT, remove_cvref_t<T2>>, "Invalid T2");
     static_assert(std::is_same_v<UIntT, remove_cvref_t<T3>>, "Invalid T3");
-    UIntT result = (aMask & aSrc) | (~aMask & aDst);
+    UIntT result = static_cast<UIntT>((aMask & aSrc) | (~aMask & aDst));
     return result;
 }
 
@@ -388,7 +389,8 @@ constexpr void addUInt64High(uint8_t *const aDst, const uint_fast8_t aNBits,
     using UIntT = std::remove_cv_t<std::remove_reference_t<T>>;
     static_assert(std::is_same_v<UIntT, uint64_t>,
                   "UIntT should be equal to uint64_t");
-    const uint_fast8_t kOffset = sizeof(UIntT) * CHAR_BIT - aNBits;
+    const uint_fast8_t kOffset =
+        static_cast<uint_fast8_t>(sizeof(UIntT) * CHAR_BIT - aNBits);
     assert(kOffset < CHAR_BIT);
     assert(kOffset > 0);
     assert(highNBits(byteAt<0>(aValue), kOffset) == 0);
@@ -404,7 +406,7 @@ constexpr void addUInt64Low(uint8_t *const aDst, uint_fast8_t aNBits,
     assert(aNBits < CHAR_BIT);
     assert(aNBits > 0);
     const uint8_t leftShiftedDst = static_cast<uint8_t>(*aDst << aNBits);
-    const uint8_t dstVal = leftShiftedDst >> aNBits;
+    const uint8_t dstVal = static_cast<uint8_t>(leftShiftedDst >> aNBits);
     const uint8_t srcVal = static_cast<uint8_t>(aValue << (CHAR_BIT - aNBits));
     *aDst = dstVal | srcVal;
 }

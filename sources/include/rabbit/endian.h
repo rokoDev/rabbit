@@ -89,7 +89,7 @@ constexpr decltype(auto) bswap_impl(T&& aValue, std::index_sequence<I...>)
     return static_cast<U>(
         (... | static_cast<U>((0b11111111 & (aValue >> (I * CHAR_BIT)))
                               << ((sizeof(U) - 1 - I) * CHAR_BIT))));
-};
+}
 }  // namespace details
 
 template <typename T>
