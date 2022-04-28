@@ -10,7 +10,7 @@ set(FETCHCONTENT_BASE_DIR ${deps_content})
 FetchContent_Declare(
   googletest
   GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG        a1cc8c55195661a58ad60c3bb062a0b9c302710d
+  GIT_TAG        830fb567285c63ab5b5873e2e8b02f2249864916
   )
 
 FetchContent_Declare(
