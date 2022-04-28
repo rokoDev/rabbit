@@ -6,7 +6,6 @@
 #include <string_view>
 #include <tuple>
 
-#include "buffer_tests.h"
 #include "rabbit/bin_ops.h"
 #include "test_helpers.h"
 

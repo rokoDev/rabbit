@@ -1,6 +1,8 @@
 #ifndef data_formatters_tests_h
 #define data_formatters_tests_h
 
+#include <fmt/core.h>
+
 #include <string>
 #include <string_view>
 

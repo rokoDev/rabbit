@@ -1,4 +1,3 @@
-#include <fmt/core.h>
 #include <gtest/gtest.h>
 
 #include "rabbit/endian.h"

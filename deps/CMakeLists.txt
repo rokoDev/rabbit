@@ -7,12 +7,6 @@ set(FETCHCONTENT_BASE_DIR ${deps_content})
 
 # If dependencies are not available then download it and make available
 FetchContent_Declare(
-	fmt
-	GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-	GIT_TAG        0cef1f819e9811209a6b110ae37fe65e70aa79b0
-)
-
-FetchContent_Declare(
 	VersionHelper
     GIT_REPOSITORY https://github.com/rokoDev/VersionHelper.git
     GIT_TAG        b8f512ee783abdb44ebe3ea2fb59bec9f32b2e31
@@ -34,11 +28,11 @@ FetchContent_Declare(
 # string(TOUPPER VersionHelper UP_VersionHelper)
 # set(FETCHCONTENT_SOURCE_DIR_${UP_VersionHelper} ${CMAKE_CURRENT_LIST_DIR}/../../VersionHelper)
 
-FetchContent_MakeAvailable(fmt VersionHelper boost_pfr strong_type)
-target_link_libraries(rabbit INTERFACE strong_type)
+FetchContent_MakeAvailable(VersionHelper boost_pfr strong_type)
+target_link_libraries(rabbit INTERFACE boost_pfr strong_type)
 
-# If use IDE add fmt target into deps source group
-set_target_properties(fmt strong_type PROPERTIES FOLDER deps)
+# If use IDE add strong_type target into deps source group
+set_target_properties(strong_type PROPERTIES FOLDER deps)
 
 # Generate sources with information about rabbit version
 list(APPEND CMAKE_MODULE_PATH "${versionhelper_SOURCE_DIR}")

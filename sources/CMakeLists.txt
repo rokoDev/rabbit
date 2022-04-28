@@ -63,12 +63,11 @@ target_sources(rabbit
 include(TestBigEndian)
 test_big_endian(HOST_BIG_ENDIAN)
 if(HOST_BIG_ENDIAN)
-  target_compile_definitions(rabbit PRIVATE HOST_BIG_ENDIAN)
+  target_compile_definitions(rabbit INTERFACE HOST_BIG_ENDIAN)
 endif()
 
 target_compile_definitions(rabbit INTERFACE $<UPPER_CASE:$<CONFIG>>)
 set_property(TARGET rabbit APPEND PROPERTY SRC_DIRS "${CMAKE_CURRENT_LIST_DIR}/include")
-target_link_libraries(rabbit INTERFACE boost_pfr strong_type)
 target_include_directories(rabbit INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>

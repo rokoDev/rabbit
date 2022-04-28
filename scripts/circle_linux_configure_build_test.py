@@ -62,9 +62,8 @@ def cmake_configure_build_test(IS_SHARED_LIBS, NOT_CLEAR_BUILD_DIR, BUILD_TYPE, 
 
   IS_SHARED_LIBS_STR = str(IS_SHARED_LIBS)
 
-  run_cmake(f"-DBUILD_SHARED_LIBS={IS_SHARED_LIBS_STR}", f"-DCMAKE_BUILD_TYPE={BUILD_TYPE}", "-G", CMAKE_GENERATOR, SOURCE_DIR)
-  run_cmake('--build', '.', '--config', BUILD_TYPE)
-  run_ctest('-VV', '--output-on-failure', '-C', BUILD_TYPE)
+  run_ctest('--build-and-test', SOURCE_DIR, BUILD_DIR, '--build-generator', CMAKE_GENERATOR, '--build-config', BUILD_TYPE)
+  run_ctest('-I ,,1', '-C', BUILD_TYPE, '-V')
 
 def main():
   parser = argparse.ArgumentParser(description="""
