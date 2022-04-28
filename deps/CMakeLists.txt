@@ -35,7 +35,7 @@ FetchContent_Declare(
 # set(FETCHCONTENT_SOURCE_DIR_${UP_VersionHelper} ${CMAKE_CURRENT_LIST_DIR}/../../VersionHelper)
 
 FetchContent_MakeAvailable(fmt VersionHelper boost_pfr strong_type)
-target_link_libraries(rabbit INTERFACE strong_type)
+target_link_libraries(rabbit INTERFACE strong_type boost_pfr)
 
 # If use IDE add fmt target into deps source group
 set_target_properties(fmt strong_type PROPERTIES FOLDER deps)

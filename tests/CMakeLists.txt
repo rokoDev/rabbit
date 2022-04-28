@@ -44,7 +44,7 @@ macro(package_add_test TESTNAME)
   set_target_properties(${TESTNAME} PROPERTIES XCODE_GENERATE_SCHEME ON)
   set_target_properties(${TESTNAME} PROPERTIES XCODE_SCHEME_ARGUMENTS "--gtest_color=no")
   target_sources(${TESTNAME} PRIVATE ${ARGN})
-  target_link_libraries(${TESTNAME} gtest gmock gtest_main rabbit fmt type_name)
+  target_link_libraries(${TESTNAME} gtest gmock rabbit fmt type_name)
   add_test(NAME ${TESTNAME} COMMAND ${TESTNAME})
   set_target_properties(${TESTNAME} PROPERTIES FOLDER tests)
 
