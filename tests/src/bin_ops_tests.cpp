@@ -19,6 +19,20 @@
 #include "rabbit/endian.h"
 #include "rabbit/utils.h"
 
+// This macro is using to get rid of compiler warning:
+// function 'x' is not needed and will not be emitted
+// [-Wunneeded-internal-declaration]
+#define MAKE_USE(prefix, test_suite_name)                        \
+    namespace                                                    \
+    {                                                            \
+    [[maybe_unused]] static inline constexpr auto                \
+        MAKE_USE_1_##prefix_##test_suite_name =                  \
+            gtest_##prefix##test_suite_name##_EvalGenerator_;    \
+    [[maybe_unused]] static inline constexpr auto                \
+        MAKE_USE_2_##prefix_##test_suite_name =                  \
+            gtest_##prefix##test_suite_name##_EvalGenerateName_; \
+    }
+
 using namespace std::string_view_literals;
 
 template <std::size_t BufSize>
@@ -305,6 +319,40 @@ INSTANTIATE_TEST_SUITE_P(Rabbit, Args1U16, Combine(Values(k80SrcBits)));
 INSTANTIATE_TEST_SUITE_P(Rabbit, Args1U32, Combine(Values(k80SrcBits)));
 
 INSTANTIATE_TEST_SUITE_P(Rabbit, Args1U64, Combine(Values(k80SrcBits)));
+
+MAKE_USE(Rabbit, CopyBitsWith5Args)
+MAKE_USE(Rabbit, CopyBitsWith4Args)
+MAKE_USE(Rabbit, CopyBitsWith3Args)
+
+MAKE_USE(Rabbit, Args4UInt8)
+MAKE_USE(Rabbit, Args4UInt16)
+MAKE_USE(Rabbit, Args4UInt32)
+MAKE_USE(Rabbit, Args4UInt64)
+
+MAKE_USE(Rabbit, Args3UInt8)
+MAKE_USE(Rabbit, Args3UInt16)
+MAKE_USE(Rabbit, Args3UInt32)
+MAKE_USE(Rabbit, Args3UInt64)
+
+MAKE_USE(Rabbit, Args2UInt8)
+MAKE_USE(Rabbit, Args2UInt16)
+MAKE_USE(Rabbit, Args2UInt32)
+MAKE_USE(Rabbit, Args2UInt64)
+
+MAKE_USE(Rabbit, Args3U8)
+MAKE_USE(Rabbit, Args3U16)
+MAKE_USE(Rabbit, Args3U32)
+MAKE_USE(Rabbit, Args3U64)
+
+MAKE_USE(Rabbit, Args2U8)
+MAKE_USE(Rabbit, Args2U16)
+MAKE_USE(Rabbit, Args2U32)
+MAKE_USE(Rabbit, Args2U64)
+
+MAKE_USE(Rabbit, Args1U8)
+MAKE_USE(Rabbit, Args1U16)
+MAKE_USE(Rabbit, Args1U32)
+MAKE_USE(Rabbit, Args1U64)
 
 TEST(BinOpsTest, Mask1)
 {
