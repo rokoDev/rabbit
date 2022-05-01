@@ -98,7 +98,7 @@ constexpr std::array<T, sizeof...(I)> make_array_with_value_impl(
 template <std::size_t... I>
 constexpr uint8_t numBitSet(uint8_t aValue, std::index_sequence<I...>) noexcept
 {
-    return (... + ((aValue >> I) & 1));
+    return static_cast<uint8_t>((... + ((aValue >> I) & 1)));
 }
 
 constexpr uint8_t getNumBits(uint8_t aValue)
@@ -410,16 +410,16 @@ using UInt = utils::uint_from_nbytes_t<NBytes>;
 template <std::size_t NBytes>
 using FastUInt = utils::fast_uint_from_nbytes_t<NBytes>;
 
-template <std::size_t N, typename Seq>
+template <typename Seq, auto N>
 struct shifted_sequence;
 
-template <std::size_t N, typename SeqT, std::size_t... I>
-struct shifted_sequence<N, std::integer_sequence<SeqT, I...>>
+template <typename SeqT, SeqT... I, auto N>
+struct shifted_sequence<std::integer_sequence<SeqT, I...>, N>
 {
     using type = std::integer_sequence<SeqT, I + N...>;
 };
-template <std::size_t N, typename Seq>
-using shifted_sequence_t = typename shifted_sequence<N, Seq>::type;
+template <typename Seq, auto N>
+using shifted_sequence_t = typename shifted_sequence<Seq, N>::type;
 
 template <auto FirstValue, auto... RestVals>
 struct value_at_index
@@ -555,7 +555,8 @@ struct values_in_range
    private:
     using SeqT = std::common_type_t<decltype(First), decltype(Last)>;
     using Indices = rabbit::shifted_sequence_t<
-        First, std::make_integer_sequence<SeqT, Last + 1 - First>>;
+        std::make_integer_sequence<SeqT, static_cast<SeqT>(Last + 1 - First)>,
+        static_cast<SeqT>(First)>;
 
     template <auto... I>
     static rabbit::values<I...> values_in_range_impl(

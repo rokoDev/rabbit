@@ -1,4 +1,3 @@
-#include <fmt/core.h>
 #include <gtest/gtest.h>
 #include <strong_type/strong_type.h>
 
@@ -8,7 +7,6 @@
 #include <utility>
 
 #include "buffer_tests.h"
-#include "data_formatters_tests.h"
 #include "rabbit/bin_ops.h"
 #include "rabbit/endian.h"
 #include "rabbit/utils.h"
@@ -24,26 +22,10 @@ class TwoBufsTest : public ::testing::Test
 };
 
 template <std::size_t BufSize>
-class BinOpsTest : public ::testing::Test
+class BinOpsTest
+    : public Buffer<BufSize>
+    , public ::testing::Test
 {
-   public:
-    BinOpsTest() : rawData_{} {}
-
-    void print() { fmt::print("{}\n", to_string()); }
-
-    std::string to_string() const noexcept
-    {
-        return to_string_impl(std::make_index_sequence<BufSize>{});
-    }
-
-   protected:
-    template <std::size_t... I>
-    std::string to_string_impl(std::index_sequence<I...>) const noexcept
-    {
-        return fmt::format(BinFormatStringView<BufSize>, rawData_[I]...);
-    }
-
-    std::array<uint8_t, BufSize> rawData_{};
 };
 
 using N1BinOpsTest = BinOpsTest<sizeof(uint8_t)>;
@@ -256,8 +238,8 @@ TEST_F(N1BinOpsTest, addValue8)
     using U = uint8_t;
     using Indices = std::make_index_sequence<sizeof(U)>;
     constexpr U valueToAdd{172};
-    bin_op::addValue(rawData_.data(), valueToAdd, Indices{});
-    ASSERT_EQ(rawData_[0], valueToAdd);
+    bin_op::addValue(array_.data(), valueToAdd, Indices{});
+    ASSERT_EQ(array_[0], valueToAdd);
 }
 
 TEST_F(N2BinOpsTest, addValue8)
@@ -266,10 +248,10 @@ TEST_F(N2BinOpsTest, addValue8)
     using Indices = std::make_index_sequence<sizeof(U)>;
     constexpr U valueToAdd{172};
     constexpr uint8_t secondValue{0b11110111};
-    rawData_[1] = secondValue;
-    bin_op::addValue(rawData_.data(), valueToAdd, Indices{});
-    ASSERT_EQ(rawData_[0], valueToAdd);
-    ASSERT_EQ(rawData_[1], secondValue);
+    array_[1] = secondValue;
+    bin_op::addValue(array_.data(), valueToAdd, Indices{});
+    ASSERT_EQ(array_[0], valueToAdd);
+    ASSERT_EQ(array_[1], secondValue);
 }
 
 TEST_F(N2BinOpsTest, addValue16)
@@ -277,9 +259,9 @@ TEST_F(N2BinOpsTest, addValue16)
     using U = uint16_t;
     using Indices = std::make_index_sequence<sizeof(U)>;
     constexpr U valueToAdd{0b00010000'11111111};
-    bin_op::addValue(rawData_.data(), valueToAdd, Indices{});
-    ASSERT_EQ(rawData_[0], uint8_t{0b00010000});
-    ASSERT_EQ(rawData_[1], uint8_t{0b11111111});
+    bin_op::addValue(array_.data(), valueToAdd, Indices{});
+    ASSERT_EQ(array_[0], uint8_t{0b00010000});
+    ASSERT_EQ(array_[1], uint8_t{0b11111111});
 }
 
 TEST_F(N4BinOpsTest, addValue32)
@@ -287,24 +269,24 @@ TEST_F(N4BinOpsTest, addValue32)
     using U = uint32_t;
     using Indices = std::make_index_sequence<sizeof(U)>;
     constexpr U valueToAdd{0b10101010'10100101'00010000'11111111};
-    bin_op::addValue(rawData_.data(), valueToAdd, Indices{});
-    ASSERT_EQ(rawData_[0], uint8_t{0b10101010});
-    ASSERT_EQ(rawData_[1], uint8_t{0b10100101});
-    ASSERT_EQ(rawData_[2], uint8_t{0b00010000});
-    ASSERT_EQ(rawData_[3], uint8_t{0b11111111});
+    bin_op::addValue(array_.data(), valueToAdd, Indices{});
+    ASSERT_EQ(array_[0], uint8_t{0b10101010});
+    ASSERT_EQ(array_[1], uint8_t{0b10100101});
+    ASSERT_EQ(array_[2], uint8_t{0b00010000});
+    ASSERT_EQ(array_[3], uint8_t{0b11111111});
 }
 
 TEST_F(N4BinOpsTest, addValue32Shifted)
 {
     using U = uint32_t;
     using Indices =
-        rabbit::shifted_sequence_t<1, std::make_index_sequence<sizeof(U) - 1>>;
+        rabbit::shifted_sequence_t<std::make_index_sequence<sizeof(U) - 1>, 1>;
     constexpr U valueToAdd{0b10101010'10100101'00010000'11111111};
-    bin_op::addValue(rawData_.data(), valueToAdd, Indices{});
-    ASSERT_EQ(rawData_[0], uint8_t{0b00000000});
-    ASSERT_EQ(rawData_[1], uint8_t{0b10100101});
-    ASSERT_EQ(rawData_[2], uint8_t{0b00010000});
-    ASSERT_EQ(rawData_[3], uint8_t{0b11111111});
+    bin_op::addValue(array_.data(), valueToAdd, Indices{});
+    ASSERT_EQ(array_[0], uint8_t{0b00000000});
+    ASSERT_EQ(array_[1], uint8_t{0b10100101});
+    ASSERT_EQ(array_[2], uint8_t{0b00010000});
+    ASSERT_EQ(array_[3], uint8_t{0b11111111});
 }
 
 TEST_F(N8BinOpsTest, addValue64)
@@ -313,102 +295,102 @@ TEST_F(N8BinOpsTest, addValue64)
     using Indices = std::make_index_sequence<sizeof(U)>;
     constexpr U valueToAdd{
         0b10100101'11111111'01010101'10101010'10100101'11111111'01010101'10101010};
-    bin_op::addValue(rawData_.data(), valueToAdd, Indices{});
-    ASSERT_EQ(rawData_[0], uint8_t{0b10100101});
-    ASSERT_EQ(rawData_[1], uint8_t{0b11111111});
-    ASSERT_EQ(rawData_[2], uint8_t{0b01010101});
-    ASSERT_EQ(rawData_[3], uint8_t{0b10101010});
-    ASSERT_EQ(rawData_[4], uint8_t{0b10100101});
-    ASSERT_EQ(rawData_[5], uint8_t{0b11111111});
-    ASSERT_EQ(rawData_[6], uint8_t{0b01010101});
-    ASSERT_EQ(rawData_[7], uint8_t{0b10101010});
+    bin_op::addValue(array_.data(), valueToAdd, Indices{});
+    ASSERT_EQ(array_[0], uint8_t{0b10100101});
+    ASSERT_EQ(array_[1], uint8_t{0b11111111});
+    ASSERT_EQ(array_[2], uint8_t{0b01010101});
+    ASSERT_EQ(array_[3], uint8_t{0b10101010});
+    ASSERT_EQ(array_[4], uint8_t{0b10100101});
+    ASSERT_EQ(array_[5], uint8_t{0b11111111});
+    ASSERT_EQ(array_[6], uint8_t{0b01010101});
+    ASSERT_EQ(array_[7], uint8_t{0b10101010});
 }
 
 TEST_F(N8BinOpsTest, addUInt64High)
 {
     using U = uint64_t;
-    rawData_[0] = uint8_t{0b11111111};
+    array_[0] = uint8_t{0b11111111};
     constexpr U valueToAdd{
         0b00000101'11111111'01010101'10101010'10100101'11111111'01010101'10101010};
-    bin_op::addUInt64High(rawData_.data(), 59, valueToAdd);
-    ASSERT_EQ(rawData_[0], uint8_t{0b11111101});
-    ASSERT_EQ(rawData_[1], uint8_t{0b11111111});
-    ASSERT_EQ(rawData_[2], uint8_t{0b01010101});
-    ASSERT_EQ(rawData_[3], uint8_t{0b10101010});
-    ASSERT_EQ(rawData_[4], uint8_t{0b10100101});
-    ASSERT_EQ(rawData_[5], uint8_t{0b11111111});
-    ASSERT_EQ(rawData_[6], uint8_t{0b01010101});
-    ASSERT_EQ(rawData_[7], uint8_t{0b10101010});
+    bin_op::addUInt64High(array_.data(), 59, valueToAdd);
+    ASSERT_EQ(array_[0], uint8_t{0b11111101});
+    ASSERT_EQ(array_[1], uint8_t{0b11111111});
+    ASSERT_EQ(array_[2], uint8_t{0b01010101});
+    ASSERT_EQ(array_[3], uint8_t{0b10101010});
+    ASSERT_EQ(array_[4], uint8_t{0b10100101});
+    ASSERT_EQ(array_[5], uint8_t{0b11111111});
+    ASSERT_EQ(array_[6], uint8_t{0b01010101});
+    ASSERT_EQ(array_[7], uint8_t{0b10101010});
 }
 
 TEST_F(N1BinOpsTest, addUInt64Low)
 {
     using U = uint8_t;
     constexpr U valueToAdd{0b00011101};
-    bin_op::addUInt64Low(rawData_.data(), 5, valueToAdd);
-    ASSERT_EQ(rawData_[0], uint8_t{0b11101000});
+    bin_op::addUInt64Low(array_.data(), 5, valueToAdd);
+    ASSERT_EQ(array_[0], uint8_t{0b11101000});
 }
 
 TEST_F(N1BinOpsTest, addUInt8WithoutOffset)
 {
     using U = uint8_t;
     constexpr U kValue = 0b10101111;
-    bin_op::add(rawData_.data(), kValue);
-    ASSERT_EQ(rawData_[0], kValue);
+    bin_op::add(array_.data(), kValue);
+    ASSERT_EQ(array_[0], kValue);
 }
 
 TEST_F(N2BinOpsTest, addUInt8WithoutOffset)
 {
     using U = uint8_t;
     constexpr U kValue = 0b10101111;
-    bin_op::add(rawData_.data(), kValue);
-    ASSERT_EQ(rawData_[0], kValue);
-    ASSERT_EQ(rawData_[1], uint8_t{0b00000000});
+    bin_op::add(array_.data(), kValue);
+    ASSERT_EQ(array_[0], kValue);
+    ASSERT_EQ(array_[1], uint8_t{0b00000000});
 }
 
 TEST_F(N2BinOpsTest, addUInt16WithoutOffset)
 {
     using U = uint16_t;
     constexpr U kValue = 0b10101111'00010111;
-    bin_op::add(rawData_.data(), kValue);
-    ASSERT_EQ(rawData_[0], uint8_t{0b10101111});
-    ASSERT_EQ(rawData_[1], uint8_t{0b00010111});
+    bin_op::add(array_.data(), kValue);
+    ASSERT_EQ(array_[0], uint8_t{0b10101111});
+    ASSERT_EQ(array_[1], uint8_t{0b00010111});
 }
 
 TEST_F(N3BinOpsTest, addUInt16WithoutOffset)
 {
     using U = uint16_t;
     constexpr U kValue = 0b10101111'00010111;
-    bin_op::add(rawData_.data() + 1, kValue);
-    ASSERT_EQ(rawData_[0], uint8_t{0b00000000});
-    ASSERT_EQ(rawData_[1], uint8_t{0b10101111});
-    ASSERT_EQ(rawData_[2], uint8_t{0b00010111});
+    bin_op::add(array_.data() + 1, kValue);
+    ASSERT_EQ(array_[0], uint8_t{0b00000000});
+    ASSERT_EQ(array_[1], uint8_t{0b10101111});
+    ASSERT_EQ(array_[2], uint8_t{0b00010111});
 }
 
 TEST_F(N4BinOpsTest, addUInt32WithoutOffset)
 {
     using U = uint32_t;
     constexpr U kValue = 0b10101111'00010111'00001111'00110011;
-    bin_op::add(rawData_.data(), kValue);
-    ASSERT_EQ(rawData_[0], uint8_t{0b10101111});
-    ASSERT_EQ(rawData_[1], uint8_t{0b00010111});
-    ASSERT_EQ(rawData_[2], uint8_t{0b00001111});
-    ASSERT_EQ(rawData_[3], uint8_t{0b00110011});
+    bin_op::add(array_.data(), kValue);
+    ASSERT_EQ(array_[0], uint8_t{0b10101111});
+    ASSERT_EQ(array_[1], uint8_t{0b00010111});
+    ASSERT_EQ(array_[2], uint8_t{0b00001111});
+    ASSERT_EQ(array_[3], uint8_t{0b00110011});
 }
 
 TEST_F(N8BinOpsTest, addUInt32WithoutOffset)
 {
     using U = uint32_t;
     constexpr U kValue = 0b10101111'00010111'00001111'00110011;
-    bin_op::add(rawData_.data() + 2, kValue);
-    ASSERT_EQ(rawData_[0], uint8_t{0b00000000});
-    ASSERT_EQ(rawData_[1], uint8_t{0b00000000});
-    ASSERT_EQ(rawData_[2], uint8_t{0b10101111});
-    ASSERT_EQ(rawData_[3], uint8_t{0b00010111});
-    ASSERT_EQ(rawData_[4], uint8_t{0b00001111});
-    ASSERT_EQ(rawData_[5], uint8_t{0b00110011});
-    ASSERT_EQ(rawData_[6], uint8_t{0b00000000});
-    ASSERT_EQ(rawData_[7], uint8_t{0b00000000});
+    bin_op::add(array_.data() + 2, kValue);
+    ASSERT_EQ(array_[0], uint8_t{0b00000000});
+    ASSERT_EQ(array_[1], uint8_t{0b00000000});
+    ASSERT_EQ(array_[2], uint8_t{0b10101111});
+    ASSERT_EQ(array_[3], uint8_t{0b00010111});
+    ASSERT_EQ(array_[4], uint8_t{0b00001111});
+    ASSERT_EQ(array_[5], uint8_t{0b00110011});
+    ASSERT_EQ(array_[6], uint8_t{0b00000000});
+    ASSERT_EQ(array_[7], uint8_t{0b00000000});
 }
 
 TEST_F(N8BinOpsTest, addUInt64WithoutOffset)
@@ -416,15 +398,15 @@ TEST_F(N8BinOpsTest, addUInt64WithoutOffset)
     using U = uint64_t;
     constexpr U kValue =
         0b10101111'00010111'00001111'00110011'10101010'01111110'10000001'10011001;
-    bin_op::add(rawData_.data(), kValue);
-    ASSERT_EQ(rawData_[0], uint8_t{0b10101111});
-    ASSERT_EQ(rawData_[1], uint8_t{0b00010111});
-    ASSERT_EQ(rawData_[2], uint8_t{0b00001111});
-    ASSERT_EQ(rawData_[3], uint8_t{0b00110011});
-    ASSERT_EQ(rawData_[4], uint8_t{0b10101010});
-    ASSERT_EQ(rawData_[5], uint8_t{0b01111110});
-    ASSERT_EQ(rawData_[6], uint8_t{0b10000001});
-    ASSERT_EQ(rawData_[7], uint8_t{0b10011001});
+    bin_op::add(array_.data(), kValue);
+    ASSERT_EQ(array_[0], uint8_t{0b10101111});
+    ASSERT_EQ(array_[1], uint8_t{0b00010111});
+    ASSERT_EQ(array_[2], uint8_t{0b00001111});
+    ASSERT_EQ(array_[3], uint8_t{0b00110011});
+    ASSERT_EQ(array_[4], uint8_t{0b10101010});
+    ASSERT_EQ(array_[5], uint8_t{0b01111110});
+    ASSERT_EQ(array_[6], uint8_t{0b10000001});
+    ASSERT_EQ(array_[7], uint8_t{0b10011001});
 }
 
 TEST_F(N8BinOpsTest, AddNLeastSignificantBytes)
@@ -432,25 +414,25 @@ TEST_F(N8BinOpsTest, AddNLeastSignificantBytes)
     using U = uint64_t;
     constexpr U kValue =
         0b10101111'00010111'00001111'00110011'10101010'01111110'10000001'10011001;
-    bin_op::addNLeastSignificantBytes<const U &&, 3>(rawData_.data(),
+    bin_op::addNLeastSignificantBytes<const U &&, 3>(array_.data(),
                                                      std::move(kValue));
-    ASSERT_EQ(rawData_[0], uint8_t{0b01111110});
-    ASSERT_EQ(rawData_[1], uint8_t{0b10000001});
-    ASSERT_EQ(rawData_[2], uint8_t{0b10011001});
-    ASSERT_EQ(rawData_[3], uint8_t{0b00000000});
-    ASSERT_EQ(rawData_[4], uint8_t{0b00000000});
-    ASSERT_EQ(rawData_[5], uint8_t{0b00000000});
-    ASSERT_EQ(rawData_[6], uint8_t{0b00000000});
-    ASSERT_EQ(rawData_[7], uint8_t{0b00000000});
+    ASSERT_EQ(array_[0], uint8_t{0b01111110});
+    ASSERT_EQ(array_[1], uint8_t{0b10000001});
+    ASSERT_EQ(array_[2], uint8_t{0b10011001});
+    ASSERT_EQ(array_[3], uint8_t{0b00000000});
+    ASSERT_EQ(array_[4], uint8_t{0b00000000});
+    ASSERT_EQ(array_[5], uint8_t{0b00000000});
+    ASSERT_EQ(array_[6], uint8_t{0b00000000});
+    ASSERT_EQ(array_[7], uint8_t{0b00000000});
 }
 
 TEST_F(N4BinOpsTest, AddNLeastSignificantBytes)
 {
     using U = uint8_t;
     constexpr U kValue = 0b10101111;
-    bin_op::addNLeastSignificantBytes<const U &&, 1>(rawData_.data(),
+    bin_op::addNLeastSignificantBytes<const U &&, 1>(array_.data(),
                                                      std::move(kValue));
-    ASSERT_EQ(rawData_[0], uint8_t{0b10101111});
+    ASSERT_EQ(array_[0], uint8_t{0b10101111});
 }
 
 TEST_F(N4BinOpsTest, AddZeroLeastSignificantBytes)
@@ -458,12 +440,12 @@ TEST_F(N4BinOpsTest, AddZeroLeastSignificantBytes)
     using U = uint64_t;
     constexpr U kValue =
         0b10101111'00010111'00001111'00110011'10101010'01111110'10000001'10011001;
-    bin_op::addNLeastSignificantBytes<const U &&, 0>(rawData_.data(),
+    bin_op::addNLeastSignificantBytes<const U &&, 0>(array_.data(),
                                                      std::move(kValue));
-    ASSERT_EQ(rawData_[0], uint8_t{0b00000000});
-    ASSERT_EQ(rawData_[1], uint8_t{0b00000000});
-    ASSERT_EQ(rawData_[2], uint8_t{0b00000000});
-    ASSERT_EQ(rawData_[3], uint8_t{0b00000000});
+    ASSERT_EQ(array_[0], uint8_t{0b00000000});
+    ASSERT_EQ(array_[1], uint8_t{0b00000000});
+    ASSERT_EQ(array_[2], uint8_t{0b00000000});
+    ASSERT_EQ(array_[3], uint8_t{0b00000000});
 }
 
 TEST(BinOpsTest, highNBitsWith2Offset)
@@ -521,12 +503,12 @@ TEST(BinOpsTest, highNBitsWith12Offset)
 TEST_F(N4BinOpsTest, GetUInt16From1Byte)
 {
     constexpr std::size_t kNBytes = 1;
-    rawData_[0] = 0b10101111;
-    rawData_[1] = 0b10000001;
-    rawData_[2] = 0b10011001;
-    rawData_[3] = 0b00111100;
+    array_[0] = 0b10101111;
+    array_[1] = 0b10000001;
+    array_[2] = 0b10011001;
+    array_[3] = 0b00111100;
     const auto value =
-        bin_op::get<uint16_t, bin_op::eAlign::kLeft>(rawData_.data(), kNBytes);
+        bin_op::get<uint16_t, bin_op::eAlign::kLeft>(array_.data(), kNBytes);
     static_assert(
         std::is_same_v<std::remove_const_t<decltype(value)>, uint16_t>,
         "value is of invalid type.");
@@ -536,12 +518,12 @@ TEST_F(N4BinOpsTest, GetUInt16From1Byte)
 TEST_F(N4BinOpsTest, GetUInt16From2Bytes)
 {
     constexpr std::size_t kNBytes = 2;
-    rawData_[0] = 0b10101111;
-    rawData_[1] = 0b10000001;
-    rawData_[2] = 0b10011001;
-    rawData_[3] = 0b00111100;
+    array_[0] = 0b10101111;
+    array_[1] = 0b10000001;
+    array_[2] = 0b10011001;
+    array_[3] = 0b00111100;
     const auto value =
-        bin_op::get<uint16_t, bin_op::eAlign::kLeft>(rawData_.data(), kNBytes);
+        bin_op::get<uint16_t, bin_op::eAlign::kLeft>(array_.data(), kNBytes);
     static_assert(
         std::is_same_v<std::remove_const_t<decltype(value)>, uint16_t>,
         "value is of invalid type.");
@@ -551,12 +533,12 @@ TEST_F(N4BinOpsTest, GetUInt16From2Bytes)
 TEST_F(N4BinOpsTest, GetUInt32From3Bytes)
 {
     constexpr std::size_t kNBytes = 3;
-    rawData_[0] = 0b10101111;
-    rawData_[1] = 0b10000001;
-    rawData_[2] = 0b10011001;
-    rawData_[3] = 0b00111100;
+    array_[0] = 0b10101111;
+    array_[1] = 0b10000001;
+    array_[2] = 0b10011001;
+    array_[3] = 0b00111100;
     const auto value =
-        bin_op::get<uint32_t, bin_op::eAlign::kLeft>(rawData_.data(), kNBytes);
+        bin_op::get<uint32_t, bin_op::eAlign::kLeft>(array_.data(), kNBytes);
     static_assert(
         std::is_same_v<std::remove_const_t<decltype(value)>, uint32_t>,
         "value is of invalid type.");
@@ -568,12 +550,12 @@ TEST_F(N4BinOpsTest, GetUInt32From3Bytes)
 TEST_F(N4BinOpsTest, GetUInt32From4Bytes)
 {
     constexpr std::size_t kNBytes = 4;
-    rawData_[0] = 0b10101111;
-    rawData_[1] = 0b10000001;
-    rawData_[2] = 0b10011001;
-    rawData_[3] = 0b00111100;
+    array_[0] = 0b10101111;
+    array_[1] = 0b10000001;
+    array_[2] = 0b10011001;
+    array_[3] = 0b00111100;
     const auto value =
-        bin_op::get<uint32_t, bin_op::eAlign::kLeft>(rawData_.data(), kNBytes);
+        bin_op::get<uint32_t, bin_op::eAlign::kLeft>(array_.data(), kNBytes);
     static_assert(
         std::is_same_v<std::remove_const_t<decltype(value)>, uint32_t>,
         "value is of invalid type.");

@@ -135,8 +135,8 @@ class BinOps final
                 uint16_t value =
                     details::get<uint16_t, eAlign::kRight>(aSrc, kNBytesToRead);
                 using FastUIntT = FastUInt<kNBytesToWrite>;
-                const std::size_t kROffset =
-                    kNBytesToRead * CHAR_BIT - kSrcNBits;
+                const std::size_t kROffset = static_cast<std::size_t>(
+                    kNBytesToRead * CHAR_BIT - kSrcNBits);
                 const std::size_t kLOffset = sizeof(FastUIntT) * CHAR_BIT -
                                              aDstOffset.get() - kBitsToAdd;
                 const auto kValue =

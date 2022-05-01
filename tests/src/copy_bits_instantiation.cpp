@@ -1,5 +1,6 @@
-#include <fmt/core.h>
 #include <gtest/gtest.h>
+
+#include <sstream>
 
 #include "copy_bits_tests.h"
 #include "rabbit/user_literals.h"
@@ -32,9 +33,14 @@ INSTANTIATE_TEST_SUITE_P(
         const auto kNumBits = std::get<1>(aInfo.param);
         const auto kDstOffset = std::get<2>(aInfo.param);
         const auto kSrcOffset = std::get<3>(aInfo.param);
-        return fmt::format("{}kNBits{}kDstOffset{}kSrcOffset{}",
-                           kTestData->name(), kNumBits.get(), kDstOffset.get(),
-                           kSrcOffset.get());
+
+        std::string initStr;
+        initStr.reserve(128);
+        std::stringstream ss(initStr);
+        ss << kTestData->name() << "kNBits"sv << std::to_string(kNumBits.get())
+           << "kDstOffset"sv << std::to_string(kDstOffset.get())
+           << "kSrcOffset"sv << std::to_string(kSrcOffset.get());
+        return ss.str();
     });
 
 INSTANTIATE_TEST_SUITE_P(
@@ -45,8 +51,13 @@ INSTANTIATE_TEST_SUITE_P(
         const auto kTestData = std::get<0>(aInfo.param);
         const auto kNumBits = std::get<1>(aInfo.param);
         const auto kOffset = std::get<2>(aInfo.param);
-        return fmt::format("{}kNBits{}kOffset{}", kTestData->name(),
-                           kNumBits.get(), kOffset.get());
+
+        std::string initStr;
+        initStr.reserve(128);
+        std::stringstream ss(initStr);
+        ss << kTestData->name() << "kNBits"sv << std::to_string(kNumBits.get())
+           << "kOffset"sv << std::to_string(kOffset.get());
+        return ss.str();
     });
 
 INSTANTIATE_TEST_SUITE_P(
@@ -55,6 +66,11 @@ INSTANTIATE_TEST_SUITE_P(
     [](const testing::TestParamInfo<CopyBitsWith3Args::ParamType> &aInfo) {
         const auto kTestData = std::get<0>(aInfo.param);
         const auto kNumBits = std::get<1>(aInfo.param);
-        return fmt::format("{}kNBits{}", kTestData->name(), kNumBits.get());
+
+        std::string initStr;
+        initStr.reserve(128);
+        std::stringstream ss(initStr);
+        ss << kTestData->name() << "kNBits"sv << std::to_string(kNumBits.get());
+        return ss.str();
     });
 }  // namespace

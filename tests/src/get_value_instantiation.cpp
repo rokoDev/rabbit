@@ -1,5 +1,6 @@
-#include <fmt/core.h>
 #include <gtest/gtest.h>
+
+#include <sstream>
 
 #include "get_value_tests.h"
 #include "rabbit/user_literals.h"
@@ -37,8 +38,13 @@ std::string GetValue3ArgsDataName(
 {
     const auto kSrcOffset = std::get<1>(aInfo.param);
     const auto kNumBits = std::get<2>(aInfo.param);
-    return fmt::format("kSrcOffset{}kNBits{}", kSrcOffset.get(),
-                       kNumBits.get());
+
+    std::string initStr;
+    initStr.reserve(32);
+    std::stringstream ss(initStr);
+    ss << "kSrcOffset" << std::to_string(kSrcOffset.get()) << "kNBits"
+       << std::to_string(kNumBits.get());
+    return ss.str();
 }
 
 INSTANTIATE_TEST_SUITE_P(Rabbit, Args3U8,
@@ -70,7 +76,12 @@ std::string GetValue2ArgsDataName(
     const testing::TestParamInfo<typename T::ParamType> &aInfo)
 {
     const auto kNumBits = std::get<1>(aInfo.param);
-    return fmt::format("kNBits{}", kNumBits.get());
+
+    std::string initStr;
+    initStr.reserve(16);
+    std::stringstream ss(initStr);
+    ss << "kNBits" << std::to_string(kNumBits.get());
+    return ss.str();
 }
 
 INSTANTIATE_TEST_SUITE_P(Rabbit, Args2U8,

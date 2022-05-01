@@ -106,7 +106,7 @@ constexpr T uint8_buf_to_value(uint8_t const *const aBuf,
         for (std::size_t i = 0; i < aNBytes; ++i)
         {
             result |= static_cast<T>(static_cast<T>(aBuf[i])
-                                     << Index<T>(i) * CHAR_BIT);
+                                     << (sizeof(T) - 1 - i) * CHAR_BIT);
         }
     }
     else
@@ -243,7 +243,8 @@ constexpr decltype(auto) highNBitsWithOffset(T &&aValue, uint_fast8_t aNBits,
            "UIntT cannot contain <aOffset + aNBits> bits");
     const auto kOffset = CHAR_BIT * sizeof(UIntT) - aNBits;
     const UIntT lowBitsErased = aValue >> kOffset;
-    const UIntT result = static_cast<UIntT>(lowBitsErased << kOffset - aOffset);
+    const UIntT result =
+        static_cast<UIntT>(lowBitsErased << (kOffset - aOffset));
     return result;
 }
 
@@ -337,7 +338,7 @@ constexpr decltype(auto) composition(T1 &&aDst, T2 &&aSrc, T3 &&aMask) noexcept
         "UIntT must be unsigned integer type. And bool is forbidden.");
     static_assert(std::is_same_v<UIntT, remove_cvref_t<T2>>, "Invalid T2");
     static_assert(std::is_same_v<UIntT, remove_cvref_t<T3>>, "Invalid T3");
-    UIntT result = (aMask & aSrc) | (~aMask & aDst);
+    UIntT result = static_cast<UIntT>((aMask & aSrc) | (~aMask & aDst));
     return result;
 }
 
@@ -393,8 +394,9 @@ constexpr void addUInt64High(uint8_t *const aDst, const uint_fast8_t aNBits,
     assert(kOffset > 0);
     assert(highNBits(byteAt<0>(aValue), kOffset) == 0);
     *aDst = byteAt<0>(aValue) | highNBits(*aDst, kOffset);
-    using Indices =
-        shifted_sequence_t<1, std::make_index_sequence<sizeof(UIntT) - 1>>;
+    using Indices = shifted_sequence_t<
+        std::make_index_sequence<static_cast<std::size_t>(sizeof(UIntT) - 1)>,
+        static_cast<std::size_t>(1)>;
     addValue(aDst, std::forward<T>(aValue), Indices{});
 }
 

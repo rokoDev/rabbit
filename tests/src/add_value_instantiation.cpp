@@ -1,5 +1,6 @@
-#include <fmt/core.h>
 #include <gtest/gtest.h>
+
+#include <sstream>
 
 #include "add_value_tests.h"
 #include "rabbit/user_literals.h"
@@ -43,8 +44,14 @@ std::string FourArgsDataName(
     const auto kValue = std::get<1>(aInfo.param);
     const auto kDstOffset = std::get<2>(aInfo.param);
     const auto kNumBits = std::get<3>(aInfo.param);
-    return fmt::format("kValue{}kDstOffset{}kNBits{}", kValue, kDstOffset.get(),
-                       kNumBits.get());
+
+    std::string initStr;
+    initStr.reserve(64);
+    std::stringstream ss(initStr);
+    ss << "kValue" << std::to_string(kValue) << "kDstOffset"
+       << std::to_string(kDstOffset.get()) << "kNBits"
+       << std::to_string(kNumBits.get());
+    return ss.str();
 }
 
 INSTANTIATE_TEST_SUITE_P(Rabbit, Args4UInt8,
@@ -76,7 +83,13 @@ std::string ThreeArgsDataName(
 {
     const auto kValue = std::get<1>(aInfo.param);
     const auto kNumBits = std::get<2>(aInfo.param);
-    return fmt::format("kValue{}kNBits{}", kValue, kNumBits.get());
+
+    std::string initStr;
+    initStr.reserve(64);
+    std::stringstream ss(initStr);
+    ss << "kValue" << std::to_string(kValue) << "kNBits"
+       << std::to_string(kNumBits.get());
+    return ss.str();
 }
 
 INSTANTIATE_TEST_SUITE_P(Rabbit, Args3UInt8,
@@ -104,7 +117,12 @@ std::string TwoArgsDataName(
     const testing::TestParamInfo<typename T::ParamType> &aInfo)
 {
     const auto kValue = std::get<1>(aInfo.param);
-    return fmt::format("kValue{}", kValue);
+
+    std::string initStr;
+    initStr.reserve(64);
+    std::stringstream ss(initStr);
+    ss << "kValue" << std::to_string(kValue);
+    return ss.str();
 }
 
 INSTANTIATE_TEST_SUITE_P(Rabbit, Args2UInt8,

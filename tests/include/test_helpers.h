@@ -56,7 +56,7 @@ class test_helpers
     static constexpr void resetBit(uint8_t *const aData,
                                    std::size_t aPos) noexcept
     {
-        aData[aPos / CHAR_BIT] &= ~bitAtIndex(aPos);
+        aData[aPos / CHAR_BIT] &= static_cast<uint8_t>(~bitAtIndex(aPos));
     }
 
     static constexpr bool isBitSet(uint8_t const *const aData,

@@ -1,10 +1,10 @@
 #ifndef buffer_tests_h
 #define buffer_tests_h
-#include <fmt/core.h>
 
+#include <charconv>
+#include <iostream>
 #include <string>
 
-#include "data_formatters_tests.h"
 #include "rabbit/utils.h"
 
 template <std::size_t BufSize, typename DataT = uint8_t>
@@ -26,13 +26,23 @@ class Buffer
     {
     }
 
-    void print() const { fmt::print("{}\n", to_string()); }
+    void print() const { std::cout << to_string() << '\n'; }
 
     Buffer() = default;
 
-    std::string to_string() const noexcept
+    std::string_view to_string() const noexcept
     {
-        return to_string_impl(std::make_index_sequence<BufSize>{});
+        auto buf = strData_.data();
+        for (const auto aValue: array_)
+        {
+            if (buf != strData_.data())
+            {
+                *buf = delimiter_;
+                ++buf;
+            }
+            buf = std::to_chars(buf, buf + CHAR_BIT, aValue, 2);
+        }
+        return {strData_.data(), strData_.size()};
     }
 
     constexpr decltype(auto) operator[](std::size_t aPos)
@@ -51,11 +61,8 @@ class Buffer
     std::array<DataT, BufSize> array_{};
 
    private:
-    template <std::size_t... I>
-    std::string to_string_impl(std::index_sequence<I...>) const noexcept
-    {
-        return fmt::format(BinFormatStringView<BufSize>, array_[I]...);
-    }
+    static inline constexpr char delimiter_ = ' ';
+    std::array<char, BufSize * CHAR_BIT + BufSize - 1> strData_{};
 };
 
 #endif /* buffer_tests_h */

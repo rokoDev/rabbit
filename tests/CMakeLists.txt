@@ -13,13 +13,7 @@ FetchContent_Declare(
   GIT_TAG        830fb567285c63ab5b5873e2e8b02f2249864916
   )
 
-FetchContent_Declare(
-  fmt
-  GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-  GIT_TAG        0cef1f819e9811209a6b110ae37fe65e70aa79b0
-)
-
-FetchContent_MakeAvailable(googletest fmt)
+FetchContent_MakeAvailable(googletest)
 
 add_library(tests_main STATIC)
 target_sources(tests_main
@@ -128,7 +122,7 @@ set(test_src
 package_add_test(
   TEST_TARGET_NAME copy_bits_tests
   TEST_SOURCES ${test_src}
-  EXTRA_TARGETS fmt test_helpers tests_main
+  EXTRA_TARGETS test_helpers tests_main
   )
 
 set(test_src
@@ -139,7 +133,7 @@ set(test_src
 package_add_test(
   TEST_TARGET_NAME add_value_tests
   TEST_SOURCES ${test_src}
-  EXTRA_TARGETS fmt test_helpers tests_main
+  EXTRA_TARGETS test_helpers tests_main
   )
 
 set(test_src
@@ -150,11 +144,10 @@ set(test_src
 package_add_test(
   TEST_TARGET_NAME get_value_tests
   TEST_SOURCES ${test_src}
-  EXTRA_TARGETS fmt test_helpers tests_main
+  EXTRA_TARGETS test_helpers tests_main
   )
 
 set(test_src
-  include/data_formatters_tests.h
   include/buffer_tests.h
   src/rabbit_tests.cpp
   src/bin_ops_tests.cpp
@@ -163,11 +156,8 @@ set(test_src
 package_add_test(
   TEST_TARGET_NAME misc_tests
   TEST_SOURCES ${test_src}
-  EXTRA_TARGETS fmt rabbit tests_main
+  EXTRA_TARGETS rabbit tests_main
 	)
 
 # If use IDE add gtest, gmock, gtest_main and gmock_main targets into deps/googletest group
 set_target_properties(gtest gmock gtest_main gmock_main PROPERTIES FOLDER deps/googletest)
-
-# If use IDE add this targets into deps source group
-set_target_properties(fmt PROPERTIES FOLDER deps)
