@@ -12,7 +12,7 @@ class Buffer
 {
    public:
     template <typename T, typename... U>
-    constexpr Buffer(T &&aFirstArg, U &&... aRestArgs) noexcept
+    constexpr Buffer(T &&aFirstArg, U &&...aRestArgs) noexcept
         : array_{rabbit::concatenate_arrays(
               rabbit::make_array(static_cast<DataT>(aFirstArg),
                                  static_cast<DataT>(aRestArgs)...),

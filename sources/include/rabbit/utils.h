@@ -374,11 +374,9 @@ void for_each_arg(F&& f, Ts&&... ts)
 template <typename F, typename T>
 void for_each_in_tuple(F&& f, T&& t)
 {
-    std::apply(
-        [&f](auto&&... xs) {
-            for_each_arg(f, std::forward<decltype(xs)>(xs)...);
-        },
-        std::forward<T>(t));
+    std::apply([&f](auto&&... xs)
+               { for_each_arg(f, std::forward<decltype(xs)>(xs)...); },
+               std::forward<T>(t));
 }
 
 template <class To, class From>

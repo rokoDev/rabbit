@@ -28,7 +28,8 @@ INSTANTIATE_TEST_SUITE_P(
     Rabbit, CopyBitsWith5Args,
     Combine(ValuesIn(kTestDatas), ValuesIn(kNBitsArray),
             ValuesIn(kDstBitOffsetsArray), ValuesIn(kSrcBitOffsetsArray)),
-    [](const testing::TestParamInfo<CopyBitsWith5Args::ParamType> &aInfo) {
+    [](const testing::TestParamInfo<CopyBitsWith5Args::ParamType> &aInfo)
+    {
         const auto kTestData = std::get<0>(aInfo.param);
         const auto kNumBits = std::get<1>(aInfo.param);
         const auto kDstOffset = std::get<2>(aInfo.param);
@@ -47,7 +48,8 @@ INSTANTIATE_TEST_SUITE_P(
     Rabbit, CopyBitsWith4Args,
     Combine(ValuesIn(kTestDatas), ValuesIn(kNBitsArray),
             ValuesIn(kBitOffsetsArray)),
-    [](const testing::TestParamInfo<CopyBitsWith4Args::ParamType> &aInfo) {
+    [](const testing::TestParamInfo<CopyBitsWith4Args::ParamType> &aInfo)
+    {
         const auto kTestData = std::get<0>(aInfo.param);
         const auto kNumBits = std::get<1>(aInfo.param);
         const auto kOffset = std::get<2>(aInfo.param);
@@ -63,7 +65,8 @@ INSTANTIATE_TEST_SUITE_P(
 INSTANTIATE_TEST_SUITE_P(
     Rabbit, CopyBitsWith3Args,
     Combine(ValuesIn(kTestDatas), ValuesIn(kNBitsArray)),
-    [](const testing::TestParamInfo<CopyBitsWith3Args::ParamType> &aInfo) {
+    [](const testing::TestParamInfo<CopyBitsWith3Args::ParamType> &aInfo)
+    {
         const auto kTestData = std::get<0>(aInfo.param);
         const auto kNumBits = std::get<1>(aInfo.param);
 
