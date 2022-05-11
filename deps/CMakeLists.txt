@@ -1,15 +1,13 @@
 include(FetchContent)
 
 # Setup directory to which dependencies will be downloaded
-get_filename_component(deps_content "../deps_content"
-                       REALPATH BASE_DIR "${CMAKE_BINARY_DIR}")
-set(FETCHCONTENT_BASE_DIR ${deps_content})
+cmake_path(APPEND FETCHCONTENT_BASE_DIR "${CMAKE_SOURCE_DIR}" "deps_content" "${CMAKE_GENERATOR_NAME_WITHOUT_SPACES}")
 
 # If dependencies are not available then download it and make available
 FetchContent_Declare(
 	VersionHelper
     GIT_REPOSITORY https://github.com/rokoDev/VersionHelper.git
-    GIT_TAG        b8f512ee783abdb44ebe3ea2fb59bec9f32b2e31
+    GIT_TAG        497e036e8ce2879aa193d905999b535da4aff8f8
 )
 
 FetchContent_Declare(
@@ -21,12 +19,12 @@ FetchContent_Declare(
 FetchContent_Declare(
 	strong_type
 	GIT_REPOSITORY https://github.com/rokoDev/strong_type.git
-	GIT_TAG        6f8dceb6da5bbd8e4c789670f39893ad2b4a8806
+	GIT_TAG        1b3c655287d7e05a1d37497facee8612c4109c00
 )
 
 # If necessary it's possible to use VersionHelper from different location instead of downloaded from GitHub
 # string(TOUPPER VersionHelper UP_VersionHelper)
-# set(FETCHCONTENT_SOURCE_DIR_${UP_VersionHelper} ${CMAKE_CURRENT_LIST_DIR}/../../VersionHelper)
+# set(FETCHCONTENT_SOURCE_DIR_${UP_VersionHelper} ${CMAKE_SOURCE_DIR}/../VersionHelper)
 
 FetchContent_MakeAvailable(VersionHelper boost_pfr strong_type)
 target_link_libraries(rabbit INTERFACE boost_pfr strong_type)
@@ -39,7 +37,7 @@ list(APPEND CMAKE_MODULE_PATH "${versionhelper_SOURCE_DIR}")
 include(VersionInfoUtils)
 m_generate_version_info(PROJECT_NAME ${ProjectName}
 	                    CPP_NAMESPACE "rabbit"
-	                    BUILD_TYPES Debug Release
+	                    BUILD_TYPES ${SUPPORTED_CONFIGURATIONS}
 	                    IDE_SRC_GROUP "generated"
 	                    TARGET_NAME "rabbit"
                         HEADER_ONLY

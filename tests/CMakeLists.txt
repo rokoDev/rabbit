@@ -3,9 +3,7 @@ cmake_minimum_required(VERSION ${cmake_version})
 set(ProjectName ${ProjectName}_tests)
 project(${ProjectName})
 
-get_filename_component(deps_content "../deps_content"
-                       REALPATH BASE_DIR "${CMAKE_BINARY_DIR}")
-set(FETCHCONTENT_BASE_DIR ${deps_content})
+cmake_path(APPEND FETCHCONTENT_BASE_DIR "${CMAKE_SOURCE_DIR}" "deps_content" "${CMAKE_GENERATOR_NAME_WITHOUT_SPACES}")
 
 FetchContent_Declare(
   googletest

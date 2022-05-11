@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   build:
     docker:
-      - image: rokodev/ubuntu2004clang11ninja:1.1
+      - image: rokodev/ubuntu2004clang13ninjacmake23:1.0
         user: root
         auth:
           username: $DOCKERHUB_LOGIN
@@ -41,12 +41,18 @@ jobs:
           name: "configure build test Ninja Debug"
           command: |
             SOURCE_PATH=`pwd`"/${CIRCLE_PROJECT_REPONAME}"
-            python3 $SOURCE_PATH/scripts/circle_linux_configure_build_test.py --build_type Debug -source_dir "$SOURCE_PATH"
+            cd $SOURCE_PATH
+            cmake --preset=ninja-clang-Debug
+            cmake --build --preset=ninja-clang-Debug
+            ctest --preset=ninja-clang-Debug
       - run:
           name: "configure build test Ninja Release"
           command: |
             SOURCE_PATH=`pwd`"/${CIRCLE_PROJECT_REPONAME}"
-            python3 $SOURCE_PATH/scripts/circle_linux_configure_build_test.py --build_type Release -source_dir "$SOURCE_PATH"
+            cd $SOURCE_PATH
+            cmake --preset=ninja-clang-Release
+            cmake --build --preset=ninja-clang-Release
+            ctest --preset=ninja-clang-Release
 workflows:
   version: 2
   run-all:
