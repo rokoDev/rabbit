@@ -1,22 +1,17 @@
 version: 2.1
 
-jobs:
-  build:
-    docker:
-      - image: rokodev/ubuntu2004clang13ninjacmake23:1.0
-        user: root
-        auth:
-          username: $DOCKERHUB_LOGIN
-          password: $DOCKERHUB_PASSWORD
+commands:
+  clone_branch_or_pr:
+    description: "Checkout source code from corresponding pull request or branch. Submodules are not taken into account."
+    parameters:
+      container_name:
+        type: string
     steps:
-      - run: printenv
       - run:
           name: "checkout sources"
           command: |
             CLONE_URL="https://github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}.git"
             echo "CLONE_URL: ${CLONE_URL}"
-            SOURCE_PATH=`pwd`"/${CIRCLE_PROJECT_REPONAME}"
-            echo "SOURCE_PATH: ${SOURCE_PATH}"
             if [ -n "$CIRCLE_PULL_REQUEST" ]; then
               PR_NUMBER=$(basename ${CIRCLE_PULL_REQUEST})
             else
@@ -24,42 +19,91 @@ jobs:
             fi
             if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" -eq "$PR_NUMBER" ] 2>/dev/null; then
               echo "This is pull request: ${PR_NUMBER}"
-              git clone ${CLONE_URL}
-              cd $SOURCE_PATH
-              BRANCH=pr${PR_NUMBER}
-              git fetch origin "pull/${PR_NUMBER}/head:${BRANCH}"
+              docker exec -it <<parameters.container_name>> bash -c "git clone ${CLONE_URL} \
+              && cd ${CIRCLE_PROJECT_REPONAME} \
+              && BRANCH=pr${PR_NUMBER} \
+              && git fetch origin \"pull/${PR_NUMBER}/head:${BRANCH}\""
             else
               echo "This is simple branch: ${CIRCLE_BRANCH}"
               BRANCH=${CIRCLE_BRANCH}
-              git clone -b ${BRANCH} --single-branch ${CLONE_URL}
-              cd $SOURCE_PATH
+              docker exec -it <<parameters.container_name>> bash -c "git clone -b ${BRANCH} --single-branch ${CLONE_URL}"
             fi
-            git checkout --recurse-submodules ${BRANCH}
-            git submodule foreach --recursive git checkout master
-            git submodule update --init --recursive
+
+jobs:
+  ubuntu_x86_64:
+    machine:
+      image: ubuntu-2004:202201-01
+    resource_class: large
+    steps:
+      - run: printenv
       - run:
-          name: "configure build test Ninja Debug"
+          name: Login to Dockerhub
           command: |
-            SOURCE_PATH=`pwd`"/${CIRCLE_PROJECT_REPONAME}"
-            cd $SOURCE_PATH
-            cmake --preset=ninja-clang-Debug
-            cmake --build --preset=ninja-clang-Debug
-            ctest --preset=ninja-clang-Debug
+            echo "$DOCKERHUB_PULL_TOKEN" | docker login --username $DOCKERHUB_LOGIN --password-stdin
       - run:
-          name: "configure build test Ninja Release"
+          name: Run docker container for amd64
+          command: docker run -it -d --platform linux/amd64 --name ubuntu_x86 rokodev/ubuntu2004-dev:1.1
+      - clone_branch_or_pr:
+          container_name: ubuntu_x86
+      - run:
+          name: Configure, build and test ninja-clang-Debug
           command: |
-            SOURCE_PATH=`pwd`"/${CIRCLE_PROJECT_REPONAME}"
-            cd $SOURCE_PATH
-            cmake --preset=ninja-clang-Release
-            cmake --build --preset=ninja-clang-Release
-            ctest --preset=ninja-clang-Release
+            docker exec -it ubuntu_x86 bash -c "cd $CIRCLE_PROJECT_REPONAME; cmake --preset=ninja-clang-Debug"
+            docker exec -it ubuntu_x86 bash -c "cd $CIRCLE_PROJECT_REPONAME; cmake --build --preset=ninja-clang-Debug"
+            docker exec -it ubuntu_x86 bash -c "cd $CIRCLE_PROJECT_REPONAME; ctest --preset=ninja-clang-Debug"
+      - run:
+          name: Configure, build and test ninja-clang-Release
+          command: |
+            docker exec -it ubuntu_x86 bash -c "cd $CIRCLE_PROJECT_REPONAME; cmake --preset=ninja-clang-Release"
+            docker exec -it ubuntu_x86 bash -c "cd $CIRCLE_PROJECT_REPONAME; cmake --build --preset=ninja-clang-Release"
+            docker exec -it ubuntu_x86 bash -c "cd $CIRCLE_PROJECT_REPONAME; ctest --preset=ninja-clang-Release"
+  ubuntu_s390x:
+    machine:
+      image: ubuntu-2004:202201-01
+    resource_class: large
+    environment:
+      DOCKER_BUILDKIT: 1
+    steps:
+      - run: printenv
+      - run:
+          name: Login to Dockerhub
+          command: |
+            echo "$DOCKERHUB_PULL_TOKEN" | docker login --username $DOCKERHUB_LOGIN --password-stdin
+      - run:
+          name: Enable run containers with different architectures
+          command: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+      - run:
+          name: Run docker container for s390x
+          command: docker run -it -d --platform linux/s390x --name ubuntu_z rokodev/ubuntu2204-dev:1.0
+      - clone_branch_or_pr:
+          container_name: ubuntu_z
+      - run:
+          name: Configure, build and test ninja-gnu-Debug
+          command: |
+            docker exec -it ubuntu_z bash -c "cd $CIRCLE_PROJECT_REPONAME; cmake --preset=ninja-gnu-Debug"
+            docker exec -it ubuntu_z bash -c "cd $CIRCLE_PROJECT_REPONAME; cmake --build --preset=ninja-gnu-Debug"
+            docker exec -it ubuntu_z bash -c "cd $CIRCLE_PROJECT_REPONAME; ctest --preset=ninja-gnu-Debug"
+      - run:
+          name: Configure, build and test ninja-gnu-Release
+          command: |
+            docker exec -it ubuntu_z bash -c "cd $CIRCLE_PROJECT_REPONAME; cmake --preset=ninja-gnu-Release"
+            docker exec -it ubuntu_z bash -c "cd $CIRCLE_PROJECT_REPONAME; cmake --build --preset=ninja-gnu-Release"
+            docker exec -it ubuntu_z bash -c "cd $CIRCLE_PROJECT_REPONAME; ctest --preset=ninja-gnu-Release"
+
 workflows:
-  version: 2
-  run-all:
+  build_and_test:
     jobs:
-      - build:
+      - ubuntu_x86_64:
+          context:
+            - roko
           filters:
             branches:
               only:
-                - master
+                - develop
+      - ubuntu_s390x:
+          context:
+            - roko
+          filters:
+            branches:
+              only:
                 - develop

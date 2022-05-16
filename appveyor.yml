@@ -5,11 +5,10 @@ image:
 
 branches:
   only:
-    - master
     - develop
 
 # set clone depth
-clone_depth: 5
+clone_depth: 1
 
 platform:
   - x64
@@ -17,12 +16,6 @@ platform:
 configuration:
   - Debug
   - Release
-
-for:
--
-  branches:
-    only:
-      - master
 
 matrix:
   fast_finish: true
