@@ -1,6 +1,18 @@
-set(cmake_version 3.23.1)
+set(cmake_version 3.15)
 
 cmake_minimum_required(VERSION ${cmake_version})
+
+include(FetchContent)
+
+# Download toolchains and make available
+FetchContent_Declare(
+    cmake-toolchains
+    GIT_REPOSITORY https://github.com/rokoDev/cmake-toolchains.git
+    GIT_TAG        de53c3458ea350644a8405ec876e56cefe321962
+    SOURCE_DIR ${CMAKE_SOURCE_DIR}/deps_content/cmake-toolchains
+)
+
+FetchContent_MakeAvailable(cmake-toolchains)
 
 set(ProjectName "rabbit")
 

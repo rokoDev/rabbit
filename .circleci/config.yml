@@ -25,8 +25,7 @@ commands:
               && git fetch origin \"pull/${PR_NUMBER}/head:${BRANCH}\""
             else
               echo "This is simple branch: ${CIRCLE_BRANCH}"
-              BRANCH=${CIRCLE_BRANCH}
-              docker exec -it <<parameters.container_name>> bash -c "git clone -b ${BRANCH} --single-branch ${CLONE_URL}"
+              docker exec -it <<parameters.container_name>> bash -c "git clone -b ${CIRCLE_BRANCH} --single-branch ${CLONE_URL}"
             fi
 
 jobs:
@@ -48,15 +47,19 @@ jobs:
       - run:
           name: Configure, build and test ninja-clang-Debug
           command: |
-            docker exec -it ubuntu_x86 bash -c "cd $CIRCLE_PROJECT_REPONAME; cmake --preset=ninja-clang-Debug"
-            docker exec -it ubuntu_x86 bash -c "cd $CIRCLE_PROJECT_REPONAME; cmake --build --preset=ninja-clang-Debug"
-            docker exec -it ubuntu_x86 bash -c "cd $CIRCLE_PROJECT_REPONAME; ctest --preset=ninja-clang-Debug"
+            SRC_DIR="/home/projects/${CIRCLE_PROJECT_REPONAME}"
+            BUILD_DIR="${SRC_DIR}/build/Ninja/clang/Debug"
+            docker exec -it ubuntu_x86 bash -c "cmake -GNinja -DCMAKE_TOOLCHAIN_FILE=deps_content/cmake-toolchains/clang.cmake -DSUPPORTED_CONFIGURATIONS=\"Debug Release\" -DCMAKE_BUILD_TYPE=\"Debug\" -S $SRC_DIR -B $BUILD_DIR"
+            docker exec -it ubuntu_x86 bash -c "cd $BUILD_DIR; cmake --build . --config Debug"
+            docker exec -it ubuntu_x86 bash -c "cd $BUILD_DIR; ctest -I ,,1 -C Debug --output-on-failure"
       - run:
           name: Configure, build and test ninja-clang-Release
           command: |
-            docker exec -it ubuntu_x86 bash -c "cd $CIRCLE_PROJECT_REPONAME; cmake --preset=ninja-clang-Release"
-            docker exec -it ubuntu_x86 bash -c "cd $CIRCLE_PROJECT_REPONAME; cmake --build --preset=ninja-clang-Release"
-            docker exec -it ubuntu_x86 bash -c "cd $CIRCLE_PROJECT_REPONAME; ctest --preset=ninja-clang-Release"
+            SRC_DIR="/home/projects/${CIRCLE_PROJECT_REPONAME}"
+            BUILD_DIR="${SRC_DIR}/build/Ninja/clang/Release"
+            docker exec -it ubuntu_x86 bash -c "cmake -GNinja -DCMAKE_TOOLCHAIN_FILE=deps_content/cmake-toolchains/clang.cmake -DSUPPORTED_CONFIGURATIONS=\"Debug Release\" -DCMAKE_BUILD_TYPE=\"Release\" -S $SRC_DIR -B $BUILD_DIR"
+            docker exec -it ubuntu_x86 bash -c "cd $BUILD_DIR; cmake --build . --config Release"
+            docker exec -it ubuntu_x86 bash -c "cd $BUILD_DIR; ctest -I ,,1 -C Release --output-on-failure"
   ubuntu_s390x:
     machine:
       image: ubuntu-2004:202201-01
@@ -80,15 +83,19 @@ jobs:
       - run:
           name: Configure, build and test ninja-gnu-Debug
           command: |
-            docker exec -it ubuntu_z bash -c "cd $CIRCLE_PROJECT_REPONAME; cmake --preset=ninja-gnu-Debug"
-            docker exec -it ubuntu_z bash -c "cd $CIRCLE_PROJECT_REPONAME; cmake --build --preset=ninja-gnu-Debug"
-            docker exec -it ubuntu_z bash -c "cd $CIRCLE_PROJECT_REPONAME; ctest --preset=ninja-gnu-Debug"
+            SRC_DIR="/home/projects/${CIRCLE_PROJECT_REPONAME}"
+            BUILD_DIR="${SRC_DIR}/build/Ninja/gnu/Debug"
+            docker exec -it ubuntu_z bash -c "cmake -GNinja -DCMAKE_TOOLCHAIN_FILE=deps_content/cmake-toolchains/gnu.cmake -DSUPPORTED_CONFIGURATIONS=\"Debug Release\" -DCMAKE_BUILD_TYPE=\"Debug\" -S ${SRC_DIR} -B ${BUILD_DIR}"
+            docker exec -it ubuntu_z bash -c "cd $BUILD_DIR; cmake --build . --config Debug"
+            docker exec -it ubuntu_z bash -c "cd $BUILD_DIR; ctest -I ,,1 -C Debug --output-on-failure"
       - run:
           name: Configure, build and test ninja-gnu-Release
           command: |
-            docker exec -it ubuntu_z bash -c "cd $CIRCLE_PROJECT_REPONAME; cmake --preset=ninja-gnu-Release"
-            docker exec -it ubuntu_z bash -c "cd $CIRCLE_PROJECT_REPONAME; cmake --build --preset=ninja-gnu-Release"
-            docker exec -it ubuntu_z bash -c "cd $CIRCLE_PROJECT_REPONAME; ctest --preset=ninja-gnu-Release"
+            SRC_DIR="/home/projects/${CIRCLE_PROJECT_REPONAME}"
+            BUILD_DIR="${SRC_DIR}/build/Ninja/gnu/Release"
+            docker exec -it ubuntu_z bash -c "cmake -GNinja -DCMAKE_TOOLCHAIN_FILE=deps_content/cmake-toolchains/gnu.cmake -DSUPPORTED_CONFIGURATIONS=\"Debug Release\" -DCMAKE_BUILD_TYPE=\"Release\" -S ${SRC_DIR} -B ${BUILD_DIR}"
+            docker exec -it ubuntu_z bash -c "cd $BUILD_DIR; cmake --build . --config Release"
+            docker exec -it ubuntu_z bash -c "cd $BUILD_DIR; ctest -I ,,1 -C Release --output-on-failure"
 
 workflows:
   build_and_test:
