@@ -1,8 +1,8 @@
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 
-| **`Windows`** | **`Linux`** |
-|-------------|-------------|
-[![Build status](https://ci.appveyor.com/api/projects/status/tcx4nbu4yb3qubhu/branch/master?svg=true)](https://ci.appveyor.com/project/rokoDev/rabbit/branch/master)|[![CircleCI](https://circleci.com/gh/rokoDev/rabbit/tree/master.svg?style=shield)](https://circleci.com/gh/rokoDev/rabbit/tree/master)|
+| **`Windows`** | **`Linux(x86/s390x)`** |
+|:-----------------:|:-----------------:|
+[![Build status](https://ci.appveyor.com/api/projects/status/tcx4nbu4yb3qubhu/branch/develop?svg=true)](https://ci.appveyor.com/project/rokoDev/rabbit/branch/develop)|[![CircleCI](https://circleci.com/gh/rokoDev/rabbit/tree/develop.svg?style=shield)](https://circleci.com/gh/rokoDev/rabbit/tree/develop)|
 
 # rabbit
 
