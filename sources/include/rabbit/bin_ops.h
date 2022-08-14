@@ -45,7 +45,7 @@ struct DataPtrOps
 using Src = strong::strong_type<struct SrcTag, uint8_t const *, DataPtrOps>;
 using Dst = strong::strong_type<struct DstTag, uint8_t *, DataPtrOps>;
 
-class BinOps final
+class Core final
 {
    public:
     static constexpr void copyBits(Dst aDst, Src aSrc, NumBits aNBits) noexcept

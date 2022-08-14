@@ -70,8 +70,8 @@ class CopyBitsCompileTime : public ::testing::Test
 
         helpers::to_uint8_buf(dstBuf.data(), dstBits);
 
-        rabbit::BinOps::copyBits(Dst(dstBuf.data()), DstOffset, Src(aSrcBuf),
-                                 SrcOffset, NBits);
+        rabbit::Core::copyBits(Dst(dstBuf.data()), DstOffset, Src(aSrcBuf),
+                               SrcOffset, NBits);
 
         return dstBuf;
     }
