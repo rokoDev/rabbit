@@ -1,9 +1,10 @@
 #ifndef rabbit_details_h
 #define rabbit_details_h
 
+#include <endian/endian.h>
+
 #include <cassert>
 
-#include "endian.h"
 #include "utils.h"
 
 namespace rabbit
@@ -27,30 +28,32 @@ class IndexBase
     }
 };
 
-template <eEndian>
+template <endian::eEndian>
 class IndexImpl;
 
 template <>
-class IndexImpl<eEndian::kLittle>
-    : public IndexBase<IndexImpl<eEndian::kLittle>>
+class IndexImpl<endian::eEndian::kLittle>
+    : public IndexBase<IndexImpl<endian::eEndian::kLittle>>
 {
-    friend class IndexBase<IndexImpl<eEndian::kLittle>>;
+    friend class IndexBase<IndexImpl<endian::eEndian::kLittle>>;
 
    private:
     template <typename U>
     static constexpr std::size_t getImpl(std::size_t I) noexcept
     {
         using T = std::decay_t<U>;
-        static_assert(is_uint_v<T>, "T must be unsigned integer but not bool");
+        static_assert(endian::is_uint_v<T>,
+                      "T must be unsigned integer but not bool");
         assert(I < sizeof(T) && "Invalid I");
         return sizeof(T) - 1 - I;
     }
 };
 
 template <>
-class IndexImpl<eEndian::kBig> : public IndexBase<IndexImpl<eEndian::kBig>>
+class IndexImpl<endian::eEndian::kBig>
+    : public IndexBase<IndexImpl<endian::eEndian::kBig>>
 {
-    friend class IndexBase<IndexImpl<eEndian::kBig>>;
+    friend class IndexBase<IndexImpl<endian::eEndian::kBig>>;
 
    private:
     template <typename T>
@@ -62,19 +65,20 @@ class IndexImpl<eEndian::kBig> : public IndexBase<IndexImpl<eEndian::kBig>>
 };
 
 template <typename T, std::size_t I>
-inline constexpr std::size_t CIndex = details::IndexImpl<kEndian>::get<T, I>();
+inline constexpr std::size_t CIndex =
+    details::IndexImpl<endian::kValue>::get<T, I>();
 
 template <typename T>
 constexpr std::size_t Index(std::size_t I) noexcept
 {
-    return details::IndexImpl<kEndian>::get<T>(I);
+    return details::IndexImpl<endian::kValue>::get<T>(I);
 }
 
 template <typename U>
 constexpr auto to_uint8_array(U &&aValue) noexcept
 {
     using T = std::decay_t<U>;
-    static_assert(is_uint_v<T>,
+    static_assert(endian::is_uint_v<T>,
                   "T must be unsigned integer type and not bool.");
     std::array<uint8_t, sizeof(T)> valueAsBytes{};
     if (__builtin_is_constant_evaluated())
@@ -87,7 +91,7 @@ constexpr auto to_uint8_array(U &&aValue) noexcept
     }
     else
     {
-        const auto netOrdered = rabbit::toNet(std::forward<U>(aValue));
+        const auto netOrdered = endian::toNet(std::forward<U>(aValue));
         std::memcpy(valueAsBytes.data(), &netOrdered, sizeof(T));
     }
     return valueAsBytes;
@@ -97,7 +101,7 @@ template <typename T>
 constexpr T uint8_buf_to_value(uint8_t const *const aBuf,
                                const std::size_t aNBytes = sizeof(T)) noexcept
 {
-    static_assert(is_uint_v<T>,
+    static_assert(endian::is_uint_v<T>,
                   "T must be unsigned integer type and not bool.");
     assert(aNBytes <= sizeof(T));
     T result{};
@@ -113,7 +117,7 @@ constexpr T uint8_buf_to_value(uint8_t const *const aBuf,
     {
         assert(aBuf);
         std::memcpy(&result, aBuf, aNBytes);
-        result = rabbit::toHost(result);
+        result = endian::toHost(result);
     }
     return result;
 }
@@ -146,7 +150,7 @@ static constexpr void copy(T *const aDst, T const *const aSrc,
 template <typename T>
 constexpr T mask(std::size_t aOffset, std::size_t aNBits) noexcept
 {
-    static_assert(is_uint_v<T>, "T must be unsigned integer");
+    static_assert(endian::is_uint_v<T>, "T must be unsigned integer");
     assert((aNBits + aOffset <= CHAR_BIT * sizeof(T)) &&
            "error: aNBits + aOffset <= CHAR_BIT * sizeof(T) isn't satisfied");
     constexpr T kBits = static_cast<T>(~T{});
@@ -165,7 +169,7 @@ constexpr T invertedMask(uint_fast8_t aOffset, uint_fast8_t aNBits) noexcept
 template <typename T>
 constexpr T maskR(std::size_t aOffset) noexcept
 {
-    static_assert(is_uint_v<T>, "T must be unsigned integer");
+    static_assert(endian::is_uint_v<T>, "T must be unsigned integer");
     assert((aOffset <= CHAR_BIT * sizeof(T)) && "Invalid aNBits.");
     constexpr T kSetBits = static_cast<T>(~T{});
     const T kMask = static_cast<T>(kSetBits >> aOffset);
@@ -175,7 +179,7 @@ constexpr T maskR(std::size_t aOffset) noexcept
 template <typename T>
 constexpr T maskL(std::size_t aOffset) noexcept
 {
-    static_assert(is_uint_v<T>, "T must be unsigned integer");
+    static_assert(endian::is_uint_v<T>, "T must be unsigned integer");
     assert((aOffset <= CHAR_BIT * sizeof(T)) && "Invalid aNBits.");
     constexpr T kSetBits = static_cast<T>(~T{});
     const T kMask = static_cast<T>(kSetBits << aOffset);
@@ -238,7 +242,8 @@ constexpr decltype(auto) highNBitsWithOffset(T &&aValue, uint_fast8_t aNBits,
                                              uint_fast8_t aOffset) noexcept
 {
     using UIntT = std::remove_cv_t<std::remove_reference_t<T>>;
-    static_assert(is_uint_v<UIntT>, "UIntT must be unsigned integer type.");
+    static_assert(endian::is_uint_v<UIntT>,
+                  "UIntT must be unsigned integer type.");
     assert((aOffset + aNBits <= CHAR_BIT * sizeof(UIntT)) &&
            "UIntT cannot contain <aOffset + aNBits> bits");
     const auto kOffset = CHAR_BIT * sizeof(UIntT) - aNBits;
@@ -252,7 +257,8 @@ template <typename T>
 constexpr decltype(auto) highNBits(T &&aValue, uint_fast8_t aNBits) noexcept
 {
     using UIntT = std::remove_cv_t<std::remove_reference_t<T>>;
-    static_assert(is_uint_v<UIntT>, "UIntT must be unsigned integer type.");
+    static_assert(endian::is_uint_v<UIntT>,
+                  "UIntT must be unsigned integer type.");
     assert((aNBits <= CHAR_BIT * sizeof(UIntT)) && "Invalid aNBits");
     const auto kOffset = CHAR_BIT * sizeof(UIntT) - aNBits;
     const UIntT lowBitsErased = aValue >> kOffset;
@@ -264,7 +270,8 @@ template <typename T>
 constexpr decltype(auto) lowNBits(T &&aValue, uint_fast8_t aNBits) noexcept
 {
     using UIntT = std::remove_cv_t<std::remove_reference_t<T>>;
-    static_assert(is_uint_v<UIntT>, "UIntT must be unsigned integer type.");
+    static_assert(endian::is_uint_v<UIntT>,
+                  "UIntT must be unsigned integer type.");
     assert((aNBits <= CHAR_BIT * sizeof(UIntT)) && "Invalid aNBits");
     const auto kOffset = CHAR_BIT * sizeof(UIntT) - aNBits;
     const UIntT highBitsErased = static_cast<UIntT>(aValue << kOffset);
@@ -275,7 +282,7 @@ constexpr decltype(auto) lowNBits(T &&aValue, uint_fast8_t aNBits) noexcept
 template <typename T, eAlign kAlign>
 constexpr T get(uint8_t const *const aSrc, const std::size_t aNBytes) noexcept
 {
-    static_assert(is_uint_v<T>,
+    static_assert(endian::is_uint_v<T>,
                   "T must be unsigned integer type. And bool is forbidden.");
     assert(aNBytes <= sizeof(T) && "T is not enough to contain aNBytes bytes");
     T value{};
@@ -303,7 +310,7 @@ template <typename T, eAlign kAlign, std::size_t... I>
 constexpr T get_impl(uint8_t const *const aSrc,
                      std::index_sequence<I...>) noexcept
 {
-    static_assert(is_uint_v<T>,
+    static_assert(endian::is_uint_v<T>,
                   "T must be unsigned integer type. And bool is forbidden.");
     constexpr std::size_t NBytes = sizeof...(I);
     static_assert(NBytes <= sizeof(T),
@@ -334,7 +341,7 @@ constexpr decltype(auto) composition(T1 &&aDst, T2 &&aSrc, T3 &&aMask) noexcept
 {
     using UIntT = remove_cvref_t<T1>;
     static_assert(
-        is_uint_v<UIntT>,
+        endian::is_uint_v<UIntT>,
         "UIntT must be unsigned integer type. And bool is forbidden.");
     static_assert(std::is_same_v<UIntT, remove_cvref_t<T2>>, "Invalid T2");
     static_assert(std::is_same_v<UIntT, remove_cvref_t<T3>>, "Invalid T3");
@@ -348,7 +355,7 @@ constexpr decltype(auto) addHighBits(T1 &&aTo, T2 &&aFrom,
 {
     using UIntT = remove_cvref_t<T1>;
     static_assert(
-        is_uint_v<UIntT>,
+        endian::is_uint_v<UIntT>,
         "UIntT must be unsigned integer type. And bool is forbidden.");
     static_assert(std::is_same_v<UIntT, remove_cvref_t<T2>>, "Invalid T2");
     constexpr std::size_t kBitsInValue = sizeof(UIntT) * CHAR_BIT;
@@ -364,7 +371,7 @@ constexpr decltype(auto) addLowBits(T1 &&aTo, T2 &&aFrom,
 {
     using UIntT = remove_cvref_t<T1>;
     static_assert(
-        is_uint_v<UIntT>,
+        endian::is_uint_v<UIntT>,
         "UIntT must be unsigned integer type. And bool is forbidden.");
     static_assert(std::is_same_v<UIntT, remove_cvref_t<T2>>, "Invalid T2");
     constexpr std::size_t kBitsInValue = sizeof(UIntT) * CHAR_BIT;
@@ -440,7 +447,7 @@ constexpr void addBits(uint8_t *const aDst, uint_fast8_t aOffset,
     const std::size_t NBytes = bytesCount(aOffset, aNBits);
     assert(NBytes > 0 && "NBytes must be positive");
     using UIntT = remove_cvref_t<T>;
-    static_assert(is_uint_v<UIntT>, "UIntT must be unsigned integer");
+    static_assert(endian::is_uint_v<UIntT>, "UIntT must be unsigned integer");
     assert(NBytes <= sizeof(UIntT) && "Invalid NBytes");
     const auto kMask = mask<UIntT>(aOffset, aNBits);
     const auto kDst = get<UIntT, eAlign::kLeft>(aDst, NBytes);
@@ -455,7 +462,7 @@ constexpr void addBits(uint8_t *const aDst, uint_fast8_t aOffset,
 {
     static_assert(NBytes > 0, "NBytes must be positive");
     using UIntT = remove_cvref_t<T>;
-    static_assert(is_uint_v<UIntT>, "UIntT must be unsigned integer");
+    static_assert(endian::is_uint_v<UIntT>, "UIntT must be unsigned integer");
     static_assert(NBytes <= sizeof(UIntT), "Invalid NBytes");
     const auto kMask = mask<UIntT>(aOffset, aNBits);
     const auto kDst = get<UIntT, NBytes, eAlign::kLeft>(aDst);

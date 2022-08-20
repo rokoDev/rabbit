@@ -1,6 +1,7 @@
 #ifndef rabbit_test_helpers_h
 #define rabbit_test_helpers_h
 
+#include <endian/endian.h>
 #include <user_literals/user_literals.h>
 
 #include <algorithm>
@@ -183,7 +184,7 @@ class test_helpers
     {
         const auto [aDstBitStr, aValue, aOffset, aNBits] = aData;
         using T = std::decay_t<decltype(aValue)>;
-        static_assert(rabbit::is_uint_v<T>, "Invalid T");
+        static_assert(endian::is_uint_v<T>, "Invalid T");
         constexpr auto kValueBitSize = rabbit::utils::num_bits<T>();
         assert(aNBits.get() <= kValueBitSize && "Invalid aNBits");
         assert(aOffset.get() + aNBits.get() <= aDstBitStr.size());
@@ -214,7 +215,7 @@ class test_helpers
                                         SrcBitOffset aSrcOffset,
                                         NumBits aNBits) noexcept
     {
-        static_assert(rabbit::is_uint_v<T>, "Invalid T");
+        static_assert(endian::is_uint_v<T>, "Invalid T");
         constexpr auto kBitsInValue = rabbit::utils::num_bits<T>();
         assert(aNBits.get() <= kBitsInValue);
         assert(aSrcOffset.get() <= CHAR_BIT);

@@ -1,3 +1,4 @@
+#include <endian/endian.h>
 #include <gtest/gtest.h>
 #include <strong_type/strong_type.h>
 
@@ -8,7 +9,6 @@
 
 #include "buffer_tests.h"
 #include "rabbit/bin_ops.h"
-#include "rabbit/endian.h"
 #include "rabbit/utils.h"
 
 using namespace std::string_view_literals;
@@ -101,7 +101,7 @@ template <typename T>
 constexpr decltype(auto) check_highNBits(T &&aValue, uint8_t aNBits) noexcept
 {
     using UIntT = std::remove_cv_t<std::remove_reference_t<T>>;
-    static_assert(rabbit::is_uint_v<UIntT>,
+    static_assert(endian::is_uint_v<UIntT>,
                   "UIntT must be unsigned integer and not bool.");
     auto result = bin_op::highNBits(std::forward<T>(aValue), aNBits);
     static_assert(std::is_same_v<decltype(result), UIntT>,
@@ -113,7 +113,7 @@ template <typename T>
 constexpr decltype(auto) check_lowNBits(T &&aValue, uint8_t aNBits) noexcept
 {
     using UIntT = std::remove_cv_t<std::remove_reference_t<T>>;
-    static_assert(rabbit::is_uint_v<UIntT>,
+    static_assert(endian::is_uint_v<UIntT>,
                   "UIntT must be unsigned integer and not bool.");
     auto result = bin_op::lowNBits(std::forward<T>(aValue), aNBits);
     static_assert(std::is_same_v<decltype(result), UIntT>,

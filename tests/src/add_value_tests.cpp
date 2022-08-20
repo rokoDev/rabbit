@@ -1,5 +1,7 @@
 #include "add_value_tests.h"
 
+#include <endian/endian.h>
+
 namespace
 {
 using namespace rabbit::test;
@@ -112,7 +114,7 @@ TEST_P(Args2UInt8, AddValue)
 {
     const auto [aDstBitStr, aValue] = GetParam();
     using ValueT = std::decay_t<decltype(aValue)>;
-    static_assert(rabbit::is_uint_v<ValueT>,
+    static_assert(endian::is_uint_v<ValueT>,
                   "ValueT must be unsigned integer type and not bool.");
     constexpr std::size_t kNBits = rabbit::utils::num_bits<ValueT>();
     const auto kParam =
@@ -130,7 +132,7 @@ TEST_P(Args2UInt16, AddValue)
 {
     const auto [aDstBitStr, aValue] = GetParam();
     using ValueT = std::decay_t<decltype(aValue)>;
-    static_assert(rabbit::is_uint_v<ValueT>,
+    static_assert(endian::is_uint_v<ValueT>,
                   "ValueT must be unsigned integer type and not bool.");
     constexpr std::size_t kNBits = rabbit::utils::num_bits<ValueT>();
     const auto kParam =
@@ -148,7 +150,7 @@ TEST_P(Args2UInt32, AddValue)
 {
     const auto [aDstBitStr, aValue] = GetParam();
     using ValueT = std::decay_t<decltype(aValue)>;
-    static_assert(rabbit::is_uint_v<ValueT>,
+    static_assert(endian::is_uint_v<ValueT>,
                   "ValueT must be unsigned integer type and not bool.");
     constexpr std::size_t kNBits = rabbit::utils::num_bits<ValueT>();
     const auto kParam =
@@ -166,7 +168,7 @@ TEST_P(Args2UInt64, AddValue)
 {
     const auto [aDstBitStr, aValue] = GetParam();
     using ValueT = std::decay_t<decltype(aValue)>;
-    static_assert(rabbit::is_uint_v<ValueT>,
+    static_assert(endian::is_uint_v<ValueT>,
                   "ValueT must be unsigned integer type and not bool.");
     constexpr std::size_t kNBits = rabbit::utils::num_bits<ValueT>();
     const auto kParam =

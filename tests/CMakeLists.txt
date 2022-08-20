@@ -8,7 +8,7 @@ cmake_path(APPEND FETCHCONTENT_BASE_DIR "${CMAKE_SOURCE_DIR}" "deps_content" "${
 FetchContent_Declare(
   googletest
   GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG        830fb567285c63ab5b5873e2e8b02f2249864916
+  GIT_TAG        c0e032efe587efa99413dd9ac54c3953a7915588
   )
 
 FetchContent_MakeAvailable(googletest)
@@ -149,7 +149,6 @@ set(test_src
   include/buffer_tests.h
   src/rabbit_tests.cpp
   src/bin_ops_tests.cpp
-  src/endian_tests.cpp
   )
 package_add_test(
   TEST_TARGET_NAME misc_tests

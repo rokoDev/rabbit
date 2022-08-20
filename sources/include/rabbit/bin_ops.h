@@ -1,12 +1,12 @@
 #ifndef rabbit_bin_ops_h
 #define rabbit_bin_ops_h
 
+#include <endian/endian.h>
 #include <strong_type/strong_type.h>
 
 #include <cstdint>
 
 #include "details.h"
-#include "endian.h"
 #include "utils.h"
 
 namespace rabbit
@@ -204,7 +204,7 @@ class Core final
             return;
         }
         using UIntT = std::decay_t<T>;
-        static_assert(is_uint_v<UIntT>,
+        static_assert(endian::is_uint_v<UIntT>,
                       "UIntT must be unsigned integer type and not bool.");
 
         assert(aDst != nullptr && "Invalid aDst");
@@ -230,7 +230,7 @@ class Core final
     static constexpr void addValue(Dst aDst, T &&aValue) noexcept
     {
         using UIntT = std::remove_cv_t<std::remove_reference_t<T>>;
-        static_assert(is_uint_v<UIntT>,
+        static_assert(endian::is_uint_v<UIntT>,
                       "UIntT must be unsigned integer type and not bool.");
         using Indices = std::make_index_sequence<sizeof(UIntT)>;
         details::addValue(aDst, std::forward<T>(aValue), Indices{});
@@ -240,7 +240,7 @@ class Core final
     static constexpr T getValue(Src aSrc, SrcBitOffset aSrcOffset,
                                 NumBits aNBits) noexcept
     {
-        static_assert(is_uint_v<T>,
+        static_assert(endian::is_uint_v<T>,
                       "T must be unsigned integer type and not bool.");
         T result{};
         if (!aNBits)
@@ -276,7 +276,7 @@ class Core final
     template <typename T>
     static constexpr T getValue(Src aSrc, NumBits aNBits) noexcept
     {
-        static_assert(is_uint_v<T>,
+        static_assert(endian::is_uint_v<T>,
                       "T must be unsigned integer type and not bool.");
         T result{};
         if (!aNBits)
@@ -295,7 +295,7 @@ class Core final
     template <typename T>
     static constexpr T getValue(Src aSrc) noexcept
     {
-        static_assert(is_uint_v<T>,
+        static_assert(endian::is_uint_v<T>,
                       "T must be unsigned integer type and not bool.");
         assert(aSrc != nullptr && "Invalid aSrc");
         return details::uint8_buf_to_value<T>(aSrc);

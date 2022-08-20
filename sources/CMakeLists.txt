@@ -8,17 +8,10 @@ endif()
 target_sources(rabbit
   PRIVATE
     include/rabbit/rabbit.h
-    include/rabbit/endian.h
     include/rabbit/bin_ops.h
     include/rabbit/utils.h
     include/rabbit/details.h
   )
-
-include(TestBigEndian)
-test_big_endian(HOST_BIG_ENDIAN)
-if(HOST_BIG_ENDIAN)
-  target_compile_definitions(rabbit INTERFACE HOST_BIG_ENDIAN)
-endif()
 
 target_compile_definitions(rabbit INTERFACE $<UPPER_CASE:$<CONFIG>>)
 set_property(TARGET rabbit APPEND PROPERTY SRC_DIRS "${CMAKE_CURRENT_LIST_DIR}/include")
