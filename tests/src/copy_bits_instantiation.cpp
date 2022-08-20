@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
+#include <user_literals/user_literals.h>
 
 #include <sstream>
 
 #include "copy_bits_tests.h"
-#include "rabbit/user_literals.h"
 #include "rabbit/utils.h"
 
 namespace

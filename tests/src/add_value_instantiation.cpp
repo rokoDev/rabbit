@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
+#include <user_literals/user_literals.h>
 
 #include <sstream>
 
 #include "add_value_tests.h"
-#include "rabbit/user_literals.h"
 
 namespace
 {

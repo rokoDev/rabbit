@@ -1,6 +1,8 @@
 #ifndef rabbit_test_helpers_h
 #define rabbit_test_helpers_h
 
+#include <user_literals/user_literals.h>
+
 #include <algorithm>
 #include <cstddef>
 #include <limits>
@@ -9,7 +11,6 @@
 
 #include "rabbit/bin_ops.h"
 #include "rabbit/details.h"
-#include "rabbit/user_literals.h"
 
 namespace rabbit
 {

@@ -22,15 +22,21 @@ FetchContent_Declare(
 	GIT_TAG        1b3c655287d7e05a1d37497facee8612c4109c00
 )
 
+FetchContent_Declare(
+	user_literals
+	GIT_REPOSITORY https://github.com/rokoDev/user_literals.git
+	GIT_TAG        5c62773ff93b21cc5868eb3c7377deb9a8d8ec97
+)
+
 # If necessary it's possible to use VersionHelper from different location instead of downloaded from GitHub
 # string(TOUPPER VersionHelper UP_VersionHelper)
 # set(FETCHCONTENT_SOURCE_DIR_${UP_VersionHelper} ${CMAKE_SOURCE_DIR}/../VersionHelper)
 
-FetchContent_MakeAvailable(VersionHelper boost_pfr strong_type)
-target_link_libraries(rabbit INTERFACE boost_pfr strong_type)
+FetchContent_MakeAvailable(VersionHelper boost_pfr strong_type user_literals)
+target_link_libraries(rabbit INTERFACE boost_pfr strong_type user_literals)
 
 # If use IDE add strong_type target into deps source group
-set_target_properties(strong_type PROPERTIES FOLDER deps)
+set_target_properties(strong_type user_literals PROPERTIES FOLDER deps)
 
 # Generate sources with information about rabbit version
 list(APPEND CMAKE_MODULE_PATH "${versionhelper_SOURCE_DIR}")

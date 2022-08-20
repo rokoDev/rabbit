@@ -12,7 +12,6 @@ target_sources(rabbit
     include/rabbit/bin_ops.h
     include/rabbit/utils.h
     include/rabbit/details.h
-    include/rabbit/user_literals.h
   )
 
 include(TestBigEndian)

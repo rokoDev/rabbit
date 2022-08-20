@@ -1,13 +1,13 @@
 #include "copy_bits_tests.h"
 
+#include <user_literals/user_literals.h>
+
 #include <algorithm>
 #include <cstring>
 #include <functional>
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "rabbit/user_literals.h"
 
 namespace
 {
