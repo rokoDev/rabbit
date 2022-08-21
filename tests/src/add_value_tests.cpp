@@ -1,6 +1,7 @@
 #include "add_value_tests.h"
 
 #include <endian/endian.h>
+#include <utils/utils.h>
 
 namespace
 {
@@ -116,7 +117,7 @@ TEST_P(Args2UInt8, AddValue)
     using ValueT = std::decay_t<decltype(aValue)>;
     static_assert(endian::is_uint_v<ValueT>,
                   "ValueT must be unsigned integer type and not bool.");
-    constexpr std::size_t kNBits = rabbit::utils::num_bits<ValueT>();
+    constexpr std::size_t kNBits = utils::num_bits<ValueT>();
     const auto kParam =
         QuadrupleData8T{aDstBitStr, aValue, DstBitOffset(0), NumBits(kNBits)};
     const auto kExpected = helpers::addValueExpected(kParam);
@@ -134,7 +135,7 @@ TEST_P(Args2UInt16, AddValue)
     using ValueT = std::decay_t<decltype(aValue)>;
     static_assert(endian::is_uint_v<ValueT>,
                   "ValueT must be unsigned integer type and not bool.");
-    constexpr std::size_t kNBits = rabbit::utils::num_bits<ValueT>();
+    constexpr std::size_t kNBits = utils::num_bits<ValueT>();
     const auto kParam =
         QuadrupleData16T{aDstBitStr, aValue, DstBitOffset(0), NumBits(kNBits)};
     const auto kExpected = helpers::addValueExpected(kParam);
@@ -152,7 +153,7 @@ TEST_P(Args2UInt32, AddValue)
     using ValueT = std::decay_t<decltype(aValue)>;
     static_assert(endian::is_uint_v<ValueT>,
                   "ValueT must be unsigned integer type and not bool.");
-    constexpr std::size_t kNBits = rabbit::utils::num_bits<ValueT>();
+    constexpr std::size_t kNBits = utils::num_bits<ValueT>();
     const auto kParam =
         QuadrupleData32T{aDstBitStr, aValue, DstBitOffset(0), NumBits(kNBits)};
     const auto kExpected = helpers::addValueExpected(kParam);
@@ -170,7 +171,7 @@ TEST_P(Args2UInt64, AddValue)
     using ValueT = std::decay_t<decltype(aValue)>;
     static_assert(endian::is_uint_v<ValueT>,
                   "ValueT must be unsigned integer type and not bool.");
-    constexpr std::size_t kNBits = rabbit::utils::num_bits<ValueT>();
+    constexpr std::size_t kNBits = utils::num_bits<ValueT>();
     const auto kParam =
         QuadrupleData64T{aDstBitStr, aValue, DstBitOffset(0), NumBits(kNBits)};
     const auto kExpected = helpers::addValueExpected(kParam);

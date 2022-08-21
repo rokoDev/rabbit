@@ -9,7 +9,6 @@ target_sources(rabbit
   PRIVATE
     include/rabbit/rabbit.h
     include/rabbit/bin_ops.h
-    include/rabbit/utils.h
     include/rabbit/details.h
   )
 

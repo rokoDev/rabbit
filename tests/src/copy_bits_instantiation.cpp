@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
 #include <user_literals/user_literals.h>
+#include <utils/utils.h>
 
 #include <sstream>
 
 #include "copy_bits_tests.h"
-#include "rabbit/utils.h"
 
 namespace
 {
@@ -13,13 +13,13 @@ using ::testing::Combine;
 using ::testing::ValuesIn;
 
 constexpr auto kDstBitOffsetsArray =
-    rabbit::make_array_from_range<0_uf8, 7_uf8, 1_uf8, DstBitOffset>();
+    utils::make_array_from_range<0_uf8, 7_uf8, 1_uf8, DstBitOffset>();
 constexpr auto kSrcBitOffsetsArray =
-    rabbit::make_array_from_range<0_uf8, 7_uf8, 1_uf8, SrcBitOffset>();
+    utils::make_array_from_range<0_uf8, 7_uf8, 1_uf8, SrcBitOffset>();
 constexpr auto kBitOffsetsArray =
-    rabbit::make_array_from_range<0_uf8, 7_uf8, 1_uf8, BitOffset>();
+    utils::make_array_from_range<0_uf8, 7_uf8, 1_uf8, BitOffset>();
 constexpr auto kNBitsArray =
-    rabbit::make_array_from_range<0_uz, 70_uz, 1_uz, NumBits>();
+    utils::make_array_from_range<0_uz, 70_uz, 1_uz, NumBits>();
 
 const auto kTestDatas = TestDataFactory::presetData();
 

@@ -3,6 +3,7 @@
 
 #include <endian/endian.h>
 #include <user_literals/user_literals.h>
+#include <utils/utils.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -111,10 +112,9 @@ class test_helpers
     template <std::size_t NBits, typename ArrayT>
     static constexpr decltype(auto) to_symbol_array(ArrayT &&aArray) noexcept
     {
-        using namespace rabbit;
-        static_assert(std::is_same_v<std_array_data_t<ArrayT>, uint8_t>,
+        static_assert(std::is_same_v<utils::std_array_data_t<ArrayT>, uint8_t>,
                       "Elements of aArray must belong to uint8_t type.");
-        constexpr std::size_t kMaxNBytes = std_array_size_v<ArrayT>;
+        constexpr std::size_t kMaxNBytes = utils::std_array_size_v<ArrayT>;
         static_assert(NBits <= kMaxNBytes * CHAR_BIT, "Invalid NBits.");
         std::array<char, NBits> result{};
         to_symbol_buf(result.data(), aArray.data(), NBits);
@@ -124,7 +124,7 @@ class test_helpers
     template <typename ArrayT>
     static constexpr decltype(auto) to_symbol_array(ArrayT &&aArray) noexcept
     {
-        constexpr std::size_t kNBytes = rabbit::std_array_size_v<ArrayT>;
+        constexpr std::size_t kNBytes = utils::std_array_size_v<ArrayT>;
         return to_symbol_array<kNBytes * CHAR_BIT>(
             std::forward<ArrayT>(aArray));
     }
@@ -185,7 +185,7 @@ class test_helpers
         const auto [aDstBitStr, aValue, aOffset, aNBits] = aData;
         using T = std::decay_t<decltype(aValue)>;
         static_assert(endian::is_uint_v<T>, "Invalid T");
-        constexpr auto kValueBitSize = rabbit::utils::num_bits<T>();
+        constexpr auto kValueBitSize = utils::num_bits<T>();
         assert(aNBits.get() <= kValueBitSize && "Invalid aNBits");
         assert(aOffset.get() + aNBits.get() <= aDstBitStr.size());
 
@@ -216,12 +216,12 @@ class test_helpers
                                         NumBits aNBits) noexcept
     {
         static_assert(endian::is_uint_v<T>, "Invalid T");
-        constexpr auto kBitsInValue = rabbit::utils::num_bits<T>();
+        constexpr auto kBitsInValue = utils::num_bits<T>();
         assert(aNBits.get() <= kBitsInValue);
         assert(aSrcOffset.get() <= CHAR_BIT);
         assert(aSrcOffset.get() + aNBits.get() <= aSrcBitStr.size());
 
-        auto valueBitsArr = make_array<char, kBitsInValue>('0');
+        auto valueBitsArr = utils::make_array<char, kBitsInValue>('0');
         std::string_view valueBitStr{aSrcBitStr.data() + aSrcOffset.get(),
                                      aNBits.get()};
 

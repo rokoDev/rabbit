@@ -2,6 +2,7 @@
 #define get_value_tests_h
 
 #include <gtest/gtest.h>
+#include <utils/utils.h>
 
 #include <string_view>
 #include <vector>
@@ -79,7 +80,7 @@ class GetValueBase : public TestWithParam<DataT>
         }
         else
         {
-            constexpr auto kNBits = NumBits{rabbit::utils::num_bits<T>()};
+            constexpr auto kNBits = NumBits{utils::num_bits<T>()};
             const auto [aSrcBitStr] = TestWithParam<DataT>::GetParam();
             return helpers::getValueExpected<T>(aSrcBitStr, SrcBitOffset{0},
                                                 kNBits);

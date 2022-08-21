@@ -1,6 +1,7 @@
 #ifndef copy_bits_constexpr_tests_h
 #define copy_bits_constexpr_tests_h
 #include <gtest/gtest.h>
+#include <utils/utils.h>
 
 #include <string>
 #include <string_view>
@@ -83,7 +84,7 @@ TYPED_TEST_P(CopyBitsCompileTime, With5ArgsNBitsDstOffsetSrcOffset)
 {
     constexpr auto kActual = TestFixture::actual();
     constexpr auto kExpected = TestFixture::expected();
-    constexpr bool kSuccess = rabbit::is_equal(kActual, kExpected);
+    constexpr bool kSuccess = utils::is_equal(kActual, kExpected);
     static_assert(kSuccess, "Unexpected kResult.");
 }
 
@@ -94,7 +95,7 @@ template <typename TypeList>
 struct testing_type;
 
 template <typename... Ts>
-struct testing_type<rabbit::type_list<Ts...>>
+struct testing_type<utils::type_list<Ts...>>
 {
     using type = ::testing::Types<Ts...>;
 };
@@ -106,18 +107,18 @@ using dst_offset_t = rabbit::DstBitOffset::value_type;
 using src_offset_t = rabbit::DstBitOffset::value_type;
 
 using DstOffsetsT =
-    rabbit::values_in_range_t<static_cast<dst_offset_t>(0),
-                              static_cast<dst_offset_t>(CHAR_BIT - 1)>;
+    utils::values_in_range_t<static_cast<dst_offset_t>(0),
+                             static_cast<dst_offset_t>(CHAR_BIT - 1)>;
 using SrcOffsetsT =
-    rabbit::values_in_range_t<static_cast<src_offset_t>(0),
-                              static_cast<src_offset_t>(CHAR_BIT - 1)>;
+    utils::values_in_range_t<static_cast<src_offset_t>(0),
+                             static_cast<src_offset_t>(CHAR_BIT - 1)>;
 
 template <auto... NBitVals>
 struct copy_bits_types
 {
-    using NumBits = rabbit::values<NBitVals...>;
+    using NumBits = utils::values<NBitVals...>;
     using Combinations =
-        rabbit::cartesian_product_t<NumBits, DstOffsetsT, SrcOffsetsT>;
+        utils::cartesian_product_t<NumBits, DstOffsetsT, SrcOffsetsT>;
     using type = testing_type_t<Combinations>;
 };
 

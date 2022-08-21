@@ -1,6 +1,7 @@
 #include <endian/endian.h>
 #include <gtest/gtest.h>
 #include <strong_type/strong_type.h>
+#include <utils/utils.h>
 
 #include <random>
 #include <string>
@@ -9,7 +10,6 @@
 
 #include "buffer_tests.h"
 #include "rabbit/bin_ops.h"
-#include "rabbit/utils.h"
 
 using namespace std::string_view_literals;
 
@@ -280,7 +280,7 @@ TEST_F(N4BinOpsTest, addValue32Shifted)
 {
     using U = uint32_t;
     using Indices =
-        rabbit::shifted_sequence_t<std::make_index_sequence<sizeof(U) - 1>, 1>;
+        utils::shifted_sequence_t<std::make_index_sequence<sizeof(U) - 1>, 1>;
     constexpr U valueToAdd{0b10101010'10100101'00010000'11111111};
     bin_op::addValue(array_.data(), valueToAdd, Indices{});
     ASSERT_EQ(array_[0], uint8_t{0b00000000});

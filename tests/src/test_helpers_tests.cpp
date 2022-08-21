@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <utils/utils.h>
 
 #include <array>
 #include <string_view>
@@ -27,7 +28,7 @@ TEST(ConvertBitStringView, ToBinArray1)
     constexpr auto kResultArray =
         helpers::to_uint8_array<kBitStr.size()>(kBitStr);
     constexpr std::array<uint8_t, 0> kExpectedArray{};
-    static_assert(rabbit::is_equal(kResultArray, kExpectedArray),
+    static_assert(utils::is_equal(kResultArray, kExpectedArray),
                   "kResultArray must be equal to kExpectedArray");
 }
 
@@ -37,7 +38,7 @@ TEST(ConvertBitStringView, ToBinArray2)
     constexpr auto kResultArray =
         helpers::to_uint8_array<kBitStr.size()>(kBitStr);
     constexpr std::array<uint8_t, 1> kExpectedArray{0b10000000};
-    static_assert(rabbit::is_equal(kResultArray, kExpectedArray),
+    static_assert(utils::is_equal(kResultArray, kExpectedArray),
                   "kResultArray must be equal to kExpectedArray");
 }
 
@@ -47,7 +48,7 @@ TEST(ConvertBitStringView, ToBinArray3)
     constexpr auto kResultArray =
         helpers::to_uint8_array<kBitStr.size()>(kBitStr);
     constexpr std::array<uint8_t, 1> kExpectedArray{0b00000000};
-    static_assert(rabbit::is_equal(kResultArray, kExpectedArray),
+    static_assert(utils::is_equal(kResultArray, kExpectedArray),
                   "kResultArray must be equal to kExpectedArray");
 }
 
@@ -57,7 +58,7 @@ TEST(ConvertBitStringView, ToBinArray4)
     constexpr auto kResultArray =
         helpers::to_uint8_array<kBitStr.size()>(kBitStr);
     constexpr std::array<uint8_t, 1> kExpectedArray{0b10100000};
-    static_assert(rabbit::is_equal(kResultArray, kExpectedArray),
+    static_assert(utils::is_equal(kResultArray, kExpectedArray),
                   "kResultArray must be equal to kExpectedArray");
 }
 
@@ -67,7 +68,7 @@ TEST(ConvertBitStringView, ToBinArray5)
     constexpr auto kResultArray =
         helpers::to_uint8_array<kBitStr.size()>(kBitStr);
     constexpr std::array<uint8_t, 1> kExpectedArray{0b10100101};
-    static_assert(rabbit::is_equal(kResultArray, kExpectedArray),
+    static_assert(utils::is_equal(kResultArray, kExpectedArray),
                   "kResultArray must be equal to kExpectedArray");
 }
 
@@ -77,7 +78,7 @@ TEST(ConvertBitStringView, ToBinArray6)
     constexpr auto kResultArray =
         helpers::to_uint8_array<kBitStr.size()>(kBitStr);
     constexpr std::array<uint8_t, 2> kExpectedArray{0b10100101, 0b10000000};
-    static_assert(rabbit::is_equal(kResultArray, kExpectedArray),
+    static_assert(utils::is_equal(kResultArray, kExpectedArray),
                   "kResultArray must be equal to kExpectedArray");
 }
 
@@ -88,7 +89,7 @@ TEST(ConvertBitStringView, ToBinArray7)
         helpers::to_uint8_array<kBitStr.size()>(kBitStr);
     constexpr std::array<uint8_t, 3> kExpectedArray{0b10101010, 0b01111110,
                                                     0b01000010};
-    static_assert(rabbit::is_equal(kResultArray, kExpectedArray),
+    static_assert(utils::is_equal(kResultArray, kExpectedArray),
                   "kResultArray must be equal to kExpectedArray");
 }
 
@@ -99,7 +100,7 @@ TEST(ConvertBitStringView, ToBinArray8)
         helpers::to_uint8_array<kBitStr.size()>(kBitStr);
     constexpr std::array<uint8_t, 4> kExpectedArray{0b10101010, 0b01111110,
                                                     0b11000011, 0b10000000};
-    static_assert(rabbit::is_equal(kResultArray, kExpectedArray),
+    static_assert(utils::is_equal(kResultArray, kExpectedArray),
                   "kResultArray must be equal to kExpectedArray");
 }
 

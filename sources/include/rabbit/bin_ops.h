@@ -3,11 +3,11 @@
 
 #include <endian/endian.h>
 #include <strong_type/strong_type.h>
+#include <utils/utils.h>
 
 #include <cstdint>
 
 #include "details.h"
-#include "utils.h"
 
 namespace rabbit
 {
@@ -134,7 +134,7 @@ class Core final
 
                 uint16_t value =
                     details::get<uint16_t, eAlign::kRight>(aSrc, kNBytesToRead);
-                using FastUIntT = FastUInt<kNBytesToWrite>;
+                using FastUIntT = utils::FastUInt<kNBytesToWrite>;
                 const std::size_t kROffset = static_cast<std::size_t>(
                     kNBytesToRead * CHAR_BIT - kSrcNBits);
                 const std::size_t kLOffset = sizeof(FastUIntT) * CHAR_BIT -

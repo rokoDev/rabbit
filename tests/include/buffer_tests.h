@@ -1,11 +1,11 @@
 #ifndef buffer_tests_h
 #define buffer_tests_h
 
+#include <utils/utils.h>
+
 #include <charconv>
 #include <iostream>
 #include <string>
-
-#include "rabbit/utils.h"
 
 template <std::size_t BufSize, typename DataT = uint8_t>
 class Buffer
@@ -13,11 +13,11 @@ class Buffer
    public:
     template <typename T, typename... U>
     constexpr Buffer(T &&aFirstArg, U &&...aRestArgs) noexcept
-        : array_{rabbit::concatenate_arrays(
-              rabbit::make_array(static_cast<DataT>(aFirstArg),
-                                 static_cast<DataT>(aRestArgs)...),
-              rabbit::make_zero_array<DataT,
-                                      BufSize - sizeof...(aRestArgs) - 1>())}
+        : array_{utils::concatenate_arrays(
+              utils::make_array(static_cast<DataT>(aFirstArg),
+                                static_cast<DataT>(aRestArgs)...),
+              utils::make_zero_array<DataT,
+                                     BufSize - sizeof...(aRestArgs) - 1>())}
     {
     }
 

@@ -1,10 +1,10 @@
 #include "test_helpers.h"
 
+#include <utils/utils.h>
+
 #include <array>
 #include <string_view>
 #include <utility>
-
-#include "rabbit/utils.h"
 
 namespace rabbit
 {

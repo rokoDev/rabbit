@@ -2,10 +2,9 @@
 #define rabbit_details_h
 
 #include <endian/endian.h>
+#include <utils/utils.h>
 
 #include <cassert>
-
-#include "utils.h"
 
 namespace rabbit
 {
@@ -189,7 +188,7 @@ constexpr T maskL(std::size_t aOffset) noexcept
 template <typename T>
 constexpr uint8_t byteAt(T &&aValue, std::size_t aIndex) noexcept
 {
-    using PureT = remove_cvref_t<T>;
+    using PureT = utils::remove_cvref_t<T>;
     assert((aIndex < sizeof(PureT)) && "Invalid aIndex.");
     return static_cast<uint8_t>(
         static_cast<PureT>(aValue << aIndex * CHAR_BIT) >>
@@ -339,12 +338,14 @@ constexpr T get(uint8_t const *const aSrc) noexcept
 template <typename T1, typename T2, typename T3>
 constexpr decltype(auto) composition(T1 &&aDst, T2 &&aSrc, T3 &&aMask) noexcept
 {
-    using UIntT = remove_cvref_t<T1>;
+    using UIntT = utils::remove_cvref_t<T1>;
     static_assert(
         endian::is_uint_v<UIntT>,
         "UIntT must be unsigned integer type. And bool is forbidden.");
-    static_assert(std::is_same_v<UIntT, remove_cvref_t<T2>>, "Invalid T2");
-    static_assert(std::is_same_v<UIntT, remove_cvref_t<T3>>, "Invalid T3");
+    static_assert(std::is_same_v<UIntT, utils::remove_cvref_t<T2>>,
+                  "Invalid T2");
+    static_assert(std::is_same_v<UIntT, utils::remove_cvref_t<T3>>,
+                  "Invalid T3");
     UIntT result = static_cast<UIntT>((aMask & aSrc) | (~aMask & aDst));
     return result;
 }
@@ -353,11 +354,12 @@ template <typename T1, typename T2>
 constexpr decltype(auto) addHighBits(T1 &&aTo, T2 &&aFrom,
                                      uint_fast8_t aNBits) noexcept
 {
-    using UIntT = remove_cvref_t<T1>;
+    using UIntT = utils::remove_cvref_t<T1>;
     static_assert(
         endian::is_uint_v<UIntT>,
         "UIntT must be unsigned integer type. And bool is forbidden.");
-    static_assert(std::is_same_v<UIntT, remove_cvref_t<T2>>, "Invalid T2");
+    static_assert(std::is_same_v<UIntT, utils::remove_cvref_t<T2>>,
+                  "Invalid T2");
     constexpr std::size_t kBitsInValue = sizeof(UIntT) * CHAR_BIT;
     assert(aNBits <= kBitsInValue);
     auto lMask = maskL<UIntT>(kBitsInValue - aNBits);
@@ -369,11 +371,12 @@ template <typename T1, typename T2>
 constexpr decltype(auto) addLowBits(T1 &&aTo, T2 &&aFrom,
                                     uint_fast8_t aNBits) noexcept
 {
-    using UIntT = remove_cvref_t<T1>;
+    using UIntT = utils::remove_cvref_t<T1>;
     static_assert(
         endian::is_uint_v<UIntT>,
         "UIntT must be unsigned integer type. And bool is forbidden.");
-    static_assert(std::is_same_v<UIntT, remove_cvref_t<T2>>, "Invalid T2");
+    static_assert(std::is_same_v<UIntT, utils::remove_cvref_t<T2>>,
+                  "Invalid T2");
     constexpr std::size_t kBitsInValue = sizeof(UIntT) * CHAR_BIT;
     assert(aNBits <= kBitsInValue);
     auto rMask = maskR<UIntT>(kBitsInValue - aNBits);
@@ -401,7 +404,7 @@ constexpr void addUInt64High(uint8_t *const aDst, const uint_fast8_t aNBits,
     assert(kOffset > 0);
     assert(highNBits(byteAt<0>(aValue), kOffset) == 0);
     *aDst = byteAt<0>(aValue) | highNBits(*aDst, kOffset);
-    using Indices = shifted_sequence_t<
+    using Indices = utils::shifted_sequence_t<
         std::make_index_sequence<static_cast<std::size_t>(sizeof(UIntT) - 1)>,
         static_cast<std::size_t>(1)>;
     addValue(aDst, std::forward<T>(aValue), Indices{});
@@ -446,7 +449,7 @@ constexpr void addBits(uint8_t *const aDst, uint_fast8_t aOffset,
 {
     const std::size_t NBytes = bytesCount(aOffset, aNBits);
     assert(NBytes > 0 && "NBytes must be positive");
-    using UIntT = remove_cvref_t<T>;
+    using UIntT = utils::remove_cvref_t<T>;
     static_assert(endian::is_uint_v<UIntT>, "UIntT must be unsigned integer");
     assert(NBytes <= sizeof(UIntT) && "Invalid NBytes");
     const auto kMask = mask<UIntT>(aOffset, aNBits);
@@ -461,7 +464,7 @@ constexpr void addBits(uint8_t *const aDst, uint_fast8_t aOffset,
                        std::size_t aNBits, T &&aValue) noexcept
 {
     static_assert(NBytes > 0, "NBytes must be positive");
-    using UIntT = remove_cvref_t<T>;
+    using UIntT = utils::remove_cvref_t<T>;
     static_assert(endian::is_uint_v<UIntT>, "UIntT must be unsigned integer");
     static_assert(NBytes <= sizeof(UIntT), "Invalid NBytes");
     const auto kMask = mask<UIntT>(aOffset, aNBits);

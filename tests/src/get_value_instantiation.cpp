@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <user_literals/user_literals.h>
+#include <utils/utils.h>
 
 #include <sstream>
 
@@ -14,22 +15,22 @@ using ::testing::Values;
 using ::testing::ValuesIn;
 
 constexpr auto kSrcBitOffsetsArray =
-    rabbit::make_array_from_range<0_uf8, 7_uf8, 1_uf8, SrcBitOffset>();
+    utils::make_array_from_range<0_uf8, 7_uf8, 1_uf8, SrcBitOffset>();
 
 static inline constexpr auto k80SrcBits =
     "11001110110100010101100100001010011001011001101111100010101001111111010101100110"sv;
 
 static inline constexpr auto kNBitsArray8 =
-    rabbit::make_array_from_range<0_uz, 8_uz, 1_uz, NumBits>();
+    utils::make_array_from_range<0_uz, 8_uz, 1_uz, NumBits>();
 
 static inline constexpr auto kNBitsArray16 =
-    rabbit::make_array_from_range<0_uz, 16_uz, 1_uz, NumBits>();
+    utils::make_array_from_range<0_uz, 16_uz, 1_uz, NumBits>();
 
 static inline constexpr auto kNBitsArray32 =
-    rabbit::make_array_from_range<0_uz, 32_uz, 1_uz, NumBits>();
+    utils::make_array_from_range<0_uz, 32_uz, 1_uz, NumBits>();
 
 static inline constexpr auto kNBitsArray64 =
-    rabbit::make_array_from_range<0_uz, 64_uz, 1_uz, NumBits>();
+    utils::make_array_from_range<0_uz, 64_uz, 1_uz, NumBits>();
 
 // getValue tests instantiation
 template <typename T>

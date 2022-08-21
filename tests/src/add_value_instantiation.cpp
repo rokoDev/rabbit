@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <user_literals/user_literals.h>
+#include <utils/utils.h>
 
 #include <sstream>
 
@@ -16,25 +17,25 @@ using ::testing::ValuesIn;
 static inline constexpr auto k72DstBits =
     "101010100100101010101101111001000110100000000111011111110001011011110101"sv;
 static inline constexpr auto kDstOffsets =
-    rabbit::make_array_from_range<0_uf8, 7_uf8, 1_uf8, DstBitOffset>();
+    utils::make_array_from_range<0_uf8, 7_uf8, 1_uf8, DstBitOffset>();
 
 static inline constexpr uint64_t kValue8 = 0b10110110;
 static inline constexpr auto kNBitsArray8 =
-    rabbit::make_array_from_range<0_uz, 8_uz, 1_uz, NumBits>();
+    utils::make_array_from_range<0_uz, 8_uz, 1_uz, NumBits>();
 
 static inline constexpr uint64_t kValue16 = 0b11110100'10000111;
 static inline constexpr auto kNBitsArray16 =
-    rabbit::make_array_from_range<0_uz, 16_uz, 1_uz, NumBits>();
+    utils::make_array_from_range<0_uz, 16_uz, 1_uz, NumBits>();
 
 static inline constexpr uint64_t kValue32 =
     0b11100111'10110110'10111011'01111001;
 static inline constexpr auto kNBitsArray32 =
-    rabbit::make_array_from_range<0_uz, 32_uz, 1_uz, NumBits>();
+    utils::make_array_from_range<0_uz, 32_uz, 1_uz, NumBits>();
 
 static inline constexpr uint64_t kValue64 =
     0b11100111'10110110'10111011'01111001'00000010'01110000'11110100'10000111;
 static inline constexpr auto kNBitsArray64 =
-    rabbit::make_array_from_range<0_uz, 64_uz, 1_uz, NumBits>();
+    utils::make_array_from_range<0_uz, 64_uz, 1_uz, NumBits>();
 
 // addValue tests instantiation
 template <typename T>
