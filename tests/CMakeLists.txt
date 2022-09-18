@@ -38,6 +38,7 @@ function(package_add_test)
   set(multiValues
     TEST_SOURCES
     EXTRA_TARGETS
+    DEFS
     )
 
   cmake_parse_arguments(${prefix}
@@ -56,6 +57,11 @@ function(package_add_test)
   foreach(target_to_link IN LISTS EXTRA_TARGETS)
       target_link_libraries(${TEST_TARGET_NAME} PUBLIC ${target_to_link})
   endforeach()
+
+  foreach(define IN LISTS DEFS)
+      target_compile_definitions(${TEST_TARGET_NAME} PRIVATE ${define})
+  endforeach()
+
   add_test(NAME ${TEST_TARGET_NAME} COMMAND ${TEST_TARGET_NAME})
 
   # Create groups in the IDE which mirrors directory structure on the hard disk

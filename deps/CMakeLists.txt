@@ -37,7 +37,7 @@ FetchContent_Declare(
 FetchContent_Declare(
 	utils
 	GIT_REPOSITORY https://github.com/rokoDev/utils.git
-	GIT_TAG        fcea2ec10c95ca97f190aba76c8fa0c8b547b7ec
+	GIT_TAG        ba8eeb3ea510d5a0cd6646f786173a85b729f497
 )
 
 # If necessary it's possible to use VersionHelper from different location instead of downloaded from GitHub
