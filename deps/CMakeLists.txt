@@ -11,15 +11,9 @@ FetchContent_Declare(
 )
 
 FetchContent_Declare(
-	boost_pfr
-	GIT_REPOSITORY https://github.com/boostorg/pfr.git
-	GIT_TAG        8a8b5bc8d3ff673c4b278d145f6bf6973844d8e9
-)
-
-FetchContent_Declare(
 	strong_type
 	GIT_REPOSITORY https://github.com/rokoDev/strong_type.git
-	GIT_TAG        1b3c655287d7e05a1d37497facee8612c4109c00
+	GIT_TAG        b34f11ad2cbb164030a56a80e488cfd716d43b5d
 )
 
 FetchContent_Declare(
@@ -37,18 +31,30 @@ FetchContent_Declare(
 FetchContent_Declare(
 	utils
 	GIT_REPOSITORY https://github.com/rokoDev/utils.git
-	GIT_TAG        ba8eeb3ea510d5a0cd6646f786173a85b729f497
+	GIT_TAG        2d05214467e543abf5fa09ce53a4b502324fde8f
+)
+
+FetchContent_Declare(
+	buffer
+	GIT_REPOSITORY https://github.com/rokoDev/buffer.git
+	GIT_TAG        dd43d5ca814eec31cce9fcfe5ea740cbaaa9e778
+)
+
+FetchContent_Declare(
+	boost_leaf
+	GIT_REPOSITORY https://github.com/boostorg/leaf.git
+	GIT_TAG        9d3ffa0f1c859a34da6175b53572fd4f2a61bb18
 )
 
 # If necessary it's possible to use VersionHelper from different location instead of downloaded from GitHub
 # string(TOUPPER VersionHelper UP_VersionHelper)
 # set(FETCHCONTENT_SOURCE_DIR_${UP_VersionHelper} ${CMAKE_SOURCE_DIR}/../VersionHelper)
 
-FetchContent_MakeAvailable(VersionHelper boost_pfr strong_type user_literals endian utils)
-target_link_libraries(rabbit INTERFACE boost_pfr strong_type user_literals endian utils)
+FetchContent_MakeAvailable(VersionHelper strong_type user_literals endian utils buffer boost_leaf)
+target_link_libraries(rabbit INTERFACE strong_type user_literals endian utils buffer boost_leaf)
 
 # If use IDE add strong_type target into deps source group
-set_target_properties(strong_type user_literals endian utils PROPERTIES FOLDER deps)
+set_target_properties(strong_type user_literals endian utils buffer boost_leaf PROPERTIES FOLDER deps)
 
 # Generate sources with information about rabbit version
 list(APPEND CMAKE_MODULE_PATH "${versionhelper_SOURCE_DIR}")

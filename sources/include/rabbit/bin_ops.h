@@ -1,6 +1,7 @@
 #ifndef rabbit_bin_ops_h
 #define rabbit_bin_ops_h
 
+#include <buffer/buffer.h>
 #include <endian/endian.h>
 #include <strong_type/strong_type.h>
 #include <utils/utils.h>
@@ -30,8 +31,7 @@ using DstBitOffset =
     strong::strong_type<struct DstBitOffsetTag, uint_fast8_t, NecessaryOps>;
 using BitOffset =
     strong::strong_type<struct BitOffsetTag, uint_fast8_t, NecessaryOps>;
-using NumBits =
-    strong::strong_type<struct NumBitsTag, std::size_t, NecessaryOps>;
+using NumBits = buffer::n_bits;
 
 template <typename StrongT>
 struct DataPtrOps
@@ -144,7 +144,7 @@ class Core final
                 details::addBits(aDst, aDstOffset.get(), kBitsToAdd,
                                  std::move(kValue));
 
-                aNBits -= kBitsToAdd;
+                aNBits -= NumBits(kBitsToAdd);
 
                 if (!aNBits)
                 {
@@ -229,7 +229,7 @@ class Core final
     template <typename T>
     static constexpr void addValue(Dst aDst, T &&aValue) noexcept
     {
-        using UIntT = std::remove_cv_t<std::remove_reference_t<T>>;
+        using UIntT = utils::remove_cvref_t<T>;
         static_assert(endian::is_uint_v<UIntT>,
                       "UIntT must be unsigned integer type and not bool.");
         using Indices = std::make_index_sequence<sizeof(UIntT)>;

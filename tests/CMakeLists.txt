@@ -162,5 +162,14 @@ package_add_test(
   EXTRA_TARGETS rabbit tests_main
 	)
 
+set(test_src
+  src/bin_writer_tests.cpp
+  )
+package_add_test(
+  TEST_TARGET_NAME bin_writer_tests
+  TEST_SOURCES ${test_src}
+  EXTRA_TARGETS rabbit tests_main gmock
+  )
+
 # If use IDE add gtest, gmock, gtest_main and gmock_main targets into deps/googletest group
 set_target_properties(gtest gmock gtest_main gmock_main PROPERTIES FOLDER deps/googletest)

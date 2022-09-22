@@ -10,9 +10,19 @@ target_sources(rabbit
     include/rabbit/rabbit.h
     include/rabbit/bin_ops.h
     include/rabbit/details.h
+    include/rabbit/bin_writer.h
   )
 
-target_compile_definitions(rabbit INTERFACE $<UPPER_CASE:$<CONFIG>>)
+target_compile_definitions(rabbit
+  INTERFACE
+  $<UPPER_CASE:$<CONFIG>>
+  BOOST_LEAF_NO_EXCEPTIONS=0
+  BOOST_LEAF_CFG_STD_SYSTEM_ERROR=0
+  BOOST_LEAF_CFG_STD_STRING=0
+  BOOST_LEAF_CFG_DIAGNOSTICS=0
+  BOOST_LEAF_CFG_GNUC_STMTEXPR=0
+  )
+
 set_property(TARGET rabbit APPEND PROPERTY SRC_DIRS "${CMAKE_CURRENT_LIST_DIR}/include")
 target_include_directories(rabbit INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
