@@ -11,6 +11,7 @@ target_sources(rabbit
     include/rabbit/bin_ops.h
     include/rabbit/details.h
     include/rabbit/bin_writer.h
+    include/rabbit/bin_reader.h
   )
 
 target_compile_definitions(rabbit
