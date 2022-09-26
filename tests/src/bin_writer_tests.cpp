@@ -298,7 +298,8 @@ TEST_F(BinWriter, SerializeMoreBitsThanContainsInSource)
     execute(
         [&]() -> result<void>
         {
-            uint8_t arr[] = {0b00000101, 0b00011100, 0b10101010, 0b11001100};
+            const uint8_t arr[] = {0b00000101, 0b00011100, 0b10101010,
+                                   0b11001100};
             BOOST_LEAF_CHECK(writer->addBits(arr, NumBits(5 * CHAR_BIT)));
             return {};
         });

@@ -41,7 +41,7 @@ result<void> validate_args(buf_view aBufView, bit_pos aStartBit) noexcept
 }
 
 template <std::size_t N>
-result<void> validate_args(uint8_t (&)[N], NumBits aNBits) noexcept
+result<void> validate_args(const uint8_t (&)[N], NumBits aNBits) noexcept
 {
     if (aNBits <= N * CHAR_BIT)
     {
@@ -172,14 +172,14 @@ class bin_writer
     }
 
     template <std::size_t N>
-    result<void> addBits(uint8_t (&aSrc)[N], NumBits aNBits) noexcept
+    result<void> addBits(const uint8_t (&aSrc)[N], NumBits aNBits) noexcept
     {
         BOOST_LEAF_CHECK(details::validate_args(aSrc, aNBits));
         return addBits(Src(aSrc), aNBits);
     }
 
     template <std::size_t N>
-    result<void> addBits(uint8_t (&aSrc)[N]) noexcept
+    result<void> addBits(const uint8_t (&aSrc)[N]) noexcept
     {
         return addBits(Src(aSrc), NumBits(N * CHAR_BIT));
     }
