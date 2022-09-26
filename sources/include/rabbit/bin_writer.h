@@ -1,20 +1,12 @@
 #ifndef rabbit_bin_writer_h
 #define rabbit_bin_writer_h
 
-#include <buffer/buffer.h>
-
-#include <boost/leaf.hpp>
 #include <utility>
 
 #include "bin_ops.h"
 
 namespace rabbit
 {
-namespace leaf = boost::leaf;
-
-template <class T>
-using result = leaf::result<T>;
-
 enum class writer_error
 {
     invalid_start_pos = 1,
@@ -23,11 +15,6 @@ enum class writer_error
     null_src_bits_array,
     write_more_than_source_size
 };
-
-using buf_view = buffer::buffer_view<uint8_t>;
-using buf_view_const = buffer::buffer_view_const<buf_view::value_type>;
-using bit_pos = buffer::bit_pos;
-using n_bytes = buffer::n_bytes;
 
 namespace details
 {
@@ -59,9 +46,6 @@ result<void> validate_args(Src aSrc) noexcept
     return leaf::new_error(writer_error::null_src_bits_array);
 }
 }  // namespace details
-
-template <typename ImplT>
-class bin_writer;
 
 template <typename ImplT>
 result<bin_writer<ImplT>> make_bin_writer(buf_view aBufView,

@@ -1,20 +1,12 @@
 #ifndef rabbit_bin_reader_h
 #define rabbit_bin_reader_h
 
-#include <buffer/buffer.h>
-
-#include <boost/leaf.hpp>
 #include <utility>
 
 #include "bin_ops.h"
 
 namespace rabbit
 {
-namespace leaf = boost::leaf;
-
-template <class T>
-using result = leaf::result<T>;
-
 enum class reader_error
 {
     invalid_start_pos = 1,
@@ -25,11 +17,6 @@ enum class reader_error
     dst_offset_too_big,
     read_more_than_destination_size
 };
-
-using buf_view = buffer::buffer_view<uint8_t>;
-using buf_view_const = buffer::buffer_view_const<buf_view::value_type>;
-using bit_pos = buffer::bit_pos;
-using n_bytes = buffer::n_bytes;
 
 namespace details
 {
@@ -93,9 +80,6 @@ result<void> validate_args(uint8_t (&)[N], NumBits aNBits) noexcept
     return leaf::new_error(reader_error::read_more_than_destination_size);
 }
 }  // namespace details
-
-template <typename ImplT>
-class bin_reader;
 
 template <typename ImplT>
 result<bin_reader<ImplT>> make_bin_reader(buf_view_const aBufView,

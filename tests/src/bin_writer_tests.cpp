@@ -1,12 +1,12 @@
 #include <buffer/buffer.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <rabbit/bin_writer.h>
 #include <user_literals/user_literals.h>
 #include <utils/utils.h>
 
-#include <limits>
 #include <memory>
+
+#include "serialization_tests.h"
 
 #ifdef BOOST_LEAF_NO_EXCEPTIONS
 
@@ -30,100 +30,7 @@ struct source_location;
 
 #endif
 
-template <class T>
-using result = boost::leaf::result<T>;
-
-namespace leaf = boost::leaf;
-using buffer_error = buffer::error;
-using writer_error = rabbit::writer_error;
-using Pos = buffer::bit_pos;
-using n_bytes = buffer::n_bytes;
-using NumBits = rabbit::NumBits;
-using bit_pos = buffer::bit_pos;
-using Dst = rabbit::Dst;
-using Src = rabbit::Src;
-using Core = rabbit::Core;
-
-class MockedMethods
-{
-   public:
-    MOCK_METHOD(void, handleError, (buffer_error));
-    MOCK_METHOD(void, handleError, (writer_error));
-
-    template <typename E>
-    void expectError(E aError)
-    {
-        static_assert(
-            std::is_enum_v<E>,
-            "E must be enum type which values represent error codes.");
-        EXPECT_CALL(*this, handleError(aError));
-    }
-};
-
-template <typename DataT, std::size_t BufSize>
-class BinWriterTest : public ::testing::Test
-{
-   public:
-    using Buf = buffer::buffer_view<DataT>;
-    using BufConst = buffer::buffer_view_const<DataT>;
-
-    template <typename E>
-    void expectError(E aError)
-    {
-        mDetails->expectError(aError);
-    }
-
-    template <typename CallableT>
-    void execute(CallableT &&aArg) noexcept
-    {
-        leaf::try_handle_all(
-            aArg,
-            [](leaf::match<buffer_error, buffer_error::null_data_and_zero_size>)
-            { mDetails->handleError(buffer_error::null_data_and_zero_size); },
-            [](leaf::match<buffer_error, buffer_error::null_data>)
-            { mDetails->handleError(buffer_error::null_data); },
-            [](leaf::match<buffer_error, buffer_error::zero_size>)
-            { mDetails->handleError(buffer_error::zero_size); },
-            [](leaf::match<buffer_error, buffer_error::invalid_index>)
-            { mDetails->handleError(buffer_error::invalid_index); },
-            [](leaf::match<writer_error, writer_error::invalid_start_pos>)
-            { mDetails->handleError(writer_error::invalid_start_pos); },
-            [](leaf::match<writer_error, writer_error::not_enough_buffer_size>)
-            { mDetails->handleError(writer_error::not_enough_buffer_size); },
-            [](leaf::match<writer_error,
-                           writer_error::num_bits_exceed_type_size>)
-            { mDetails->handleError(writer_error::num_bits_exceed_type_size); },
-            [](leaf::match<writer_error,
-                           writer_error::write_more_than_source_size>) {
-                mDetails->handleError(
-                    writer_error::write_more_than_source_size);
-            },
-            [](leaf::error_info const &unmatched)
-            {
-                std::cerr << "Unknown failure detected" << std::endl
-                          << "Cryptic diagnostic information follows"
-                          << std::endl
-                          << unmatched;
-            });
-    }
-
-    static std::shared_ptr<MockedMethods> mDetails;
-
-   protected:
-    static void SetUpTestSuite()
-    {
-        mDetails = std::make_unique<MockedMethods>();
-    }
-    static void TearDownTestSuite() { mDetails = nullptr; }
-
-    static inline constexpr std::size_t kSize{BufSize};
-    DataT rawBuf_[BufSize]{};
-};
-
-template <typename DataT, std::size_t BufSize>
-std::shared_ptr<MockedMethods> BinWriterTest<DataT, BufSize>::mDetails;
-
-using BinWriter = BinWriterTest<uint8_t, 64>;
+using BinWriter = Data<uint8_t, 64>;
 
 TEST_F(BinWriter, ConstructFail1)
 {

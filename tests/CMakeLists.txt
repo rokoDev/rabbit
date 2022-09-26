@@ -163,6 +163,7 @@ package_add_test(
 	)
 
 set(test_src
+  include/serialization_tests.h
   src/bin_writer_tests.cpp
   )
 package_add_test(
@@ -172,10 +173,31 @@ package_add_test(
   )
 
 set(test_src
+  include/serialization_tests.h
   src/bin_reader_tests.cpp
   )
 package_add_test(
   TEST_TARGET_NAME bin_reader_tests
+  TEST_SOURCES ${test_src}
+  EXTRA_TARGETS rabbit tests_main gmock
+  )
+
+set(test_src
+  include/serialization_tests.h
+  src/serialize_tests.cpp
+  )
+package_add_test(
+  TEST_TARGET_NAME serialize_tests
+  TEST_SOURCES ${test_src}
+  EXTRA_TARGETS rabbit tests_main gmock
+  )
+
+set(test_src
+  include/serialization_tests.h
+  src/deserialize_tests.cpp
+  )
+package_add_test(
+  TEST_TARGET_NAME deserialize_tests
   TEST_SOURCES ${test_src}
   EXTRA_TARGETS rabbit tests_main gmock
   )

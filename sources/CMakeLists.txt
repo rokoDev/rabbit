@@ -12,6 +12,9 @@ target_sources(rabbit
     include/rabbit/details.h
     include/rabbit/bin_writer.h
     include/rabbit/bin_reader.h
+    include/rabbit/serialize.h
+    include/rabbit/deserialize.h
+    include/rabbit/typedefs.h
   )
 
 target_compile_definitions(rabbit
