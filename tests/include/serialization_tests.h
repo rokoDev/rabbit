@@ -3,8 +3,7 @@
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <rabbit/bin_reader.h>
-#include <rabbit/bin_writer.h>
+#include <rabbit/rabbit.h>
 
 template <class T>
 using result = rabbit::result<T>;

@@ -15,7 +15,8 @@ enum class reader_error
     null_dst_bits_array,
     invalid_destination,
     dst_offset_too_big,
-    read_more_than_destination_size
+    read_more_than_destination_size,
+    invalid_enum_value
 };
 
 namespace details

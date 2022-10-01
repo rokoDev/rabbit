@@ -13,7 +13,8 @@ enum class writer_error
     not_enough_buffer_size,
     num_bits_exceed_type_size,
     null_src_bits_array,
-    write_more_than_source_size
+    write_more_than_source_size,
+    invalid_enum_value
 };
 
 namespace details

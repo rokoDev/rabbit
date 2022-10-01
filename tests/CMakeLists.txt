@@ -153,7 +153,6 @@ package_add_test(
 
 set(test_src
   include/buffer_tests.h
-  src/rabbit_tests.cpp
   src/bin_ops_tests.cpp
   )
 package_add_test(
@@ -190,6 +189,7 @@ package_add_test(
   TEST_TARGET_NAME serialize_tests
   TEST_SOURCES ${test_src}
   EXTRA_TARGETS rabbit tests_main gmock
+  DEFS RABBIT_DISABLE_BUILTIN
   )
 
 set(test_src
@@ -198,6 +198,17 @@ set(test_src
   )
 package_add_test(
   TEST_TARGET_NAME deserialize_tests
+  TEST_SOURCES ${test_src}
+  EXTRA_TARGETS rabbit tests_main gmock
+  DEFS RABBIT_DISABLE_BUILTIN
+  )
+
+set(test_src
+  include/serialization_tests.h
+  src/builtin_tests.cpp
+  )
+package_add_test(
+  TEST_TARGET_NAME builtin_tests
   TEST_SOURCES ${test_src}
   EXTRA_TARGETS rabbit tests_main gmock
   )
