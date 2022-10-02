@@ -77,6 +77,8 @@ class Data : public ::testing::Test
                 mDetails->handleError(
                     reader_error::read_more_than_destination_size);
             },
+            [](leaf::match<reader_error, reader_error::invalid_interval_index>)
+            { mDetails->handleError(reader_error::invalid_interval_index); },
             [](leaf::match<writer_error, writer_error::invalid_start_pos>)
             { mDetails->handleError(writer_error::invalid_start_pos); },
             [](leaf::match<writer_error, writer_error::not_enough_buffer_size>)
@@ -89,6 +91,10 @@ class Data : public ::testing::Test
                 mDetails->handleError(
                     writer_error::write_more_than_source_size);
             },
+            [](leaf::match<writer_error, writer_error::value_below_interval>)
+            { mDetails->handleError(writer_error::value_below_interval); },
+            [](leaf::match<writer_error, writer_error::value_above_interval>)
+            { mDetails->handleError(writer_error::value_above_interval); },
             [](leaf::error_info const &unmatched)
             {
                 std::cerr << "Unknown failure detected" << std::endl

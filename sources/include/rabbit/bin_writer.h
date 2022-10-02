@@ -14,7 +14,8 @@ enum class writer_error
     num_bits_exceed_type_size,
     null_src_bits_array,
     write_more_than_source_size,
-    invalid_enum_value
+    value_below_interval,
+    value_above_interval
 };
 
 namespace details
