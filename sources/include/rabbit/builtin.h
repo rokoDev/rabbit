@@ -6,11 +6,14 @@
 
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 #include "deserialize.h"
 #include "serialize.h"
 
-#define DEFINE_ENUM_MIN_MAX(e, eMin, eMax)                        \
+#define RABBIT_ENUM_MIN_MAX(e, eMin, eMax)                        \
+    namespace rabbit                                              \
+    {                                                             \
     template <>                                                   \
     struct enum_traits<e>                                         \
     {                                                             \
@@ -22,7 +25,8 @@
         {                                                         \
             return utils::to_underlying(e::eMax);                 \
         }                                                         \
-    };
+    };                                                            \
+    }  // namespace rabbit
 
 namespace rabbit
 {
@@ -56,6 +60,23 @@ using enable_if_bool_t = std::enable_if_t<is_bool_v<T>, T>;
 template <typename T>
 using enable_if_enum_t =
     std::enable_if_t<std::is_enum_v<utils::remove_cvref_t<T>>, T>;
+
+template <typename T>
+struct is_vector : std::false_type
+{
+};
+
+template <typename T>
+struct is_vector<std::vector<T>> : std::true_type
+{
+};
+
+template <typename T>
+inline constexpr bool is_vector_v = is_vector<T>::value;
+
+template <typename T>
+using enable_if_vector_t =
+    std::enable_if_t<is_vector_v<utils::remove_cvref_t<T>>, T>;
 
 template <typename E>
 struct enum_traits
@@ -195,6 +216,93 @@ result<enable_if_enum_t<T>> deserialize(reader &aReader, tag_t<T>) noexcept
                     details::Interval<IntervalT>::deserialize(aReader));
     E value = static_cast<E>(underlyingValue);
     return value;
+}
+
+template <typename T>
+result<void> serialize(writer &aWriter, T &&aValue,
+                       tag_t<enable_if_vector_t<T>>) noexcept
+{
+    using VectorT = utils::remove_cvref_t<T>;
+    using ValueT = typename VectorT::value_type;
+    const std::size_t kSize = aValue.size();
+    constexpr uint32_t kMaxSize =
+        static_cast<uint32_t>(std::numeric_limits<uint32_t>::max() >> 1);
+    if (kSize > kMaxSize)
+    {
+        return leaf::new_error(writer_error::vector_size_is_too_big);
+    }
+    if (kSize)
+    {
+        const uint32_t kSize32 = static_cast<uint32_t>(kSize);
+        const uint32_t kNonEmptyFlag = static_cast<uint32_t>(~kMaxSize);
+        const uint32_t kValueToSave =
+            static_cast<uint32_t>(kSize32 | kNonEmptyFlag);
+        BOOST_LEAF_CHECK(aWriter.addValue(std::move(kValueToSave)));
+        if constexpr ((std::alignment_of_v<ValueT> ==
+                       std::alignment_of_v<uint8_t>)&&(sizeof(ValueT) ==
+                                                       sizeof(uint8_t)))
+        {
+            BOOST_LEAF_CHECK(aWriter.addBits(
+                Src(reinterpret_cast<uint8_t const *>(aValue.data())),
+                NumBits(kSize * CHAR_BIT)));
+        }
+        else
+        {
+            for (const auto &instance: aValue)
+            {
+                BOOST_LEAF_CHECK(serialize(aWriter, instance));
+            }
+        }
+    }
+    else
+    {
+        BOOST_LEAF_CHECK(aWriter.addValue(0_u8, NumBits(1)));
+    }
+    return {};
+}
+
+template <typename T>
+result<enable_if_vector_t<T>> deserialize(reader &aReader, tag_t<T>)
+{
+    using VectorT = utils::remove_cvref_t<T>;
+    using ValueT = typename VectorT::value_type;
+    BOOST_LEAF_AUTO(nonEmptyFlag, aReader.getValue<uint8_t>(NumBits(1)));
+    if (nonEmptyFlag)
+    {
+        BOOST_LEAF_AUTO(kSize, aReader.getValue<uint32_t>(NumBits(31)));
+        if (kSize > 0)
+        {
+            if constexpr ((std::alignment_of_v<ValueT> ==
+                           std::alignment_of_v<uint8_t>)&&(sizeof(ValueT) ==
+                                                           sizeof(uint8_t)))
+            {
+                VectorT vec(kSize);
+                BOOST_LEAF_CHECK(aReader.getBits(
+                    Dst(reinterpret_cast<uint8_t *>(vec.data())),
+                    DstBitOffset(0), NumBits(kSize * CHAR_BIT)));
+                return vec;
+            }
+            else
+            {
+                VectorT vec{};
+                vec.reserve(kSize);
+                for (std::size_t i = 0; i < kSize; ++i)
+                {
+                    BOOST_LEAF_AUTO(value, deserialize<ValueT>(aReader));
+                    vec.push_back(value);
+                }
+                return vec;
+            }
+        }
+        else
+        {
+            return leaf::new_error(reader_error::non_empty_vector_size_is_zero);
+        }
+    }
+    else
+    {
+        return VectorT{};
+    }
 }
 }  // namespace rabbit
 

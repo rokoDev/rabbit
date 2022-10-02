@@ -79,6 +79,11 @@ class Data : public ::testing::Test
             },
             [](leaf::match<reader_error, reader_error::invalid_interval_index>)
             { mDetails->handleError(reader_error::invalid_interval_index); },
+            [](leaf::match<reader_error,
+                           reader_error::non_empty_vector_size_is_zero>) {
+                mDetails->handleError(
+                    reader_error::non_empty_vector_size_is_zero);
+            },
             [](leaf::match<writer_error, writer_error::invalid_start_pos>)
             { mDetails->handleError(writer_error::invalid_start_pos); },
             [](leaf::match<writer_error, writer_error::not_enough_buffer_size>)
@@ -95,6 +100,8 @@ class Data : public ::testing::Test
             { mDetails->handleError(writer_error::value_below_interval); },
             [](leaf::match<writer_error, writer_error::value_above_interval>)
             { mDetails->handleError(writer_error::value_above_interval); },
+            [](leaf::match<writer_error, writer_error::vector_size_is_too_big>)
+            { mDetails->handleError(writer_error::vector_size_is_too_big); },
             [](leaf::error_info const &unmatched)
             {
                 std::cerr << "Unknown failure detected" << std::endl

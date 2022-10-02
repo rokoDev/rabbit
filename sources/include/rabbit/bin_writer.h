@@ -15,7 +15,8 @@ enum class writer_error
     null_src_bits_array,
     write_more_than_source_size,
     value_below_interval,
-    value_above_interval
+    value_above_interval,
+    vector_size_is_too_big
 };
 
 namespace details

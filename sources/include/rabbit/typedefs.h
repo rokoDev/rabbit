@@ -72,6 +72,99 @@ template <typename ImplT>
 class bin_reader;
 
 using reader = bin_reader<Core>;
+
+template <typename T>
+result<void> serialize(writer &aWriter, T &&aValue) noexcept;
+
+template <typename T>
+result<T> deserialize(reader &aReader) noexcept;
+
+namespace details
+{
+template <class T>
+using tagged_serialize_result_t =
+    decltype(serialize(std::declval<writer &>(), std::declval<T>(), tag<T>));
+
+template <class T>
+using serialize_result_t =
+    decltype(serialize(std::declval<writer &>(), std::declval<T>()));
+
+template <class T>
+using tagged_deserialize_result_t =
+    decltype(deserialize(std::declval<reader &>(), tag<T>));
+
+template <class T>
+using deserialize_result_t = decltype(deserialize<T>(std::declval<reader &>()));
+}  // namespace details
+
+template <typename T>
+inline constexpr bool is_serialize_defined_v =
+    utils::is_detected_exact_v<result<void>, details::tagged_serialize_result_t,
+                               T>;
+
+template <typename T>
+inline constexpr bool is_deserialize_defined_v =
+    utils::is_detected_exact_v<result<T>, details::tagged_deserialize_result_t,
+                               T>;
+
+namespace details
+{
+template <typename T, bool IsAggregate>
+struct is_serializable;
+
+template <typename T, bool IsAggregate>
+struct is_deserializable;
+
+template <typename T>
+struct aggregate
+{
+    template <std::size_t... I>
+    static std::bool_constant<
+        (... && is_serializable<
+                    pfr::tuple_element_t<I, T>,
+                    std::is_aggregate_v<pfr::tuple_element_t<I, T>>>::value)>
+        isSerializable(std::index_sequence<I...>);
+
+    template <std::size_t... I>
+    static std::bool_constant<
+        (... && is_deserializable<
+                    pfr::tuple_element_t<I, T>,
+                    std::is_aggregate_v<pfr::tuple_element_t<I, T>>>::value)>
+        isDeserializable(std::index_sequence<I...>);
+};
+
+template <typename T, bool IsAggregate>
+struct is_serializable : std::bool_constant<is_serialize_defined_v<T>>
+{
+};
+
+template <typename T>
+struct is_serializable<T, true>
+    : decltype(aggregate<T>::isSerializable(
+          std::make_index_sequence<pfr::tuple_size_v<T>>{}))
+{
+};
+
+template <typename T, bool IsAggregate>
+struct is_deserializable : std::bool_constant<is_deserialize_defined_v<T>>
+{
+};
+
+template <typename T>
+struct is_deserializable<T, true>
+    : decltype(aggregate<T>::isDeserializable(
+          std::make_index_sequence<pfr::tuple_size_v<T>>{}))
+{
+};
+}  // namespace details
+
+template <typename T>
+inline constexpr bool is_serializable_v =
+    details::is_serializable<T, std::is_aggregate_v<T>>::value;
+
+template <typename T>
+inline constexpr bool is_deserializable_v =
+    details::is_deserializable<T, std::is_aggregate_v<T>>::value;
 }  // namespace rabbit
 
 #endif /* rabbit_typedefs_h */

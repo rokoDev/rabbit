@@ -16,7 +16,8 @@ enum class reader_error
     invalid_destination,
     dst_offset_too_big,
     read_more_than_destination_size,
-    invalid_interval_index
+    invalid_interval_index,
+    non_empty_vector_size_is_zero
 };
 
 namespace details
