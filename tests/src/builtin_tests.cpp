@@ -3,6 +3,7 @@
 #include <user_literals/user_literals.h>
 
 #include <cstring>
+#include <valarray>
 #include <vector>
 
 #include "serialization_tests.h"
@@ -208,4 +209,105 @@ TEST_F(BuiltinTests, StructWithVector)
         1);
     ASSERT_EQ(readerPos, expectedBitPos);
     ASSERT_EQ(restored, toSave);
+}
+
+TEST_F(BuiltinTests, ValarrayOfChars)
+{
+    constexpr std::size_t kSize = 100_uz;
+    using VecT = std::valarray<char>;
+    VecT vec(kSize);
+
+    char value = static_cast<char>(-50);
+    for (std::size_t i = 0_uz; i < kSize; ++i)
+    {
+        vec[i] = value++;
+    }
+
+    VecT restored{};
+    bit_pos readerPos{};
+    bit_pos writerPos{};
+    execute(
+        [&]() -> result<void>
+        {
+            BOOST_LEAF_AUTO(w, rabbit::make_bin_writer(rawBuf_));
+            BOOST_LEAF_AUTO(r, rabbit::make_bin_reader(rawBuf_));
+            BOOST_LEAF_CHECK(rabbit::serialize(w, vec));
+            BOOST_LEAF_ASSIGN(restored, rabbit::deserialize<VecT>(r));
+            readerPos = r.pos();
+            writerPos = w.pos();
+            return {};
+        });
+
+    ASSERT_EQ(readerPos, writerPos);
+    ASSERT_EQ(readerPos, bit_pos((kSize + sizeof(uint32_t)) * CHAR_BIT));
+    ASSERT_EQ(vec.size(), restored.size());
+    ASSERT_EQ(vec.size(), kSize);
+    for (std::size_t i = 0_uz; i < kSize; ++i)
+    {
+        ASSERT_EQ(restored[i], vec[i]);
+    }
+}
+
+TEST_F(BuiltinTests, EmptyValarray)
+{
+    using VecT = std::valarray<int16_t>;
+    const VecT vec{};
+    VecT restored{};
+    bit_pos readerPos{};
+    bit_pos writerPos{};
+    execute(
+        [&]() -> result<void>
+        {
+            BOOST_LEAF_AUTO(w, rabbit::make_bin_writer(rawBuf_));
+            BOOST_LEAF_AUTO(r, rabbit::make_bin_reader(rawBuf_));
+            BOOST_LEAF_CHECK(rabbit::serialize(w, vec));
+            BOOST_LEAF_ASSIGN(restored, rabbit::deserialize<VecT>(r));
+            readerPos = r.pos();
+            writerPos = w.pos();
+            return {};
+        });
+
+    ASSERT_EQ(readerPos, writerPos);
+    ASSERT_EQ(readerPos, bit_pos(1));
+    ASSERT_EQ(vec.size(), restored.size());
+    ASSERT_EQ(vec.size(), 0_uz);
+}
+
+TEST_F(BuiltinTests, ValarrayOfInt32)
+{
+    constexpr std::size_t kSize = 10_uz;
+    using DataT = int32_t;
+    using VecT = std::valarray<DataT>;
+    VecT vec(kSize);
+
+    DataT value = static_cast<DataT>(-50);
+    for (std::size_t i = 0_uz; i < kSize; ++i)
+    {
+        vec[i] = value++;
+    }
+
+    VecT restored{};
+    bit_pos readerPos{};
+    bit_pos writerPos{};
+    execute(
+        [&]() -> result<void>
+        {
+            BOOST_LEAF_AUTO(w, rabbit::make_bin_writer(rawBuf_));
+            BOOST_LEAF_AUTO(r, rabbit::make_bin_reader(rawBuf_));
+            BOOST_LEAF_CHECK(rabbit::serialize(w, vec));
+            BOOST_LEAF_ASSIGN(restored, rabbit::deserialize<VecT>(r));
+            readerPos = r.pos();
+            writerPos = w.pos();
+            return {};
+        });
+
+    ASSERT_EQ(readerPos, writerPos);
+    ASSERT_EQ(readerPos,
+              bit_pos((sizeof(DataT) * kSize + sizeof(uint32_t)) * CHAR_BIT));
+    ASSERT_EQ(vec.size(), restored.size());
+    ASSERT_EQ(vec.size(), kSize);
+    for (std::size_t i = 0_uz; i < kSize; ++i)
+    {
+        ASSERT_EQ(restored[i], vec[i]);
+    }
 }

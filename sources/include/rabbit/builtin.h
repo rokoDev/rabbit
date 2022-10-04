@@ -6,6 +6,7 @@
 
 #include <type_traits>
 #include <utility>
+#include <valarray>
 #include <vector>
 
 #include "deserialize.h"
@@ -77,6 +78,23 @@ inline constexpr bool is_vector_v = is_vector<T>::value;
 template <typename T>
 using enable_if_vector_t =
     std::enable_if_t<is_vector_v<utils::remove_cvref_t<T>>, T>;
+
+template <typename T>
+struct is_valarray : std::false_type
+{
+};
+
+template <typename T>
+struct is_valarray<std::valarray<T>> : std::true_type
+{
+};
+
+template <typename T>
+inline constexpr bool is_valarray_v = is_valarray<T>::value;
+
+template <typename T>
+using enable_if_valarray_t =
+    std::enable_if_t<is_valarray_v<utils::remove_cvref_t<T>>, T>;
 
 template <typename E>
 struct enum_traits
@@ -302,6 +320,92 @@ result<enable_if_vector_t<T>> deserialize(reader &aReader, tag_t<T>)
     else
     {
         return VectorT{};
+    }
+}
+
+template <typename T>
+result<void> serialize(writer &aWriter, T &&aValue,
+                       tag_t<enable_if_valarray_t<T>>) noexcept
+{
+    using ValarrayT = utils::remove_cvref_t<T>;
+    using ValueT = typename ValarrayT::value_type;
+    const std::size_t kSize = aValue.size();
+    constexpr uint32_t kMaxSize =
+        static_cast<uint32_t>(std::numeric_limits<uint32_t>::max() >> 1);
+    if (kSize > kMaxSize)
+    {
+        return leaf::new_error(writer_error::vector_size_is_too_big);
+    }
+    if (kSize)
+    {
+        const uint32_t kSize32 = static_cast<uint32_t>(kSize);
+        const uint32_t kNonEmptyFlag = static_cast<uint32_t>(~kMaxSize);
+        const uint32_t kValueToSave =
+            static_cast<uint32_t>(kSize32 | kNonEmptyFlag);
+        BOOST_LEAF_CHECK(aWriter.addValue(std::move(kValueToSave)));
+        if constexpr ((std::alignment_of_v<ValueT> ==
+                       std::alignment_of_v<uint8_t>)&&(sizeof(ValueT) ==
+                                                       sizeof(uint8_t)))
+        {
+            uint8_t const *firstPtr =
+                reinterpret_cast<uint8_t const *>(&(aValue[0]));
+            BOOST_LEAF_CHECK(
+                aWriter.addBits(Src(firstPtr), NumBits(kSize * CHAR_BIT)));
+        }
+        else
+        {
+            for (const auto &instance: aValue)
+            {
+                BOOST_LEAF_CHECK(serialize(aWriter, instance));
+            }
+        }
+    }
+    else
+    {
+        BOOST_LEAF_CHECK(aWriter.addValue(0_u8, NumBits(1)));
+    }
+    return {};
+}
+
+template <typename T>
+result<enable_if_valarray_t<T>> deserialize(reader &aReader, tag_t<T>)
+{
+    using ValarrayT = utils::remove_cvref_t<T>;
+    using ValueT = typename ValarrayT::value_type;
+    BOOST_LEAF_AUTO(nonEmptyFlag, aReader.getValue<uint8_t>(NumBits(1)));
+    if (nonEmptyFlag)
+    {
+        BOOST_LEAF_AUTO(kSize, aReader.getValue<uint32_t>(NumBits(31)));
+        if (kSize > 0)
+        {
+            if constexpr ((std::alignment_of_v<ValueT> ==
+                           std::alignment_of_v<uint8_t>)&&(sizeof(ValueT) ==
+                                                           sizeof(uint8_t)))
+            {
+                ValarrayT vec(kSize);
+                uint8_t *firstPtr = reinterpret_cast<uint8_t *>(&(vec[0]));
+                BOOST_LEAF_CHECK(aReader.getBits(Dst(firstPtr), DstBitOffset(0),
+                                                 NumBits(kSize * CHAR_BIT)));
+                return vec;
+            }
+            else
+            {
+                ValarrayT vec(kSize);
+                for (auto &value: vec)
+                {
+                    BOOST_LEAF_ASSIGN(value, deserialize<ValueT>(aReader));
+                }
+                return vec;
+            }
+        }
+        else
+        {
+            return leaf::new_error(reader_error::non_empty_vector_size_is_zero);
+        }
+    }
+    else
+    {
+        return ValarrayT{};
     }
 }
 }  // namespace rabbit
