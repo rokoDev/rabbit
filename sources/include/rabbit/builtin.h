@@ -96,6 +96,23 @@ template <typename T>
 using enable_if_valarray_t =
     std::enable_if_t<is_valarray_v<utils::remove_cvref_t<T>>, T>;
 
+template <typename T>
+struct is_std_string : std::false_type
+{
+};
+
+template <>
+struct is_std_string<std::string> : std::true_type
+{
+};
+
+template <typename T>
+inline constexpr bool is_std_string_v = is_std_string<T>::value;
+
+template <typename T>
+using enable_if_std_string_t =
+    std::enable_if_t<is_std_string_v<utils::remove_cvref_t<T>>, T>;
+
 template <typename E>
 struct enum_traits
 {
@@ -406,6 +423,62 @@ result<enable_if_valarray_t<T>> deserialize(reader &aReader, tag_t<T>)
     else
     {
         return ValarrayT{};
+    }
+}
+
+template <typename T>
+result<void> serialize(writer &aWriter, T &&aValue,
+                       tag_t<enable_if_std_string_t<T>>) noexcept
+{
+    const std::size_t kSize = aValue.size();
+    constexpr uint32_t kMaxSize =
+        static_cast<uint32_t>(std::numeric_limits<uint32_t>::max() >> 1);
+    if (kSize > kMaxSize)
+    {
+        return leaf::new_error(writer_error::vector_size_is_too_big);
+    }
+    if (kSize)
+    {
+        const uint32_t kSize32 = static_cast<uint32_t>(kSize);
+        const uint32_t kNonEmptyFlag = static_cast<uint32_t>(~kMaxSize);
+        const uint32_t kValueToSave =
+            static_cast<uint32_t>(kSize32 | kNonEmptyFlag);
+        BOOST_LEAF_CHECK(aWriter.addValue(std::move(kValueToSave)));
+        BOOST_LEAF_CHECK(aWriter.addBits(
+            Src(reinterpret_cast<uint8_t const *>(aValue.data())),
+            NumBits(kSize * CHAR_BIT)));
+    }
+    else
+    {
+        BOOST_LEAF_CHECK(aWriter.addValue(0_u8, NumBits(1)));
+    }
+    return {};
+}
+
+template <typename T>
+result<enable_if_std_string_t<T>> deserialize(reader &aReader, tag_t<T>)
+{
+    using StrT = utils::remove_cvref_t<T>;
+    BOOST_LEAF_AUTO(nonEmptyFlag, aReader.getValue<uint8_t>(NumBits(1)));
+    if (nonEmptyFlag)
+    {
+        BOOST_LEAF_AUTO(kSize, aReader.getValue<uint32_t>(NumBits(31)));
+        if (kSize > 0)
+        {
+            StrT str(kSize, ' ');
+            BOOST_LEAF_CHECK(
+                aReader.getBits(Dst(reinterpret_cast<uint8_t *>(str.data())),
+                                DstBitOffset(0), NumBits(kSize * CHAR_BIT)));
+            return str;
+        }
+        else
+        {
+            return leaf::new_error(reader_error::non_empty_vector_size_is_zero);
+        }
+    }
+    else
+    {
+        return StrT{};
     }
 }
 }  // namespace rabbit

@@ -311,3 +311,53 @@ TEST_F(BuiltinTests, ValarrayOfInt32)
         ASSERT_EQ(restored[i], vec[i]);
     }
 }
+
+TEST_F(BuiltinTests, EmptyStdString)
+{
+    const std::string str;
+    std::string restored{};
+    bit_pos readerPos{};
+    bit_pos writerPos{};
+    execute(
+        [&]() -> result<void>
+        {
+            BOOST_LEAF_AUTO(w, rabbit::make_bin_writer(rawBuf_));
+            BOOST_LEAF_AUTO(r, rabbit::make_bin_reader(rawBuf_));
+            BOOST_LEAF_CHECK(rabbit::serialize(w, str));
+            BOOST_LEAF_ASSIGN(restored, rabbit::deserialize<std::string>(r));
+            readerPos = r.pos();
+            writerPos = w.pos();
+            return {};
+        });
+
+    ASSERT_EQ(readerPos, writerPos);
+    ASSERT_EQ(readerPos, bit_pos(1));
+    ASSERT_EQ(str.size(), restored.size());
+    ASSERT_EQ(str.size(), 0_uz);
+}
+
+TEST_F(BuiltinTests, NotEmptyStdString)
+{
+    const std::string str("Hi! This is test string.");
+    const std::size_t kSize = str.size();
+    std::string restored{};
+    bit_pos readerPos{};
+    bit_pos writerPos{};
+    execute(
+        [&]() -> result<void>
+        {
+            BOOST_LEAF_AUTO(w, rabbit::make_bin_writer(rawBuf_));
+            BOOST_LEAF_AUTO(r, rabbit::make_bin_reader(rawBuf_));
+            BOOST_LEAF_CHECK(rabbit::serialize(w, str));
+            BOOST_LEAF_ASSIGN(restored, rabbit::deserialize<std::string>(r));
+            readerPos = r.pos();
+            writerPos = w.pos();
+            return {};
+        });
+
+    ASSERT_EQ(readerPos, writerPos);
+    ASSERT_EQ(readerPos, bit_pos((kSize + sizeof(uint32_t)) * CHAR_BIT));
+    ASSERT_EQ(str.size(), restored.size());
+    ASSERT_EQ(str.size(), kSize);
+    ASSERT_EQ(restored, str);
+}
