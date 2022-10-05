@@ -481,6 +481,82 @@ result<enable_if_std_string_t<T>> deserialize(reader &aReader, tag_t<T>)
         return StrT{};
     }
 }
+
+template <typename T>
+constexpr std::enable_if_t<std::is_arithmetic_v<T>, std::size_t> bit_size(
+    tag_t<T>) noexcept
+{
+    return utils::num_bits<T>();
+};
+
+template <typename T>
+constexpr std::enable_if_t<std::is_enum_v<T>, std::size_t> bit_size(
+    tag_t<T>) noexcept
+{
+    using IntervalT = interval::Interval<interval::Min<enum_traits<T>::min()>,
+                                         interval::Max<enum_traits<T>::max()>>;
+    return details::Interval<IntervalT>::kNumBits;
+};
+
+namespace details
+{
+template <typename T>
+static constexpr std::size_t vector_like_bit_size(const T &aValue) noexcept
+{
+    using ValueT = typename T::value_type;
+    const auto kSize = aValue.size();
+    if (kSize)
+    {
+        if constexpr (is_compile_time_computable_size_v<ValueT>)
+        {
+            return utils::num_bits<uint32_t>() + kSize * bit_sizeof_v<ValueT>;
+        }
+        else
+        {
+            std::size_t retVal{utils::num_bits<uint32_t>()};
+            for (const auto &element: aValue)
+            {
+                retVal += bit_sizeof(element);
+            }
+            return retVal;
+        }
+    }
+    else
+    {
+        return 1_uz;
+    }
+}
+}  // namespace details
+
+template <typename T>
+class SizeChecker<std::vector<T>>
+{
+   public:
+    static std::size_t bit_size(const std::vector<T> &aValue) noexcept
+    {
+        return details::vector_like_bit_size(aValue);
+    }
+};
+
+template <typename T>
+class SizeChecker<std::valarray<T>>
+{
+   public:
+    static std::size_t bit_size(const std::valarray<T> &aValue) noexcept
+    {
+        return details::vector_like_bit_size(aValue);
+    }
+};
+
+template <>
+class SizeChecker<std::string>
+{
+   public:
+    static std::size_t bit_size(const std::string &aValue) noexcept
+    {
+        return details::vector_like_bit_size(aValue);
+    }
+};
 }  // namespace rabbit
 
 #endif /* rabbit_builtin_h */
