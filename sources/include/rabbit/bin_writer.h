@@ -178,6 +178,11 @@ class bin_writer
 
     inline constexpr bit_pos pos() const noexcept { return pos_; }
 
+    inline constexpr std::size_t bytes_used() const noexcept
+    {
+        return pos_.bytesUsed();
+    }
+
    private:
     result<bit_pos> getNextPos(NumBits aNBits) noexcept
     {

@@ -175,6 +175,11 @@ class bin_reader
 
     inline constexpr bit_pos pos() const noexcept { return pos_; }
 
+    inline constexpr std::size_t bytes_used() const noexcept
+    {
+        return pos_.bytesUsed();
+    }
+
    private:
     constexpr bin_reader(buf_view_const aBufView, bit_pos aStartPos) noexcept
         : buf_(aBufView), pos_(aStartPos)

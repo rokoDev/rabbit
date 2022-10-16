@@ -37,7 +37,7 @@ FetchContent_Declare(
 FetchContent_Declare(
 	buffer
 	GIT_REPOSITORY https://github.com/rokoDev/buffer.git
-	GIT_TAG        69a54f60a8e885af1ed12096c22def67a5006867
+	GIT_TAG        4ae52b15ab5bb547d71881c258432497a623ec66
 )
 
 FetchContent_Declare(
