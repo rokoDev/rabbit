@@ -41,6 +41,8 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 # Create library
 add_library(rabbit INTERFACE)
 
+add_library(Rabbit::rabbit ALIAS rabbit)
+
 # Add dependencies
 add_subdirectory(deps)
 

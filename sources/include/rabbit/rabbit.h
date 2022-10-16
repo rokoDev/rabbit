@@ -7,6 +7,8 @@
 
 #ifdef BOOST_LEAF_NO_EXCEPTIONS
 
+#include <iostream>
+
 namespace boost
 {
 [[noreturn]] void throw_exception(std::exception const &e)

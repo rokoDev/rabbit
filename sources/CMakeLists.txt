@@ -29,7 +29,40 @@ target_compile_definitions(rabbit
   )
 
 set_property(TARGET rabbit APPEND PROPERTY SRC_DIRS "${CMAKE_CURRENT_LIST_DIR}/include")
+
+include(GNUInstallDirs)
 target_include_directories(rabbit INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
+# -------------------Installation-------------------
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+  ${CMAKE_CURRENT_BINARY_DIR}/RabbitConfigVersion.cmake
+  COMPATIBILITY SameMajorVersion
+  ARCH_INDEPENDENT
+)
+
+install(
+  TARGETS rabbit user_literals strong_type endian utils buffer boost_leaf boost_pfr interval rabbit_version
+  EXPORT rabbitTargets
+  INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+install(
+  EXPORT rabbitTargets
+  FILE "RabbitConfig.cmake"
+  NAMESPACE Rabbit::
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/rabbit
+)
+
+install(
+  FILES ${CMAKE_CURRENT_BINARY_DIR}/RabbitConfigVersion.cmake
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/rabbit
+)
+
+install(
+  DIRECTORY include
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )

@@ -2,6 +2,7 @@
 #define rabbit_builtin_h
 
 #include <interval/interval.h>
+#include <user_literals/user_literals.h>
 #include <utils/utils.h>
 
 #include <type_traits>

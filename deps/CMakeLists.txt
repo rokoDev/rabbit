@@ -1,7 +1,7 @@
 include(FetchContent)
 
 # Setup directory to which dependencies will be downloaded
-cmake_path(APPEND FETCHCONTENT_BASE_DIR "${CMAKE_SOURCE_DIR}" "deps_content" "${CMAKE_GENERATOR_NAME_WITHOUT_SPACES}")
+cmake_path(APPEND FETCHCONTENT_BASE_DIR "${CMAKE_SOURCE_DIR}/../" "deps_content" "${CMAKE_GENERATOR_NAME_WITHOUT_SPACES}")
 
 # If dependencies are not available then download it and make available
 FetchContent_Declare(
