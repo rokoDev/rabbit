@@ -56,12 +56,20 @@ struct DataPtrOps
 using Src = strong::strong_type<struct SrcTag, uint8_t const *, DataPtrOps>;
 using Dst = strong::strong_type<struct DstTag, uint8_t *, DataPtrOps>;
 
+using simple_buf_view = buffer::simple_buffer_view<uint8_t>;
+using simple_buf_view_const =
+    buffer::simple_buffer_view_const<simple_buf_view::value_type>;
 using buf_view = buffer::buffer_view<uint8_t>;
 using buf_view_const = buffer::buffer_view_const<buf_view::value_type>;
 using bit_pos = buffer::bit_pos;
 using n_bytes = buffer::n_bytes;
 
 class Core;
+
+template <typename ImplT>
+class simple_bin_writer;
+
+using simple_writer = simple_bin_writer<Core>;
 
 template <typename ImplT>
 class bin_writer;
@@ -72,6 +80,9 @@ template <typename ImplT>
 class bin_reader;
 
 using reader = bin_reader<Core>;
+
+template <typename T>
+void serialize(simple_writer &aWriter, T &&aValue) noexcept;
 
 template <typename T>
 result<void> serialize(writer &aWriter, T &&aValue) noexcept;
@@ -87,6 +98,10 @@ class SizeChecker
 
 namespace details
 {
+template <class T>
+using tagged_simple_serialize_result_t = decltype(serialize(
+    std::declval<simple_writer &>(), std::declval<T>(), tag<T>));
+
 template <class T>
 using tagged_serialize_result_t =
     decltype(serialize(std::declval<writer &>(), std::declval<T>(), tag<T>));
@@ -108,6 +123,11 @@ using bit_size_result_t =
 }  // namespace details
 
 template <typename T>
+inline constexpr bool is_simple_serialize_defined_v =
+    utils::is_detected_exact_v<void, details::tagged_simple_serialize_result_t,
+                               T>;
+
+template <typename T>
 inline constexpr bool is_serialize_defined_v =
     utils::is_detected_exact_v<result<void>, details::tagged_serialize_result_t,
                                T>;
@@ -127,6 +147,9 @@ constexpr std::size_t bit_sizeof(const T &aValue) noexcept;
 namespace details
 {
 template <typename T, bool IsAggregate>
+struct is_simple_serializable;
+
+template <typename T, bool IsAggregate>
 struct is_serializable;
 
 template <typename T, bool IsAggregate>
@@ -141,6 +164,13 @@ struct compile_time_bit_size;
 template <typename T>
 struct aggregate
 {
+    template <std::size_t... I>
+    static std::bool_constant<
+        (... && is_simple_serializable<
+                    pfr::tuple_element_t<I, T>,
+                    std::is_aggregate_v<pfr::tuple_element_t<I, T>>>::value)>
+        isSimpleSerializable(std::index_sequence<I...>);
+
     template <std::size_t... I>
     static std::bool_constant<
         (... && is_serializable<
@@ -180,6 +210,19 @@ struct aggregate
     {
         return (... + bit_sizeof(pfr::get<I>(aValue)));
     }
+};
+
+template <typename T, bool IsAggregate>
+struct is_simple_serializable
+    : decltype(aggregate<T>::isSimpleSerializable(
+          std::make_index_sequence<pfr::tuple_size_v<T>>{}))
+{
+};
+
+template <typename T>
+struct is_simple_serializable<T, false>
+    : std::bool_constant<is_simple_serialize_defined_v<T>>
+{
 };
 
 template <typename T, bool IsAggregate>
@@ -259,6 +302,10 @@ struct run_time_bit_size<T, IsAggregate, true>
     }
 };
 }  // namespace details
+
+template <typename T>
+inline constexpr bool is_simple_serializable_v =
+    details::is_simple_serializable<T, std::is_aggregate_v<T>>::value;
 
 template <typename T>
 inline constexpr bool is_serializable_v =

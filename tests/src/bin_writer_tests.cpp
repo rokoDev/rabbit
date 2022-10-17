@@ -10,6 +10,66 @@
 
 using BinWriter = Data<uint8_t, 64>;
 
+using SimpleBinWriter = Data<uint8_t, 64>;
+
+TEST_F(SimpleBinWriter, SerializeUInt8)
+{
+    constexpr uint8_t value = 0b00000101;
+    rabbit::simple_writer writer(rawBuf_);
+    writer.addValue(value, NumBits(3));
+    ASSERT_EQ(writer[n_bytes(0)], 0b10100000);
+}
+
+TEST_F(SimpleBinWriter, Serialize3UInt8)
+{
+    rabbit::simple_writer writer(rawBuf_);
+
+    constexpr uint8_t value1 = 0b00000101;
+    writer.addValue(value1, NumBits(3));
+    ASSERT_EQ(writer[n_bytes(0)], 0b10100000);
+
+    constexpr uint8_t value2 = 0b00000111;
+    writer.addValue(value2, NumBits(5));
+    ASSERT_EQ(writer[n_bytes(0)], 0b10100111);
+
+    constexpr uint8_t value3 = 0b00010111;
+    writer.addValue(value3, NumBits(5));
+    ASSERT_EQ(writer[n_bytes(0)], 0b10100111);
+    ASSERT_EQ(writer[n_bytes(1)], 0b10111000);
+}
+
+TEST_F(SimpleBinWriter, SerializeCharBitsOneByOne)
+{
+    rabbit::simple_writer writer(Dst(rawBuf_), n_bytes(1));
+    ASSERT_EQ(writer.pos(), bit_pos(0));
+    ASSERT_EQ(writer.buffer().size(), n_bytes(1));
+
+    constexpr uint8_t kValue = 0b00000001;
+    for (std::size_t i = 0; i < CHAR_BIT; ++i)
+    {
+        writer.addValue(kValue, NumBits(1));
+    }
+
+    ASSERT_EQ(writer[n_bytes(0)], 0b11111111);
+    ASSERT_EQ(writer.pos(), bit_pos(CHAR_BIT));
+    ASSERT_EQ(rawBuf_[1], 0);
+}
+
+TEST_F(SimpleBinWriter, Serialize21BitsOfUInt32)
+{
+    rabbit::simple_writer writer(Dst(rawBuf_), n_bytes(3));
+
+    constexpr uint8_t arr[] = {0b00000101, 0b00011100, 0b10101010, 0b11001100};
+    writer.addBits(Src(arr), NumBits(21));
+
+    ASSERT_EQ(rawBuf_[0], 0b00000101);
+    ASSERT_EQ(rawBuf_[1], 0b00011100);
+    ASSERT_EQ(rawBuf_[2], 0b10101000);
+    ASSERT_EQ(writer.pos(), bit_pos(21));
+    ASSERT_EQ(writer.pos().bitOffset(), 5);
+    ASSERT_EQ(writer.pos().byteIndex(), 2_uz);
+}
+
 TEST_F(BinWriter, ConstructFail1)
 {
     expectError(buffer_error::null_data);

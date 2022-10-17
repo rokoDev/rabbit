@@ -51,6 +51,174 @@ result<void> validate_args(Src aSrc) noexcept
 }  // namespace details
 
 template <typename ImplT>
+class simple_bin_writer
+{
+   public:
+    using value_type = uint8_t;
+
+    simple_bin_writer() = delete;
+
+    inline constexpr simple_bin_writer(simple_buf_view aBufView,
+                                       bit_pos aStartBit) noexcept
+        : buf_(aBufView), pos_(aStartBit)
+    {
+        assert(aStartBit <= aBufView.size() && "Invalid aStartBit");
+    }
+
+    inline constexpr simple_bin_writer(simple_buf_view aBufView) noexcept
+        : simple_bin_writer(aBufView, bit_pos(0))
+    {
+    }
+
+    template <std::size_t N>
+    inline constexpr simple_bin_writer(uint8_t (&aData)[N],
+                                       bit_pos aStartBit) noexcept
+        : simple_bin_writer(simple_buf_view(aData), aStartBit)
+    {
+    }
+
+    template <std::size_t N>
+    inline constexpr simple_bin_writer(uint8_t (&aData)[N]) noexcept
+        : simple_bin_writer(aData, bit_pos(0))
+    {
+    }
+
+    inline constexpr simple_bin_writer(Dst aDst, n_bytes aSize,
+                                       bit_pos aStartBit) noexcept
+        : simple_bin_writer(simple_buf_view(aDst.get(), aSize), aStartBit)
+    {
+    }
+
+    inline constexpr simple_bin_writer(Dst aDst, n_bytes aSize) noexcept
+        : simple_bin_writer(aDst, aSize, bit_pos(0))
+    {
+    }
+
+    inline constexpr value_type operator[](n_bytes aIndex) const noexcept
+    {
+        return buf_[aIndex];
+    }
+
+    template <typename T>
+    constexpr void addValue(T &&aValue, NumBits aNBits) noexcept
+    {
+        constexpr NumBits kMaxBits(utils::num_bits<utils::remove_cvref_t<T>>());
+        assert(aNBits <= kMaxBits && "Invalid aNBits");
+        if (aNBits < kMaxBits)
+        {
+            const auto kOffset = pos_.bitOffset();
+            ImplT::addValue(dst(), DstBitOffset(kOffset),
+                            std::forward<T>(aValue), aNBits);
+            increment_pos(aNBits);
+        }
+        else
+        {
+            addValue(std::forward<T>(aValue));
+        }
+    }
+
+    template <typename T>
+    constexpr void addValue(T &&aValue) noexcept
+    {
+        constexpr NumBits nBits(utils::num_bits<utils::remove_cvref_t<T>>());
+        const auto kOffset = pos_.bitOffset();
+        if (!kOffset)
+        {
+            ImplT::addValue(dst(), std::forward<T>(aValue));
+        }
+        else
+        {
+            ImplT::addValue(dst(), DstBitOffset(kOffset),
+                            std::forward<T>(aValue), nBits);
+        }
+        increment_pos(nBits);
+    }
+
+    constexpr void addBits(Src aSrc, SrcBitOffset aSrcOffset,
+                           NumBits aNBits) noexcept
+    {
+        assert(aSrc && "aSrc must be not null");
+        aSrc.get() += aSrcOffset / CHAR_BIT;
+        aSrcOffset = aSrcOffset % CHAR_BIT;
+        const auto kDstOffset = pos_.bitOffset();
+        if (aSrcOffset != kDstOffset)
+        {
+            ImplT::copyBits(dst(), DstBitOffset(kDstOffset), aSrc, aSrcOffset,
+                            aNBits);
+        }
+        else
+        {
+            if (kDstOffset)
+            {
+                ImplT::copyBits(dst(), aSrc, BitOffset(kDstOffset), aNBits);
+            }
+            else
+            {
+                ImplT::copyBits(dst(), aSrc, aNBits);
+            }
+        }
+        increment_pos(aNBits);
+    }
+
+    constexpr void addBits(Src aSrc, NumBits aNBits) noexcept
+    {
+        assert(aSrc && "aSrc must be not null");
+        const auto kDstOffset = pos_.bitOffset();
+        if (kDstOffset)
+        {
+            ImplT::copyBits(dst(), DstBitOffset(kDstOffset), aSrc,
+                            SrcBitOffset(0), aNBits);
+        }
+        else
+        {
+            ImplT::copyBits(dst(), aSrc, aNBits);
+        }
+        increment_pos(aNBits);
+    }
+
+    template <std::size_t N>
+    constexpr void addBits(const uint8_t (&aSrc)[N],
+                           NumBits aNBits) const noexcept
+    {
+        assert(aNBits <= N * CHAR_BIT &&
+               "attempt to write more bits than contains in aSrc");
+        addBits(Src(aSrc), aNBits);
+    }
+
+    template <std::size_t N>
+    constexpr void addBits(const uint8_t (&aSrc)[N]) const noexcept
+    {
+        addBits(Src(aSrc), NumBits(N * CHAR_BIT));
+    }
+
+    inline constexpr simple_buf_view_const buffer() const noexcept
+    {
+        return simple_buf_view_const(buf_);
+    }
+
+    inline constexpr bit_pos pos() const noexcept { return pos_; }
+
+    inline constexpr std::size_t bytes_used() const noexcept
+    {
+        return pos_.bytesUsed();
+    }
+
+   private:
+    inline constexpr void increment_pos(NumBits aNBits) noexcept
+    {
+        pos_ += bit_pos(aNBits);
+    }
+
+    inline constexpr Dst dst() const noexcept
+    {
+        return Dst(buf_.data() + pos_.byteIndex());
+    }
+
+    simple_buf_view buf_;
+    bit_pos pos_;
+};
+
+template <typename ImplT>
 result<bin_writer<ImplT>> make_bin_writer(buf_view aBufView,
                                           bit_pos aStartBit) noexcept;
 

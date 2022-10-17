@@ -126,6 +126,30 @@ struct enum_traits
 };
 
 template <typename T>
+void serialize(simple_writer &aWriter, T &&aValue,
+               tag_t<enable_if_u_int_t<T>>) noexcept
+{
+    aWriter.addValue(std::forward<T>(aValue));
+}
+
+template <typename T>
+void serialize(simple_writer &aWriter, T &&aValue,
+               tag_t<enable_if_i_or_f_t<T>>) noexcept
+{
+    using CoreT = utils::remove_cvref_t<T>;
+    using UIntT = utils::UInt<sizeof(CoreT)>;
+    UIntT uValue = utils::bit_cast<UIntT>(aValue);
+    aWriter.addValue(std::move(uValue));
+}
+
+template <typename T>
+void serialize(writer &aWriter, T &&aValue, tag_t<enable_if_bool_t<T>>) noexcept
+{
+    uint8_t uValue = static_cast<uint8_t>(aValue);
+    aWriter.addValue(std::move(uValue), NumBits(1));
+}
+
+template <typename T>
 result<void> serialize(writer &aWriter, T &&aValue,
                        tag_t<enable_if_u_int_t<T>>) noexcept
 {
@@ -191,6 +215,13 @@ struct Interval<interval::Interval<interval::Min<MinV>, interval::Max<MaxV>>>
     static constexpr std::size_t kNumBits =
         utils::bits_count(interval_type::kMaxIndex);
     using UIntT = utils::uint_from_nbits_t<kNumBits>;
+
+    static constexpr void serialize(simple_writer &aWriter, T &&aValue) noexcept
+    {
+        UIntT valueToSave = static_cast<UIntT>(interval_type::indexOf(aValue));
+        aWriter.addValue(valueToSave, NumBits(kNumBits));
+    }
+
     static result<void> serialize(writer &aWriter, T &&aValue) noexcept
     {
         switch (interval_type::location(aValue))
@@ -243,6 +274,18 @@ result<void> serialize(writer &aWriter, T &&aValue,
 }
 
 template <typename T>
+constexpr void serialize(simple_writer &aWriter, T &&aValue,
+                         tag_t<enable_if_enum_t<T>>) noexcept
+{
+    using E = utils::remove_cvref_t<T>;
+    using IntervalT = interval::Interval<interval::Min<enum_traits<E>::min()>,
+                                         interval::Max<enum_traits<E>::max()>>;
+    auto underlyingValue = utils::to_underlying(aValue);
+    details::Interval<IntervalT>::serialize(aWriter,
+                                            std::move(underlyingValue));
+}
+
+template <typename T>
 result<enable_if_enum_t<T>> deserialize(reader &aReader, tag_t<T>) noexcept
 {
     using E = utils::remove_cvref_t<T>;
@@ -252,6 +295,67 @@ result<enable_if_enum_t<T>> deserialize(reader &aReader, tag_t<T>) noexcept
                     details::Interval<IntervalT>::deserialize(aReader));
     E value = static_cast<E>(underlyingValue);
     return value;
+}
+
+namespace details
+{
+template <typename T>
+void serialize_vector_like(simple_writer &aWriter, T &&aValue) noexcept
+{
+    using VectorT = utils::remove_cvref_t<T>;
+    using ValueT = typename VectorT::value_type;
+    const std::size_t kSize = aValue.size();
+    constexpr uint32_t kMaxSize =
+        static_cast<uint32_t>(std::numeric_limits<uint32_t>::max() >> 1);
+    if (kSize)
+    {
+        const uint32_t kSize32 = static_cast<uint32_t>(kSize);
+        const uint32_t kNonEmptyFlag = static_cast<uint32_t>(~kMaxSize);
+        const uint32_t kValueToSave =
+            static_cast<uint32_t>(kSize32 | kNonEmptyFlag);
+        aWriter.addValue(std::move(kValueToSave));
+        if constexpr ((std::alignment_of_v<ValueT> ==
+                       std::alignment_of_v<uint8_t>)&&(sizeof(ValueT) ==
+                                                       sizeof(uint8_t)))
+        {
+            uint8_t const *firstPtr =
+                reinterpret_cast<uint8_t const *>(&(aValue[0]));
+            aWriter.addBits(Src(firstPtr), NumBits(kSize * CHAR_BIT));
+        }
+        else
+        {
+            for (const auto &instance: aValue)
+            {
+                serialize(aWriter, instance);
+            }
+        }
+    }
+    else
+    {
+        aWriter.addValue(0_u8, NumBits(1));
+    }
+}
+}  // namespace details
+
+template <typename T>
+void serialize(simple_writer &aWriter, T &&aValue,
+               tag_t<enable_if_vector_t<T>>) noexcept
+{
+    details::serialize_vector_like(aWriter, std::forward<T>(aValue));
+}
+
+template <typename T>
+void serialize(simple_writer &aWriter, T &&aValue,
+               tag_t<enable_if_valarray_t<T>>) noexcept
+{
+    details::serialize_vector_like(aWriter, std::forward<T>(aValue));
+}
+
+template <typename T>
+void serialize(simple_writer &aWriter, T &&aValue,
+               tag_t<enable_if_std_string_t<T>>) noexcept
+{
+    details::serialize_vector_like(aWriter, std::forward<T>(aValue));
 }
 
 template <typename T>
