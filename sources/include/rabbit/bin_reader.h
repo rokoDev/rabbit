@@ -20,6 +20,13 @@ enum class reader_error
     non_empty_vector_size_is_zero
 };
 
+enum class eReaderError
+{
+    kSuccess = 0,
+    kNotEnoughBufferSize,
+    kNumBitsExceedTypeSize,
+};
+
 namespace details
 {
 result<void> validate_args(buf_view_const aBufView, bit_pos aStartBit) noexcept
@@ -82,6 +89,224 @@ result<void> validate_args(uint8_t (&)[N], NumBits aNBits) noexcept
     return leaf::new_error(reader_error::read_more_than_destination_size);
 }
 }  // namespace details
+
+template <typename ImplT>
+class simple_bin_reader
+{
+   public:
+    using value_type = uint8_t;
+
+    simple_bin_reader() = delete;
+
+    inline constexpr simple_bin_reader(simple_buf_view_const aBufView,
+                                       bit_pos aStartBit) noexcept
+        : buf_(aBufView), pos_(aStartBit)
+    {
+        assert(aStartBit <= aBufView.size() && "Invalid aStartBit");
+    }
+
+    inline constexpr simple_bin_reader(simple_buf_view_const aBufView) noexcept
+        : simple_bin_reader(aBufView, bit_pos(0))
+    {
+    }
+
+    template <std::size_t N>
+    inline constexpr simple_bin_reader(const uint8_t (&aData)[N],
+                                       bit_pos aStartBit) noexcept
+        : simple_bin_reader(simple_buf_view_const(aData), aStartBit)
+    {
+    }
+
+    template <std::size_t N>
+    inline constexpr simple_bin_reader(const uint8_t (&aData)[N]) noexcept
+        : simple_bin_reader(simple_buf_view_const(aData), bit_pos(0))
+    {
+    }
+
+    inline constexpr simple_bin_reader(Src aSrc, n_bytes aSize,
+                                       bit_pos aStartBit) noexcept
+        : simple_bin_reader(simple_buf_view_const(aSrc.get(), aSize), aStartBit)
+    {
+    }
+
+    inline constexpr simple_bin_reader(Src aSrc, n_bytes aSize) noexcept
+        : simple_bin_reader(aSrc, aSize, bit_pos(0))
+    {
+    }
+
+    inline constexpr value_type operator[](n_bytes aIndex) const noexcept
+    {
+        return buf_[aIndex];
+    }
+
+    template <typename T>
+    constexpr eReaderError getValue(T& aValue, NumBits aNBits) noexcept
+    {
+        auto valueGetter = [&aValue, aNBits, this]()
+        { aValue = readValue<T>(src(), aNBits); };
+        return getValueImpl(aNBits, std::move(valueGetter));
+    }
+
+    template <typename T>
+    constexpr eReaderError getValue(T& aValue) noexcept
+    {
+        auto valueGetter = [&aValue, this]() { aValue = readValue<T>(src()); };
+        constexpr NumBits kBitsToRead(utils::num_bits<T>());
+        return getValueImpl(kBitsToRead, std::move(valueGetter));
+    }
+
+    constexpr eReaderError getBits(Dst aDst, DstBitOffset aOffset,
+                                   NumBits aNBits) noexcept
+    {
+        auto bitsGetter = [aDst, aOffset, aNBits, this]()
+        { readBits(aDst.get(), aOffset, aNBits); };
+        return getValueImpl(aNBits, std::move(bitsGetter));
+    }
+
+    template <std::size_t N>
+    constexpr eReaderError getBits(uint8_t (&aDst)[N], DstBitOffset aOffset,
+                                   NumBits aNBits) noexcept
+    {
+        auto bitsGetter = [&aDst, aOffset, aNBits, this]()
+        { readBits(aDst.get(), aOffset, aNBits); };
+        return getValueImpl(aNBits, std::move(bitsGetter));
+    }
+
+    template <std::size_t N>
+    constexpr eReaderError getBits(uint8_t (&aDst)[N],
+                                   DstBitOffset aOffset) noexcept
+    {
+        NumBits nBits(N * CHAR_BIT - aOffset.get());
+        auto bitsGetter = [&aDst, aOffset, nBits, this]()
+        { readBits(aDst.get(), aOffset, nBits); };
+        return getValueImpl(nBits, std::move(bitsGetter));
+    }
+
+    template <std::size_t N>
+    constexpr eReaderError getBits(uint8_t (&aDst)[N], NumBits aNBits) noexcept
+    {
+        auto bitsGetter = [&aDst, aNBits, this]()
+        { readBits(aDst.get(), DstBitOffset(0), aNBits); };
+        return getValueImpl(aNBits, std::move(bitsGetter));
+    }
+
+    template <std::size_t N>
+    constexpr eReaderError getBits(uint8_t (&aDst)[N]) noexcept
+    {
+        constexpr NumBits nBits(N * CHAR_BIT);
+        auto bitsGetter = [&aDst, nBits, this]()
+        { readBits(aDst.get(), DstBitOffset(0), nBits); };
+        return getValueImpl(nBits, std::move(bitsGetter));
+    }
+
+    inline constexpr uint_fast8_t bitOffset() const noexcept
+    {
+        return pos_.bitOffset();
+    }
+
+    inline constexpr buf_view_const buffer() const noexcept { return buf_; }
+
+    inline constexpr bit_pos pos() const noexcept { return pos_; }
+
+    inline constexpr std::size_t bytes_used() const noexcept
+    {
+        return pos_.bytesUsed();
+    }
+
+   private:
+    template <typename Lambda>
+    constexpr eReaderError getValueImpl(NumBits aNBits,
+                                        Lambda&& aLambda) noexcept
+    {
+        const auto kNextPos = next_pos(aNBits);
+        if (kNextPos <= bit_pos(buf_.size()))
+        {
+            aLambda();
+            pos_ = kNextPos;
+            return eReaderError::kSuccess;
+        }
+        else
+        {
+            return eReaderError::kNotEnoughBufferSize;
+        }
+    }
+
+    void readBits(uint8_t* aDst, DstBitOffset aOffset, NumBits aNBits) noexcept
+    {
+        Dst kDst(aDst + aOffset / CHAR_BIT);
+        DstBitOffset kOffset(aOffset % CHAR_BIT);
+        const auto kSrcOffset = bitOffset();
+        if (kOffset != kSrcOffset)
+        {
+            ImplT::copyBits(kDst, kOffset, src(), SrcBitOffset(kSrcOffset),
+                            aNBits);
+        }
+        else
+        {
+            if (kOffset)
+            {
+                ImplT::copyBits(kDst, src(), BitOffset(kOffset.get()), aNBits);
+            }
+            else
+            {
+                ImplT::copyBits(kDst, src(), aNBits);
+            }
+        }
+    }
+
+    template <typename T>
+    constexpr T readValue(Src aSrc, NumBits aNBits) const noexcept
+    {
+        if (const auto kOffset = bitOffset(); not kOffset)
+        {
+            constexpr NumBits kTSize(
+                utils::num_bits<utils::remove_cvref_t<T>>());
+            assert((aNBits <= kTSize) &&
+                   "error: number bits to read can't exceed type size.");
+            if (aNBits < kTSize)
+            {
+                return ImplT::template getValue<T>(aSrc, aNBits);
+            }
+            else
+            {
+                return ImplT::template getValue<T>(aSrc);
+            }
+        }
+        else
+        {
+            return ImplT::template getValue<T>(aSrc, SrcBitOffset(kOffset),
+                                               aNBits);
+        }
+    }
+
+    template <typename T>
+    constexpr T readValue(Src aSrc) const noexcept
+    {
+        constexpr NumBits kTSize(utils::num_bits<utils::remove_cvref_t<T>>());
+        if (const auto kOffset = bitOffset(); not kOffset)
+        {
+            return ImplT::template getValue<T>(aSrc);
+        }
+        else
+        {
+            return ImplT::template getValue<T>(aSrc, SrcBitOffset(kOffset),
+                                               kTSize);
+        }
+    }
+
+    constexpr bit_pos next_pos(NumBits aNBits) const noexcept
+    {
+        return pos_ + bit_pos(aNBits);
+    }
+
+    inline constexpr Src src() const noexcept
+    {
+        return Src(buf_.data() + pos_.byteIndex());
+    }
+
+    simple_buf_view_const buf_;
+    bit_pos pos_;
+};
 
 template <typename ImplT>
 result<bin_reader<ImplT>> make_bin_reader(buf_view_const aBufView,

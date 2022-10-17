@@ -72,6 +72,11 @@ class simple_bin_writer;
 using simple_writer = simple_bin_writer<Core>;
 
 template <typename ImplT>
+class simple_bin_reader;
+
+using simple_reader = simple_bin_reader<Core>;
+
+template <typename ImplT>
 class bin_writer;
 
 using writer = bin_writer<Core>;
