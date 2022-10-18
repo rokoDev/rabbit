@@ -20,13 +20,6 @@ enum class reader_error
     non_empty_vector_size_is_zero
 };
 
-enum class eReaderError
-{
-    kSuccess = 0,
-    kNotEnoughBufferSize,
-    kNumBitsExceedTypeSize,
-};
-
 namespace details
 {
 result<void> validate_args(buf_view_const aBufView, bit_pos aStartBit) noexcept
@@ -168,7 +161,7 @@ class simple_bin_reader
                                    NumBits aNBits) noexcept
     {
         auto bitsGetter = [&aDst, aOffset, aNBits, this]()
-        { readBits(aDst.get(), aOffset, aNBits); };
+        { readBits(aDst, aOffset, aNBits); };
         return getValueImpl(aNBits, std::move(bitsGetter));
     }
 
@@ -178,7 +171,7 @@ class simple_bin_reader
     {
         NumBits nBits(N * CHAR_BIT - aOffset.get());
         auto bitsGetter = [&aDst, aOffset, nBits, this]()
-        { readBits(aDst.get(), aOffset, nBits); };
+        { readBits(aDst, aOffset, nBits); };
         return getValueImpl(nBits, std::move(bitsGetter));
     }
 
@@ -186,7 +179,7 @@ class simple_bin_reader
     constexpr eReaderError getBits(uint8_t (&aDst)[N], NumBits aNBits) noexcept
     {
         auto bitsGetter = [&aDst, aNBits, this]()
-        { readBits(aDst.get(), DstBitOffset(0), aNBits); };
+        { readBits(aDst, DstBitOffset(0), aNBits); };
         return getValueImpl(aNBits, std::move(bitsGetter));
     }
 
@@ -195,7 +188,7 @@ class simple_bin_reader
     {
         constexpr NumBits nBits(N * CHAR_BIT);
         auto bitsGetter = [&aDst, nBits, this]()
-        { readBits(aDst.get(), DstBitOffset(0), nBits); };
+        { readBits(aDst, DstBitOffset(0), nBits); };
         return getValueImpl(nBits, std::move(bitsGetter));
     }
 

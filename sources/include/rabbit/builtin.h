@@ -37,8 +37,8 @@ inline constexpr bool is_uint_v =
     std::is_unsigned_v<utils::remove_cvref_t<T>> &&
     (not std::is_same_v<utils::remove_cvref_t<T>, bool>);
 
-template <typename T>
-using enable_if_u_int_t = std::enable_if_t<is_uint_v<T>, T>;
+template <typename T, typename U = T>
+using enable_if_u_int_t = std::enable_if_t<is_uint_v<T>, U>;
 
 template <typename T>
 inline constexpr bool is_int_v = std::is_signed_v<utils::remove_cvref_t<T>>
@@ -49,19 +49,19 @@ inline constexpr bool is_floating_v =
     std::is_same_v<utils::remove_cvref_t<T>, float> ||
     std::is_same_v<utils::remove_cvref_t<T>, double>;
 
-template <typename T>
-using enable_if_i_or_f_t = std::enable_if_t<is_int_v<T> || is_floating_v<T>, T>;
+template <typename T, typename U = T>
+using enable_if_i_or_f_t = std::enable_if_t<is_int_v<T> || is_floating_v<T>, U>;
 
 template <typename T>
 inline constexpr bool is_bool_v =
     std::is_same_v<utils::remove_cvref_t<T>, bool>;
 
-template <typename T>
-using enable_if_bool_t = std::enable_if_t<is_bool_v<T>, T>;
+template <typename T, typename U = T>
+using enable_if_bool_t = std::enable_if_t<is_bool_v<T>, U>;
 
-template <typename T>
+template <typename T, typename U = T>
 using enable_if_enum_t =
-    std::enable_if_t<std::is_enum_v<utils::remove_cvref_t<T>>, T>;
+    std::enable_if_t<std::is_enum_v<utils::remove_cvref_t<T>>, U>;
 
 template <typename T>
 struct is_vector : std::false_type
@@ -76,9 +76,9 @@ struct is_vector<std::vector<T>> : std::true_type
 template <typename T>
 inline constexpr bool is_vector_v = is_vector<T>::value;
 
-template <typename T>
+template <typename T, typename U = T>
 using enable_if_vector_t =
-    std::enable_if_t<is_vector_v<utils::remove_cvref_t<T>>, T>;
+    std::enable_if_t<is_vector_v<utils::remove_cvref_t<T>>, U>;
 
 template <typename T>
 struct is_valarray : std::false_type
@@ -93,9 +93,9 @@ struct is_valarray<std::valarray<T>> : std::true_type
 template <typename T>
 inline constexpr bool is_valarray_v = is_valarray<T>::value;
 
-template <typename T>
+template <typename T, typename U = T>
 using enable_if_valarray_t =
-    std::enable_if_t<is_valarray_v<utils::remove_cvref_t<T>>, T>;
+    std::enable_if_t<is_valarray_v<utils::remove_cvref_t<T>>, U>;
 
 template <typename T>
 struct is_std_string : std::false_type
@@ -110,9 +110,9 @@ struct is_std_string<std::string> : std::true_type
 template <typename T>
 inline constexpr bool is_std_string_v = is_std_string<T>::value;
 
-template <typename T>
+template <typename T, typename U = T>
 using enable_if_std_string_t =
-    std::enable_if_t<is_std_string_v<utils::remove_cvref_t<T>>, T>;
+    std::enable_if_t<is_std_string_v<utils::remove_cvref_t<T>>, U>;
 
 template <typename E>
 struct enum_traits
@@ -155,6 +155,37 @@ result<void> serialize(writer &aWriter, T &&aValue,
 {
     BOOST_LEAF_CHECK(aWriter.addValue(aValue));
     return {};
+}
+
+template <typename T>
+enable_if_u_int_t<T, eReaderError> deserialize(simple_reader &aReader,
+                                               T &aValue) noexcept
+{
+    return aReader.getValue(aValue);
+}
+
+template <typename T>
+enable_if_i_or_f_t<T, eReaderError> deserialize(simple_reader &aReader,
+                                                T &aValue) noexcept
+{
+    using UIntT = utils::UInt<sizeof(T)>;
+    UIntT uValue{};
+    const auto retVal = aReader.getValue(uValue);
+    if (retVal == eReaderError::kSuccess)
+    {
+        aValue = utils::bit_cast<T>(uValue);
+    }
+    return retVal;
+}
+
+template <typename T>
+enable_if_bool_t<T, eReaderError> deserialize(simple_reader &aReader,
+                                              T &aValue) noexcept
+{
+    uint8_t interimValue{};
+    const auto retVal = aReader.getValue(interimValue, NumBits(1));
+    aValue = static_cast<bool>(interimValue);
+    return retVal;
 }
 
 template <typename T>
@@ -220,6 +251,25 @@ struct Interval<interval::Interval<interval::Min<MinV>, interval::Max<MaxV>>>
     {
         UIntT valueToSave = static_cast<UIntT>(interval_type::indexOf(aValue));
         aWriter.addValue(valueToSave, NumBits(kNumBits));
+    }
+
+    template <typename E>
+    static eReaderError deserialize(simple_reader &aReader, E &aValue) noexcept
+    {
+        UIntT index{};
+        auto retVal = aReader.getValue(index, NumBits(kNumBits));
+        if (retVal == eReaderError::kSuccess)
+        {
+            if (index <= interval_type::kMaxIndex)
+            {
+                aValue = static_cast<E>(interval_type::valueAt(index));
+            }
+            else
+            {
+                retVal = eReaderError::kInvalidEnumValue;
+            }
+        }
+        return retVal;
     }
 
     static result<void> serialize(writer &aWriter, T &&aValue) noexcept
@@ -297,6 +347,15 @@ result<enable_if_enum_t<T>> deserialize(reader &aReader, tag_t<T>) noexcept
     return value;
 }
 
+template <typename T>
+enable_if_enum_t<T, eReaderError> deserialize(simple_reader &aReader,
+                                              T &aValue) noexcept
+{
+    using IntervalT = interval::Interval<interval::Min<enum_traits<T>::min()>,
+                                         interval::Max<enum_traits<T>::max()>>;
+    return details::Interval<IntervalT>::deserialize(aReader, aValue);
+}
+
 namespace details
 {
 template <typename T>
@@ -335,6 +394,61 @@ void serialize_vector_like(simple_writer &aWriter, T &&aValue) noexcept
         aWriter.addValue(0_u8, NumBits(1));
     }
 }
+
+template <typename T>
+enable_if_vector_t<T, eReaderError> deserialize_vector_like(
+    simple_reader &aReader, T &aValue) noexcept
+{
+    using VectorT = T;
+    using ValueT = typename VectorT::value_type;
+    uint8_t nonEmptyFlag{};
+    auto retVal = aReader.getValue(nonEmptyFlag, NumBits(1));
+    if (retVal == eReaderError::kSuccess)
+    {
+        if (nonEmptyFlag)
+        {
+            uint32_t kSize{};
+            retVal = aReader.getValue(kSize, NumBits(31));
+            if (retVal == eReaderError::kSuccess)
+            {
+                if (kSize > 0)
+                {
+                    if constexpr ((std::alignment_of_v<ValueT> ==
+                                   std::alignment_of_v<
+                                       uint8_t>)&&(sizeof(ValueT) ==
+                                                   sizeof(uint8_t)))
+                    {
+                        aValue.resize(kSize);
+                        retVal = aReader.getBits(
+                            Dst(reinterpret_cast<uint8_t *>(aValue.data())),
+                            DstBitOffset(0), NumBits(kSize * CHAR_BIT));
+                    }
+                    else
+                    {
+                        aValue.resize(kSize);
+                        for (auto &element: aValue)
+                        {
+                            retVal = deserialize(aReader, element);
+                            if (retVal != eReaderError::kSuccess)
+                            {
+                                break;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    retVal = eReaderError::kNonEmptyContainerSizeIsZero;
+                }
+            }
+        }
+        else
+        {
+            aValue.resize(0_uz);
+        }
+    }
+    return retVal;
+}
 }  // namespace details
 
 template <typename T>
@@ -356,6 +470,25 @@ void serialize(simple_writer &aWriter, T &&aValue,
                tag_t<enable_if_std_string_t<T>>) noexcept
 {
     details::serialize_vector_like(aWriter, std::forward<T>(aValue));
+}
+
+template <typename T>
+enable_if_vector_t<T, eReaderError> deserialize(simple_reader &aReader,
+                                                T &aValue)
+{
+    return details::deserialize_vector_like(aReader, aValue);
+}
+
+template <typename T>
+enable_if_valarray_t<T, eReaderError> deserialize(reader &aReader, T &aValue)
+{
+    return details::deserialize_vector_like(aReader, aValue);
+}
+
+template <typename T>
+enable_if_std_string_t<T, eReaderError> deserialize(reader &aReader, T &aValue)
+{
+    return details::deserialize_vector_like(aReader, aValue);
 }
 
 template <typename T>

@@ -13,6 +13,25 @@ namespace rabbit
 namespace details
 {
 template <typename T, typename... Ts>
+eReaderError deserializeAggregateImpl(simple_reader &aReader,
+                                      Ts &...aArgs) noexcept
+{
+    static_assert(std::is_aggregate_v<T>, "T must be aggregate type.");
+    eReaderError retVal{eReaderError::kSuccess};
+    [[maybe_unused]] const bool isSuccess =
+        (... && !(retVal = deserialize<Ts>(aReader, aArgs)));
+    return retVal;
+}
+
+template <typename T, std::size_t... I>
+eReaderError deserializeAggregate(simple_reader &aReader, T &aValue,
+                                  std::index_sequence<I...>) noexcept
+{
+    static_assert(std::is_aggregate_v<T>, "T must be aggregate type.");
+    return deserializeAggregateImpl<T>(aReader, pfr::get<I>(aValue)...);
+}
+
+template <typename T, typename... Ts>
 result<T> deserializeAggregateImpl(reader &aReader,
                                    result<Ts>... aArgs) noexcept
 {
@@ -36,6 +55,21 @@ result<T> deserializeAggregate(reader &aReader,
                                        result<pfr::tuple_element_t<I, T>>{}...);
 }
 }  // namespace details
+
+template <typename T>
+eReaderError deserialize(simple_reader &aReader, T &aValue) noexcept
+{
+    static_assert(is_simple_deserializable_v<T>, "T is not serializable type.");
+    if constexpr (is_simple_deserialize_defined_v<T>)
+    {
+        return deserialize<T>(aReader, aValue);
+    }
+    else
+    {
+        using Indices = std::make_index_sequence<pfr::tuple_size_v<T>>;
+        return details::deserializeAggregate<T>(aReader, aValue, Indices{});
+    }
+}
 
 template <typename T>
 result<T> deserialize(reader &aReader) noexcept

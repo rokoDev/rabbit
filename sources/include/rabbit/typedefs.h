@@ -64,6 +64,14 @@ using buf_view_const = buffer::buffer_view_const<buf_view::value_type>;
 using bit_pos = buffer::bit_pos;
 using n_bytes = buffer::n_bytes;
 
+enum class eReaderError
+{
+    kSuccess = 0,
+    kNotEnoughBufferSize,
+    kInvalidEnumValue,
+    kNonEmptyContainerSizeIsZero,
+};
+
 class Core;
 
 template <typename ImplT>
@@ -90,6 +98,9 @@ template <typename T>
 void serialize(simple_writer &aWriter, T &&aValue) noexcept;
 
 template <typename T>
+eReaderError deserialize(simple_reader &aReader, T &aValue) noexcept;
+
+template <typename T>
 result<void> serialize(writer &aWriter, T &&aValue) noexcept;
 
 template <typename T>
@@ -106,6 +117,10 @@ namespace details
 template <class T>
 using tagged_simple_serialize_result_t = decltype(serialize(
     std::declval<simple_writer &>(), std::declval<T>(), tag<T>));
+
+template <class T>
+using tagged_simple_deserialize_result_t =
+    decltype(deserialize(std::declval<reader &>(), std::declval<T &>()));
 
 template <class T>
 using tagged_serialize_result_t =
@@ -133,6 +148,11 @@ inline constexpr bool is_simple_serialize_defined_v =
                                T>;
 
 template <typename T>
+inline constexpr bool is_simple_deserialize_defined_v =
+    utils::is_detected_exact_v<eReaderError,
+                               details::tagged_simple_deserialize_result_t, T>;
+
+template <typename T>
 inline constexpr bool is_serialize_defined_v =
     utils::is_detected_exact_v<result<void>, details::tagged_serialize_result_t,
                                T>;
@@ -155,6 +175,9 @@ template <typename T, bool IsAggregate>
 struct is_simple_serializable;
 
 template <typename T, bool IsAggregate>
+struct is_simple_deserializable;
+
+template <typename T, bool IsAggregate>
 struct is_serializable;
 
 template <typename T, bool IsAggregate>
@@ -175,6 +198,13 @@ struct aggregate
                     pfr::tuple_element_t<I, T>,
                     std::is_aggregate_v<pfr::tuple_element_t<I, T>>>::value)>
         isSimpleSerializable(std::index_sequence<I...>);
+
+    template <std::size_t... I>
+    static std::bool_constant<
+        (... && is_simple_deserializable<
+                    pfr::tuple_element_t<I, T>,
+                    std::is_aggregate_v<pfr::tuple_element_t<I, T>>>::value)>
+        isSimpleDeserializable(std::index_sequence<I...>);
 
     template <std::size_t... I>
     static std::bool_constant<
@@ -227,6 +257,19 @@ struct is_simple_serializable
 template <typename T>
 struct is_simple_serializable<T, false>
     : std::bool_constant<is_simple_serialize_defined_v<T>>
+{
+};
+
+template <typename T, bool IsAggregate>
+struct is_simple_deserializable
+    : decltype(aggregate<T>::isSimpleDeserializable(
+          std::make_index_sequence<pfr::tuple_size_v<T>>{}))
+{
+};
+
+template <typename T>
+struct is_simple_deserializable<T, false>
+    : std::bool_constant<is_simple_deserialize_defined_v<T>>
 {
 };
 
@@ -311,6 +354,10 @@ struct run_time_bit_size<T, IsAggregate, true>
 template <typename T>
 inline constexpr bool is_simple_serializable_v =
     details::is_simple_serializable<T, std::is_aggregate_v<T>>::value;
+
+template <typename T>
+inline constexpr bool is_simple_deserializable_v =
+    details::is_simple_deserializable<T, std::is_aggregate_v<T>>::value;
 
 template <typename T>
 inline constexpr bool is_serializable_v =

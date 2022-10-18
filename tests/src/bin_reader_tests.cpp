@@ -6,6 +6,104 @@
 #include "serialization_tests.h"
 
 using BinReader = Data<uint8_t, 64>;
+using SimpleBinReader = Data<uint8_t, 64>;
+
+TEST_F(SimpleBinReader, DeserializeUInt8)
+{
+    rawBuf_[0] = 0b10100111;
+    rabbit::simple_reader r(rawBuf_);
+    uint8_t v{};
+    const auto error = r.getValue(v, NumBits(3));
+    ASSERT_EQ(error, rabbit::eReaderError::kSuccess);
+    ASSERT_EQ(v, 0b00000101);
+    ASSERT_EQ(r.pos(), bit_pos(3));
+}
+
+TEST_F(SimpleBinReader, Deserialize3UInt8)
+{
+    rawBuf_[0] = 0b10100111;
+    rawBuf_[1] = 0b10111101;
+    rawBuf_[2] = 0b00000000;
+
+    rabbit::simple_reader reader(rawBuf_);
+
+    uint8_t val1{}, val2{}, val3{};
+
+    ASSERT_EQ(reader.getValue(val1, NumBits(3)),
+              rabbit::eReaderError::kSuccess);
+    ASSERT_EQ(val1, 0b00000101);
+
+    ASSERT_EQ(reader.getValue(val2, NumBits(5)),
+              rabbit::eReaderError::kSuccess);
+    ASSERT_EQ(val2, 0b00000111);
+
+    ASSERT_EQ(reader.getValue(val3, NumBits(5)),
+              rabbit::eReaderError::kSuccess);
+    ASSERT_EQ(val3, 0b00010111);
+
+    ASSERT_EQ(reader.pos(), bit_pos(13));
+    ASSERT_EQ(reader.bytes_used(), 2_uz);
+}
+
+TEST_F(SimpleBinReader, DeserializeCharBitsOneByOne)
+{
+    rawBuf_[0] = 0b11111111;
+
+    rabbit::simple_reader reader(rawBuf_);
+
+    for (std::size_t i = 0; i < CHAR_BIT; ++i)
+    {
+        uint8_t val{};
+        ASSERT_EQ(reader.getValue(val, NumBits(1)),
+                  rabbit::eReaderError::kSuccess);
+        ASSERT_EQ(val, 1_u8);
+    }
+}
+
+TEST_F(SimpleBinReader, Deserialize21BitsOfUInt32)
+{
+    rawBuf_[0] = 0b00000101;
+    rawBuf_[1] = 0b00011100;
+    rawBuf_[2] = 0b10101101;
+
+    uint8_t deserialized[3]{};
+
+    rabbit::simple_reader reader(Src(rawBuf_), n_bytes(3));
+
+    ASSERT_EQ(reader.getBits(deserialized, NumBits(21)),
+              rabbit::eReaderError::kSuccess);
+
+    ASSERT_EQ(deserialized[0], 0b00000101);
+    ASSERT_EQ(deserialized[1], 0b00011100);
+    ASSERT_EQ(deserialized[2], 0b10101000);
+    ASSERT_EQ(reader.pos(), bit_pos(21));
+    ASSERT_EQ(reader.pos().bitOffset(), 5);
+    ASSERT_EQ(reader.pos().byteIndex(), 2_uz);
+}
+
+TEST_F(SimpleBinReader, Deserialize21BitsOfUInt32By1Offset)
+{
+    rawBuf_[0] = 0b00000101;
+    rawBuf_[1] = 0b00011100;
+    rawBuf_[2] = 0b10101101;
+
+    uint8_t deserialized[3]{};
+
+    auto reader = rabbit::make_bin_reader(Src(rawBuf_), n_bytes(3), bit_pos(1));
+    execute(
+        [&]() -> result<void>
+        {
+            BOOST_LEAF_CHECK(reader->getBits(deserialized, NumBits(21)));
+            return {};
+        });
+
+    ASSERT_EQ(deserialized[0], 0b00001010);
+    ASSERT_EQ(deserialized[1], 0b00111001);
+    ASSERT_EQ(deserialized[2], 0b01011000);
+    ASSERT_EQ(reader->pos(), bit_pos(22));
+    ASSERT_EQ(reader->pos().bitOffset(), 6);
+    ASSERT_EQ(reader->pos().byteIndex(), 2_uz);
+}
 
 TEST_F(BinReader, ConstructFail1)
 {
