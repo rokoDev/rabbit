@@ -95,7 +95,7 @@ class bin_reader;
 using reader = bin_reader<Core>;
 
 template <typename T>
-void serialize(simple_writer &aWriter, T &&aValue) noexcept;
+void serialize(simple_writer &aWriter, T &aValue) noexcept;
 
 template <typename T>
 eReaderError deserialize(simple_reader &aReader, T &aValue) noexcept;
@@ -119,8 +119,8 @@ using tagged_simple_serialize_result_t = decltype(serialize(
     std::declval<simple_writer &>(), std::declval<T>(), tag<T>));
 
 template <class T>
-using tagged_simple_deserialize_result_t =
-    decltype(deserialize(std::declval<reader &>(), std::declval<T &>()));
+using tagged_simple_deserialize_result_t = decltype(deserialize(
+    std::declval<simple_reader &>(), std::declval<T &>(), tag<T>));
 
 template <class T>
 using tagged_serialize_result_t =

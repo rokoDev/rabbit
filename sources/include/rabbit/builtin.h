@@ -126,14 +126,14 @@ struct enum_traits
 };
 
 template <typename T>
-void serialize(simple_writer &aWriter, T &&aValue,
+void serialize(simple_writer &aWriter, T &aValue,
                tag_t<enable_if_u_int_t<T>>) noexcept
 {
-    aWriter.addValue(std::forward<T>(aValue));
+    aWriter.addValue(aValue);
 }
 
 template <typename T>
-void serialize(simple_writer &aWriter, T &&aValue,
+void serialize(simple_writer &aWriter, T &aValue,
                tag_t<enable_if_i_or_f_t<T>>) noexcept
 {
     using CoreT = utils::remove_cvref_t<T>;
@@ -143,7 +143,8 @@ void serialize(simple_writer &aWriter, T &&aValue,
 }
 
 template <typename T>
-void serialize(writer &aWriter, T &&aValue, tag_t<enable_if_bool_t<T>>) noexcept
+void serialize(simple_writer &aWriter, T &aValue,
+               tag_t<enable_if_bool_t<T>>) noexcept
 {
     uint8_t uValue = static_cast<uint8_t>(aValue);
     aWriter.addValue(std::move(uValue), NumBits(1));
@@ -159,14 +160,14 @@ result<void> serialize(writer &aWriter, T &&aValue,
 
 template <typename T>
 enable_if_u_int_t<T, eReaderError> deserialize(simple_reader &aReader,
-                                               T &aValue) noexcept
+                                               T &aValue, tag_t<T>) noexcept
 {
     return aReader.getValue(aValue);
 }
 
 template <typename T>
 enable_if_i_or_f_t<T, eReaderError> deserialize(simple_reader &aReader,
-                                                T &aValue) noexcept
+                                                T &aValue, tag_t<T>) noexcept
 {
     using UIntT = utils::UInt<sizeof(T)>;
     UIntT uValue{};
@@ -179,8 +180,8 @@ enable_if_i_or_f_t<T, eReaderError> deserialize(simple_reader &aReader,
 }
 
 template <typename T>
-enable_if_bool_t<T, eReaderError> deserialize(simple_reader &aReader,
-                                              T &aValue) noexcept
+enable_if_bool_t<T, eReaderError> deserialize(simple_reader &aReader, T &aValue,
+                                              tag_t<T>) noexcept
 {
     uint8_t interimValue{};
     const auto retVal = aReader.getValue(interimValue, NumBits(1));
@@ -247,7 +248,7 @@ struct Interval<interval::Interval<interval::Min<MinV>, interval::Max<MaxV>>>
         utils::bits_count(interval_type::kMaxIndex);
     using UIntT = utils::uint_from_nbits_t<kNumBits>;
 
-    static constexpr void serialize(simple_writer &aWriter, T &&aValue) noexcept
+    static constexpr void serialize(simple_writer &aWriter, T aValue) noexcept
     {
         UIntT valueToSave = static_cast<UIntT>(interval_type::indexOf(aValue));
         aWriter.addValue(valueToSave, NumBits(kNumBits));
@@ -348,8 +349,8 @@ result<enable_if_enum_t<T>> deserialize(reader &aReader, tag_t<T>) noexcept
 }
 
 template <typename T>
-enable_if_enum_t<T, eReaderError> deserialize(simple_reader &aReader,
-                                              T &aValue) noexcept
+enable_if_enum_t<T, eReaderError> deserialize(simple_reader &aReader, T &aValue,
+                                              tag_t<T>) noexcept
 {
     using IntervalT = interval::Interval<interval::Min<enum_traits<T>::min()>,
                                          interval::Max<enum_traits<T>::max()>>;
@@ -359,7 +360,7 @@ enable_if_enum_t<T, eReaderError> deserialize(simple_reader &aReader,
 namespace details
 {
 template <typename T>
-void serialize_vector_like(simple_writer &aWriter, T &&aValue) noexcept
+void serialize_vector_like(simple_writer &aWriter, T &aValue) noexcept
 {
     using VectorT = utils::remove_cvref_t<T>;
     using ValueT = typename VectorT::value_type;
@@ -396,8 +397,7 @@ void serialize_vector_like(simple_writer &aWriter, T &&aValue) noexcept
 }
 
 template <typename T>
-enable_if_vector_t<T, eReaderError> deserialize_vector_like(
-    simple_reader &aReader, T &aValue) noexcept
+eReaderError deserialize_vector_like(simple_reader &aReader, T &aValue) noexcept
 {
     using VectorT = T;
     using ValueT = typename VectorT::value_type;
@@ -452,41 +452,43 @@ enable_if_vector_t<T, eReaderError> deserialize_vector_like(
 }  // namespace details
 
 template <typename T>
-void serialize(simple_writer &aWriter, T &&aValue,
+void serialize(simple_writer &aWriter, T &aValue,
                tag_t<enable_if_vector_t<T>>) noexcept
 {
-    details::serialize_vector_like(aWriter, std::forward<T>(aValue));
+    details::serialize_vector_like(aWriter, aValue);
 }
 
 template <typename T>
-void serialize(simple_writer &aWriter, T &&aValue,
+void serialize(simple_writer &aWriter, T &aValue,
                tag_t<enable_if_valarray_t<T>>) noexcept
 {
-    details::serialize_vector_like(aWriter, std::forward<T>(aValue));
+    details::serialize_vector_like(aWriter, aValue);
 }
 
 template <typename T>
-void serialize(simple_writer &aWriter, T &&aValue,
+void serialize(simple_writer &aWriter, T &aValue,
                tag_t<enable_if_std_string_t<T>>) noexcept
 {
-    details::serialize_vector_like(aWriter, std::forward<T>(aValue));
+    details::serialize_vector_like(aWriter, aValue);
 }
 
 template <typename T>
 enable_if_vector_t<T, eReaderError> deserialize(simple_reader &aReader,
-                                                T &aValue)
+                                                T &aValue, tag_t<T>)
 {
     return details::deserialize_vector_like(aReader, aValue);
 }
 
 template <typename T>
-enable_if_valarray_t<T, eReaderError> deserialize(reader &aReader, T &aValue)
+enable_if_valarray_t<T, eReaderError> deserialize(simple_reader &aReader,
+                                                  T &aValue, tag_t<T>)
 {
     return details::deserialize_vector_like(aReader, aValue);
 }
 
 template <typename T>
-enable_if_std_string_t<T, eReaderError> deserialize(reader &aReader, T &aValue)
+enable_if_std_string_t<T, eReaderError> deserialize(simple_reader &aReader,
+                                                    T &aValue, tag_t<T>)
 {
     return details::deserialize_vector_like(aReader, aValue);
 }

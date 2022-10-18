@@ -10,6 +10,8 @@
 
 using BuiltinTests = Data<uint8_t, 128>;
 
+using SimpleBuiltinTests = Data<uint8_t, 128>;
+
 enum class eState : uint8_t
 {
     kFirst = 0,
@@ -65,6 +67,28 @@ inline bool operator==(const WithVectorAndString& lhs,
            (utils::bit_cast<uint32_t>(lhs.c) ==
             utils::bit_cast<uint32_t>(rhs.c)) &&
            (lhs.d == rhs.d) && (lhs.s == rhs.s);
+}
+
+using simple_writer = rabbit::simple_writer;
+using simple_reader = rabbit::simple_reader;
+
+TEST_F(SimpleBuiltinTests, TrickySerialization)
+{
+    constexpr Tricky toSave{true,
+                            1111_u16,
+                            100.234f,
+                            eCustom::kSecond,
+                            -288247968372752384_i64,
+                            eState::kFourth};
+    Tricky restored{};
+
+    simple_writer w(rawBuf_);
+    simple_reader r(rawBuf_);
+
+    rabbit::serialize(w, toSave);
+    ASSERT_EQ(rabbit::deserialize(r, restored), rabbit::eReaderError::kSuccess);
+    ASSERT_EQ(r.pos(), bit_pos(119));
+    ASSERT_EQ(r.pos(), w.pos());
 }
 
 TEST_F(BuiltinTests, TrickySerialization)

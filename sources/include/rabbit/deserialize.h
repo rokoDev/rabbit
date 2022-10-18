@@ -19,7 +19,8 @@ eReaderError deserializeAggregateImpl(simple_reader &aReader,
     static_assert(std::is_aggregate_v<T>, "T must be aggregate type.");
     eReaderError retVal{eReaderError::kSuccess};
     [[maybe_unused]] const bool isSuccess =
-        (... && !(retVal = deserialize<Ts>(aReader, aArgs)));
+        (... &&
+         (eReaderError::kSuccess == (retVal = deserialize(aReader, aArgs))));
     return retVal;
 }
 
@@ -62,7 +63,7 @@ eReaderError deserialize(simple_reader &aReader, T &aValue) noexcept
     static_assert(is_simple_deserializable_v<T>, "T is not serializable type.");
     if constexpr (is_simple_deserialize_defined_v<T>)
     {
-        return deserialize<T>(aReader, aValue);
+        return deserialize<T>(aReader, aValue, tag<T>);
     }
     else
     {
