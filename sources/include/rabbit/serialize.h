@@ -13,11 +13,10 @@ namespace rabbit
 namespace details
 {
 template <typename T, std::size_t... I>
-void serializeAggregateFunc(simple_writer &aWriter, T &aValue,
+void serializeAggregateFunc(simple_writer &aWriter, const T &aValue,
                             std::index_sequence<I...>) noexcept
 {
-    static_assert(std::is_aggregate_v<utils::remove_cvref_t<T>>,
-                  "T must be aggregate type.");
+    static_assert(std::is_aggregate_v<T>, "T must be aggregate type.");
     (..., serialize(aWriter, pfr::get<I>(aValue)));
 }
 
@@ -39,12 +38,12 @@ result<void> serializeAggregate(writer &aWriter, T &&aValue,
 }  // namespace details
 
 template <typename T>
-void serialize(simple_writer &aWriter, T &aValue) noexcept
+void serialize(simple_writer &aWriter, const T &aValue) noexcept
 {
     static_assert(is_simple_serializable_v<T>, "T is not serializable type.");
     if constexpr (is_simple_serialize_defined_v<T>)
     {
-        return serialize(aWriter, std::forward<T>(aValue), tag<T>);
+        return serialize(aWriter, aValue, tag<T>);
     }
     else
     {

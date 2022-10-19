@@ -116,7 +116,7 @@ namespace details
 {
 template <class T>
 using tagged_simple_serialize_result_t = decltype(serialize(
-    std::declval<simple_writer &>(), std::declval<T>(), tag<T>));
+    std::declval<simple_writer &>(), std::declval<const T &>(), tag<T>));
 
 template <class T>
 using tagged_simple_deserialize_result_t = decltype(deserialize(

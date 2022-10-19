@@ -126,14 +126,14 @@ struct enum_traits
 };
 
 template <typename T>
-void serialize(simple_writer &aWriter, T &aValue,
+void serialize(simple_writer &aWriter, const T &aValue,
                tag_t<enable_if_u_int_t<T>>) noexcept
 {
     aWriter.addValue(aValue);
 }
 
 template <typename T>
-void serialize(simple_writer &aWriter, T &aValue,
+void serialize(simple_writer &aWriter, const T &aValue,
                tag_t<enable_if_i_or_f_t<T>>) noexcept
 {
     using CoreT = utils::remove_cvref_t<T>;
@@ -143,7 +143,7 @@ void serialize(simple_writer &aWriter, T &aValue,
 }
 
 template <typename T>
-void serialize(simple_writer &aWriter, T &aValue,
+void serialize(simple_writer &aWriter, const T &aValue,
                tag_t<enable_if_bool_t<T>>) noexcept
 {
     uint8_t uValue = static_cast<uint8_t>(aValue);
@@ -325,7 +325,7 @@ result<void> serialize(writer &aWriter, T &&aValue,
 }
 
 template <typename T>
-constexpr void serialize(simple_writer &aWriter, T &&aValue,
+constexpr void serialize(simple_writer &aWriter, const T &aValue,
                          tag_t<enable_if_enum_t<T>>) noexcept
 {
     using E = utils::remove_cvref_t<T>;
@@ -360,7 +360,7 @@ enable_if_enum_t<T, eReaderError> deserialize(simple_reader &aReader, T &aValue,
 namespace details
 {
 template <typename T>
-void serialize_vector_like(simple_writer &aWriter, T &aValue) noexcept
+void serialize_vector_like(simple_writer &aWriter, const T &aValue) noexcept
 {
     using VectorT = utils::remove_cvref_t<T>;
     using ValueT = typename VectorT::value_type;
@@ -452,21 +452,21 @@ eReaderError deserialize_vector_like(simple_reader &aReader, T &aValue) noexcept
 }  // namespace details
 
 template <typename T>
-void serialize(simple_writer &aWriter, T &aValue,
+void serialize(simple_writer &aWriter, const T &aValue,
                tag_t<enable_if_vector_t<T>>) noexcept
 {
     details::serialize_vector_like(aWriter, aValue);
 }
 
 template <typename T>
-void serialize(simple_writer &aWriter, T &aValue,
+void serialize(simple_writer &aWriter, const T &aValue,
                tag_t<enable_if_valarray_t<T>>) noexcept
 {
     details::serialize_vector_like(aWriter, aValue);
 }
 
 template <typename T>
-void serialize(simple_writer &aWriter, T &aValue,
+void serialize(simple_writer &aWriter, const T &aValue,
                tag_t<enable_if_std_string_t<T>>) noexcept
 {
     details::serialize_vector_like(aWriter, aValue);
