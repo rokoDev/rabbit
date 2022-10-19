@@ -33,13 +33,12 @@ eReaderError deserializeAggregate(simple_reader &aReader, T &aValue,
 }
 
 template <typename T, typename... Ts>
-result<T> deserializeAggregateImpl(reader &aReader,
-                                   result<Ts>... aArgs) noexcept
+result<void> deserializeAggregateImpl(reader &aReader, Ts &...aArgs) noexcept
 {
     static_assert(std::is_aggregate_v<T>, "T must be aggregate type.");
-    if ((... && (aArgs = deserialize<Ts>(aReader))))
+    if ((... && deserialize<Ts>(aReader, aArgs)))
     {
-        return T{(std::move(*aArgs))...};
+        return {};
     }
     else
     {
@@ -48,12 +47,11 @@ result<T> deserializeAggregateImpl(reader &aReader,
 }
 
 template <typename T, std::size_t... I>
-result<T> deserializeAggregate(reader &aReader,
-                               std::index_sequence<I...>) noexcept
+result<void> deserializeAggregate(reader &aReader, T &aValue,
+                                  std::index_sequence<I...>) noexcept
 {
     static_assert(std::is_aggregate_v<T>, "T must be aggregate type.");
-    return deserializeAggregateImpl<T>(aReader,
-                                       result<pfr::tuple_element_t<I, T>>{}...);
+    return deserializeAggregateImpl<T>(aReader, pfr::get<I>(aValue)...);
 }
 }  // namespace details
 
@@ -73,18 +71,26 @@ eReaderError deserialize(simple_reader &aReader, T &aValue) noexcept
 }
 
 template <typename T>
-result<T> deserialize(reader &aReader) noexcept
+result<void> deserialize(reader &aReader, T &aValue) noexcept
 {
     static_assert(is_deserializable_v<T>, "T is not serializable type.");
     if constexpr (is_deserialize_defined_v<T>)
     {
-        return deserialize<T>(aReader, tag<T>);
+        return deserialize<T>(aReader, aValue, tag<T>);
     }
     else
     {
         using Indices = std::make_index_sequence<pfr::tuple_size_v<T>>;
-        return details::deserializeAggregate<T>(aReader, Indices{});
+        return details::deserializeAggregate<T>(aReader, aValue, Indices{});
     }
+}
+
+template <typename T>
+result<T> deserialize(reader &aReader) noexcept
+{
+    T retVal{};
+    BOOST_LEAF_CHECK(deserialize(aReader, retVal));
+    return retVal;
 }
 }  // namespace rabbit
 

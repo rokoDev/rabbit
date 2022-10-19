@@ -190,10 +190,11 @@ enable_if_bool_t<T, eReaderError> deserialize(simple_reader &aReader, T &aValue,
 }
 
 template <typename T>
-result<enable_if_u_int_t<T>> deserialize(reader &aReader, tag_t<T>) noexcept
+result<void> deserialize(reader &aReader, T &aValue,
+                         tag_t<enable_if_u_int_t<T>>) noexcept
 {
-    BOOST_LEAF_AUTO(r, aReader.getValue<T>());
-    return r;
+    BOOST_LEAF_ASSIGN(aValue, aReader.getValue<T>());
+    return {};
 }
 
 template <typename T>
@@ -208,13 +209,14 @@ result<void> serialize(writer &aWriter, T &&aValue,
 }
 
 template <typename T>
-result<enable_if_i_or_f_t<T>> deserialize(reader &aReader, tag_t<T>) noexcept
+result<enable_if_i_or_f_t<T, void>> deserialize(reader &aReader, T &aValue,
+                                                tag_t<T>) noexcept
 {
     using CoreT = utils::remove_cvref_t<T>;
     using UIntT = utils::UInt<sizeof(CoreT)>;
     BOOST_LEAF_AUTO(uValue, aReader.getValue<UIntT>());
-    CoreT value = utils::bit_cast<CoreT>(uValue);
-    return value;
+    aValue = utils::bit_cast<CoreT>(uValue);
+    return {};
 }
 
 template <typename T>
@@ -227,11 +229,12 @@ result<void> serialize(writer &aWriter, T &&aValue,
 }
 
 template <typename T>
-result<enable_if_bool_t<T>> deserialize(reader &aReader, tag_t<T>) noexcept
+result<enable_if_bool_t<T, void>> deserialize(reader &aReader, T &aValue,
+                                              tag_t<T>) noexcept
 {
     BOOST_LEAF_AUTO(uValue, aReader.getValue<uint8_t>(NumBits(1)));
-    bool value = static_cast<bool>(uValue);
-    return value;
+    aValue = static_cast<bool>(uValue);
+    return {};
 }
 
 namespace details
@@ -337,15 +340,16 @@ constexpr void serialize(simple_writer &aWriter, const T &aValue,
 }
 
 template <typename T>
-result<enable_if_enum_t<T>> deserialize(reader &aReader, tag_t<T>) noexcept
+result<enable_if_enum_t<T, void>> deserialize(reader &aReader, T &aValue,
+                                              tag_t<T>) noexcept
 {
     using E = utils::remove_cvref_t<T>;
     using IntervalT = interval::Interval<interval::Min<enum_traits<E>::min()>,
                                          interval::Max<enum_traits<E>::max()>>;
     BOOST_LEAF_AUTO(underlyingValue,
                     details::Interval<IntervalT>::deserialize(aReader));
-    E value = static_cast<E>(underlyingValue);
-    return value;
+    aValue = static_cast<E>(underlyingValue);
+    return {};
 }
 
 template <typename T>
@@ -537,7 +541,8 @@ result<void> serialize(writer &aWriter, T &&aValue,
 }
 
 template <typename T>
-result<enable_if_vector_t<T>> deserialize(reader &aReader, tag_t<T>)
+result<enable_if_vector_t<T, void>> deserialize(reader &aReader, T &aValue,
+                                                tag_t<T>)
 {
     using VectorT = utils::remove_cvref_t<T>;
     using ValueT = typename VectorT::value_type;
@@ -547,27 +552,23 @@ result<enable_if_vector_t<T>> deserialize(reader &aReader, tag_t<T>)
         BOOST_LEAF_AUTO(kSize, aReader.getValue<uint32_t>(NumBits(31)));
         if (kSize > 0)
         {
+            aValue.resize(kSize);
             if constexpr ((std::alignment_of_v<ValueT> ==
                            std::alignment_of_v<uint8_t>)&&(sizeof(ValueT) ==
                                                            sizeof(uint8_t)))
             {
-                VectorT vec(kSize);
                 BOOST_LEAF_CHECK(aReader.getBits(
-                    Dst(reinterpret_cast<uint8_t *>(vec.data())),
+                    Dst(reinterpret_cast<uint8_t *>(aValue.data())),
                     DstBitOffset(0), NumBits(kSize * CHAR_BIT)));
-                return vec;
             }
             else
             {
-                VectorT vec{};
-                vec.reserve(kSize);
-                for (std::size_t i = 0; i < kSize; ++i)
+                for (auto &element: aValue)
                 {
-                    BOOST_LEAF_AUTO(value, deserialize<ValueT>(aReader));
-                    vec.push_back(value);
+                    BOOST_LEAF_CHECK(deserialize<ValueT>(aReader, element));
                 }
-                return vec;
             }
+            return {};
         }
         else
         {
@@ -576,7 +577,7 @@ result<enable_if_vector_t<T>> deserialize(reader &aReader, tag_t<T>)
     }
     else
     {
-        return VectorT{};
+        return {};
     }
 }
 
@@ -625,7 +626,8 @@ result<void> serialize(writer &aWriter, T &&aValue,
 }
 
 template <typename T>
-result<enable_if_valarray_t<T>> deserialize(reader &aReader, tag_t<T>)
+result<enable_if_valarray_t<T, void>> deserialize(reader &aReader, T &aValue,
+                                                  tag_t<T>)
 {
     using ValarrayT = utils::remove_cvref_t<T>;
     using ValueT = typename ValarrayT::value_type;
@@ -635,25 +637,23 @@ result<enable_if_valarray_t<T>> deserialize(reader &aReader, tag_t<T>)
         BOOST_LEAF_AUTO(kSize, aReader.getValue<uint32_t>(NumBits(31)));
         if (kSize > 0)
         {
+            aValue.resize(kSize);
             if constexpr ((std::alignment_of_v<ValueT> ==
                            std::alignment_of_v<uint8_t>)&&(sizeof(ValueT) ==
                                                            sizeof(uint8_t)))
             {
-                ValarrayT vec(kSize);
-                uint8_t *firstPtr = reinterpret_cast<uint8_t *>(&(vec[0]));
+                uint8_t *firstPtr = reinterpret_cast<uint8_t *>(&(aValue[0]));
                 BOOST_LEAF_CHECK(aReader.getBits(Dst(firstPtr), DstBitOffset(0),
                                                  NumBits(kSize * CHAR_BIT)));
-                return vec;
             }
             else
             {
-                ValarrayT vec(kSize);
-                for (auto &value: vec)
+                for (auto &element: aValue)
                 {
-                    BOOST_LEAF_ASSIGN(value, deserialize<ValueT>(aReader));
+                    BOOST_LEAF_CHECK(deserialize<ValueT>(aReader, element));
                 }
-                return vec;
             }
+            return {};
         }
         else
         {
@@ -662,7 +662,7 @@ result<enable_if_valarray_t<T>> deserialize(reader &aReader, tag_t<T>)
     }
     else
     {
-        return ValarrayT{};
+        return {};
     }
 }
 
@@ -696,20 +696,20 @@ result<void> serialize(writer &aWriter, T &&aValue,
 }
 
 template <typename T>
-result<enable_if_std_string_t<T>> deserialize(reader &aReader, tag_t<T>)
+result<enable_if_std_string_t<T, void>> deserialize(reader &aReader, T &aValue,
+                                                    tag_t<T>)
 {
-    using StrT = utils::remove_cvref_t<T>;
     BOOST_LEAF_AUTO(nonEmptyFlag, aReader.getValue<uint8_t>(NumBits(1)));
     if (nonEmptyFlag)
     {
         BOOST_LEAF_AUTO(kSize, aReader.getValue<uint32_t>(NumBits(31)));
         if (kSize > 0)
         {
-            StrT str(kSize, ' ');
+            aValue.resize(kSize);
             BOOST_LEAF_CHECK(
-                aReader.getBits(Dst(reinterpret_cast<uint8_t *>(str.data())),
+                aReader.getBits(Dst(reinterpret_cast<uint8_t *>(aValue.data())),
                                 DstBitOffset(0), NumBits(kSize * CHAR_BIT)));
-            return str;
+            return {};
         }
         else
         {
@@ -718,7 +718,7 @@ result<enable_if_std_string_t<T>> deserialize(reader &aReader, tag_t<T>)
     }
     else
     {
-        return StrT{};
+        return {};
     }
 }
 

@@ -11,10 +11,11 @@ using enable_if_uint16_t =
     std::enable_if_t<std::is_same_v<std::decay_t<T>, uint16_t>, T>;
 
 template <typename T>
-result<enable_if_uint16_t<T>> deserialize(reader &aReader, tag_t<T>) noexcept
+result<void> deserialize(reader &aReader, T &aValue,
+                         tag_t<enable_if_uint16_t<T>>) noexcept
 {
-    BOOST_LEAF_AUTO(r, aReader.getValue<T>());
-    return r;
+    BOOST_LEAF_ASSIGN(aValue, aReader.getValue<T>());
+    return {};
 }
 }  // namespace rabbit
 

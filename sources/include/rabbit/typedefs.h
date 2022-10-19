@@ -104,7 +104,7 @@ template <typename T>
 result<void> serialize(writer &aWriter, T &&aValue) noexcept;
 
 template <typename T>
-result<T> deserialize(reader &aReader) noexcept;
+result<void> deserialize(reader &aReader, T &aValue) noexcept;
 
 template <typename T>
 class SizeChecker
@@ -127,8 +127,8 @@ using tagged_serialize_result_t =
     decltype(serialize(std::declval<writer &>(), std::declval<T>(), tag<T>));
 
 template <class T>
-using tagged_deserialize_result_t =
-    decltype(deserialize(std::declval<reader &>(), tag<T>));
+using tagged_deserialize_result_t = decltype(deserialize(
+    std::declval<reader &>(), std::declval<T &>(), tag<T>));
 
 template <class T>
 using tagged_bit_size_result_t = decltype(bit_size(tag<T>));
@@ -159,8 +159,8 @@ inline constexpr bool is_serialize_defined_v =
 
 template <typename T>
 inline constexpr bool is_deserialize_defined_v =
-    utils::is_detected_exact_v<result<T>, details::tagged_deserialize_result_t,
-                               T>;
+    utils::is_detected_exact_v<result<void>,
+                               details::tagged_deserialize_result_t, T>;
 
 template <typename T>
 inline constexpr bool is_bit_size_defined_v =
