@@ -5,6 +5,8 @@
 #include "serialize.h"
 #endif
 
+#include "rabbit/version_info.h"
+
 #ifdef BOOST_LEAF_NO_EXCEPTIONS
 
 #include <iostream>
