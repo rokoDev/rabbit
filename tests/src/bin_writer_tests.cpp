@@ -5,6 +5,7 @@
 #include <utils/utils.h>
 
 #include <memory>
+#include <tuple>
 
 #include "serialization_tests.h"
 
@@ -150,7 +151,7 @@ TEST_F(BinWriter, SerializeUInt8)
     constexpr uint8_t value = 0b00000101;
     auto writer = rabbit::make_bin_writer(rawBuf_);
     ASSERT_TRUE(writer.has_value());
-    writer->addValue(value, NumBits(3));
+    std::ignore = writer->addValue(value, NumBits(3));
     ASSERT_EQ(*((*writer)[n_bytes(0)]), 0b10100000);
 }
 
@@ -160,15 +161,15 @@ TEST_F(BinWriter, Serialize3UInt8)
     ASSERT_TRUE(writer.has_value());
 
     constexpr uint8_t value1 = 0b00000101;
-    writer->addValue(value1, NumBits(3));
+    std::ignore = writer->addValue(value1, NumBits(3));
     ASSERT_EQ(*((*writer)[n_bytes(0)]), 0b10100000);
 
     constexpr uint8_t value2 = 0b00000111;
-    writer->addValue(value2, NumBits(5));
+    std::ignore = writer->addValue(value2, NumBits(5));
     ASSERT_EQ(*((*writer)[n_bytes(0)]), 0b10100111);
 
     constexpr uint8_t value3 = 0b00010111;
-    writer->addValue(value3, NumBits(5));
+    std::ignore = writer->addValue(value3, NumBits(5));
     ASSERT_EQ(*((*writer)[n_bytes(0)]), 0b10100111);
     ASSERT_EQ(*((*writer)[n_bytes(1)]), 0b10111000);
 }

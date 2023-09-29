@@ -43,7 +43,7 @@ FetchContent_Declare(
 FetchContent_Declare(
 	boost_leaf
 	GIT_REPOSITORY https://github.com/boostorg/leaf.git
-	GIT_TAG        9d3ffa0f1c859a34da6175b53572fd4f2a61bb18
+	GIT_TAG        f2ec744ce9ca1934193b85f7094c1931177a451c
 )
 
 FetchContent_Declare(
