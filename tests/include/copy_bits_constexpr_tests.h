@@ -41,9 +41,9 @@ class CopyBitsCompileTime : public ::testing::Test
         helpers::to_uint8_array<kSrc256BitsStr.size()>(kSrc256BitsStr);
 
    protected:
-    static inline constexpr NumBits NBits{T::template get<0>()};
-    static inline constexpr DstBitOffset DstOffset{T::template get<1>()};
-    static inline constexpr SrcBitOffset SrcOffset{T::template get<2>()};
+    static inline constexpr NumBits NBits{T::template at<0>};
+    static inline constexpr DstBitOffset DstOffset{T::template at<1>};
+    static inline constexpr SrcBitOffset SrcOffset{T::template at<2>};
 
     static constexpr decltype(auto) expected(
         std::string_view aDstData = kDst256BitsStr,
@@ -116,7 +116,7 @@ using SrcOffsetsT =
 template <auto... NBitVals>
 struct copy_bits_types
 {
-    using NumBits = utils::values<NBitVals...>;
+    using NumBits = utils::value_list<NBitVals...>;
     using Combinations =
         utils::cartesian_product_t<NumBits, DstOffsetsT, SrcOffsetsT>;
     using type = testing_type_t<Combinations>;

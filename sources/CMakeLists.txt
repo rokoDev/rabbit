@@ -45,7 +45,7 @@ write_basic_package_version_file(
 )
 
 install(
-  TARGETS rabbit user_literals strong_type endian utils buffer boost_leaf boost_pfr interval rabbit_version
+  TARGETS rabbit user_literals strong_type endian utils buffer boost_leaf boost_pfr interval rabbit_version sysops
   EXPORT rabbitTargets
   INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
