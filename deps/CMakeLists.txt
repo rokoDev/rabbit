@@ -49,7 +49,7 @@ FetchContent_Declare(
 FetchContent_Declare(
 	boost_pfr
 	GIT_REPOSITORY https://github.com/boostorg/pfr.git
-	GIT_TAG        58dcb40a4906cb0f5f7b162599e58a018ca8f040
+	GIT_TAG        2c7903681677c7683457f0beb53d51329c81f430
 )
 
 FetchContent_Declare(
