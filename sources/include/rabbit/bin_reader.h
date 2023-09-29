@@ -197,7 +197,10 @@ class simple_bin_reader
         return pos_.bitOffset();
     }
 
-    inline constexpr buf_view_const buffer() const noexcept { return buf_; }
+    inline constexpr simple_buf_view_const buffer() const noexcept
+    {
+        return buf_;
+    }
 
     inline constexpr bit_pos pos() const noexcept { return pos_; }
 
