@@ -7,7 +7,7 @@ cmake_path(APPEND FETCHCONTENT_BASE_DIR "${CMAKE_SOURCE_DIR}/../" "deps_content"
 FetchContent_Declare(
 	VersionHelper
     GIT_REPOSITORY https://github.com/rokoDev/VersionHelper.git
-    GIT_TAG        497e036e8ce2879aa193d905999b535da4aff8f8
+    GIT_TAG        eb8ee4d0ad5c8730adc39e73e04681453bcdc0c5
 )
 
 FetchContent_Declare(
