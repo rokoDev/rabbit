@@ -43,13 +43,13 @@ FetchContent_Declare(
 FetchContent_Declare(
 	boost_leaf
 	GIT_REPOSITORY https://github.com/boostorg/leaf.git
-	GIT_TAG        9d3ffa0f1c859a34da6175b53572fd4f2a61bb18
+	GIT_TAG        d8aae791332a1307ee5a14561a9f7636649e62b9
 )
 
 FetchContent_Declare(
 	boost_pfr
 	GIT_REPOSITORY https://github.com/boostorg/pfr.git
-	GIT_TAG        2c7903681677c7683457f0beb53d51329c81f430
+	GIT_TAG        98789f610a8bab53d5523157ff6a3fac7606764a
 )
 
 FetchContent_Declare(
