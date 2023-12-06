@@ -8,7 +8,7 @@ cmake_path(APPEND FETCHCONTENT_BASE_DIR "${CMAKE_SOURCE_DIR}" "deps_content" "${
 FetchContent_Declare(
   googletest
   GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG        c0e032efe587efa99413dd9ac54c3953a7915588
+  GIT_TAG        b3a9ba2b8e975550799838332803d468797ae2e1
   )
 
 FetchContent_MakeAvailable(googletest)

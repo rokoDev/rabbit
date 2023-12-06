@@ -64,17 +64,6 @@ jobs:
       - run:
           name: Configure, build and test ninja-clang-Debug
           command: |
-            # echo "host user:"
-            # whoami
-            # echo "host user id:"
-            # id -u "$(whoami)"
-            # echo "container commands:"
-            # docker exec -it "build-test-host" bash -c "cd $CIRCLE_WORKING_DIRECTORY; ls -l"
-            # docker exec -it "build-test-host" bash -c "echo \"current user name:\""
-            # docker exec -it "build-test-host" bash -c "whoami"
-            # docker exec -it "build-test-host" bash -c "echo \"current user id:\""
-            # docker exec -it "build-test-host" bash -c "id -u \"\$(whoami)\""
-            # docker exec -it "build-test-host" bash -c "git config --global --add safe.directory $SOURCE_DIR"
             docker exec -it "build-test-host" bash -c "cmake -GNinja -DCMAKE_TOOLCHAIN_FILE=$SOURCE_DIR/deps_content/cmake-toolchains/gnu.cmake -DSUPPORTED_CONFIGURATIONS=\"Debug Release\" -DCMAKE_BUILD_TYPE=\"Debug\" -S $SOURCE_DIR -B $BUILD_DIR/Debug"
             docker exec -it "build-test-host" bash -c "cd $BUILD_DIR/Debug; cmake --build . --config Debug"
             docker exec -it "build-test-host" bash -c "cd $BUILD_DIR/Debug; ctest -I ,,1 -C Debug --output-on-failure"
