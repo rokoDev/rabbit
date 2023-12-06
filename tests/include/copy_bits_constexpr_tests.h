@@ -104,7 +104,7 @@ template <typename TypeList>
 using testing_type_t = typename testing_type<TypeList>::type;
 
 using dst_offset_t = rabbit::DstBitOffset::value_type;
-using src_offset_t = rabbit::DstBitOffset::value_type;
+using src_offset_t = rabbit::SrcBitOffset::value_type;
 
 using DstOffsetsT =
     utils::values_in_range_t<static_cast<dst_offset_t>(0),
