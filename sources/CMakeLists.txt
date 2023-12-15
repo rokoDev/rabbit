@@ -36,6 +36,20 @@ target_include_directories(rabbit INTERFACE
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
+get_target_property(LEAF_INTERFACE_INC_DIR boost_leaf INTERFACE_INCLUDE_DIRECTORIES)
+set_target_properties(boost_leaf PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "")
+target_include_directories(boost_leaf INTERFACE
+  $<BUILD_INTERFACE:${LEAF_INTERFACE_INC_DIR}>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
+get_target_property(PFR_INTERFACE_INC_DIR boost_pfr INTERFACE_INCLUDE_DIRECTORIES)
+set_target_properties(boost_pfr PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "")
+target_include_directories(boost_pfr INTERFACE
+  $<BUILD_INTERFACE:${PFR_INTERFACE_INC_DIR}>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
 # -------------------Installation-------------------
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(

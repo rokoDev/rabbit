@@ -3,12 +3,10 @@ cmake_minimum_required(VERSION ${cmake_version})
 set(ProjectName ${ProjectName}_tests)
 project(${ProjectName})
 
-cmake_path(APPEND FETCHCONTENT_BASE_DIR "${CMAKE_SOURCE_DIR}" "deps_content" "${CMAKE_GENERATOR_NAME_WITHOUT_SPACES}")
-
 FetchContent_Declare(
   googletest
   GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG        b3a9ba2b8e975550799838332803d468797ae2e1
+  GIT_TAG        530d5c8c84abd2a46f38583ee817743c9b3a42b4
   )
 
 FetchContent_MakeAvailable(googletest)

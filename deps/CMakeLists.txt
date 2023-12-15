@@ -1,8 +1,5 @@
 include(FetchContent)
 
-# Setup directory to which dependencies will be downloaded
-cmake_path(APPEND FETCHCONTENT_BASE_DIR "${CMAKE_SOURCE_DIR}/../" "deps_content" "${CMAKE_GENERATOR_NAME_WITHOUT_SPACES}")
-
 # If dependencies are not available then download it and make available
 FetchContent_Declare(
 	VersionHelper
@@ -13,31 +10,31 @@ FetchContent_Declare(
 FetchContent_Declare(
 	strong_type
 	GIT_REPOSITORY https://github.com/rokoDev/strong_type.git
-	GIT_TAG        b34f11ad2cbb164030a56a80e488cfd716d43b5d
+	GIT_TAG        512cdd6470a658f508a6fc9938de6dae28ff2b23
 )
 
 FetchContent_Declare(
 	user_literals
 	GIT_REPOSITORY https://github.com/rokoDev/user_literals.git
-	GIT_TAG        5c62773ff93b21cc5868eb3c7377deb9a8d8ec97
+	GIT_TAG        e750e9879bfe717a8b64601a2a1d0a76e47916cd
 )
 
 FetchContent_Declare(
 	endian
 	GIT_REPOSITORY https://github.com/rokoDev/endian.git
-	GIT_TAG        3426169e75f102a78b60dbc767e06d116ca76b26
+	GIT_TAG        d1a314b7837cc661bc319f6e417d8e27ed5835c6
 )
 
 FetchContent_Declare(
 	utils
 	GIT_REPOSITORY https://github.com/rokoDev/utils.git
-	GIT_TAG        0f5a0276194c2b72ef289aa731afa497fb6d6f15
+	GIT_TAG        4fdd621eebcd9e0109a715bcce7c9b9c6fb8b347
 )
 
 FetchContent_Declare(
 	buffer
 	GIT_REPOSITORY https://github.com/rokoDev/buffer.git
-	GIT_TAG        dbd42a85f1522ed58ac074702b69b6eb99f5f18e
+	GIT_TAG        f228c39f8c456e0700cd629360a35e81c300c6a5
 )
 
 FetchContent_Declare(
@@ -55,7 +52,7 @@ FetchContent_Declare(
 FetchContent_Declare(
 	interval
 	GIT_REPOSITORY https://github.com/rokoDev/interval.git
-	GIT_TAG        9621cf141f8503aecf89de6233c0dda4267cb53a
+	GIT_TAG        ab70895cf999a0584024a718d7ea0a5d52bd4c52
 )
 
 # If necessary it's possible to use VersionHelper from different location instead of downloaded from GitHub
