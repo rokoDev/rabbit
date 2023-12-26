@@ -21,6 +21,9 @@ using Src = rabbit::Src;
 using Core = rabbit::Core;
 using reader = rabbit::bin_reader<Core>;
 using writer = rabbit::bin_writer<Core>;
+using DstOffset = rabbit::DstOffset;
+using SrcOffset = rabbit::SrcOffset;
+using Offset = rabbit::Offset;
 
 class MockedMethods
 {
@@ -133,29 +136,29 @@ struct Empty
 
 struct NotEmpty
 {
-    uint16_t a;
-    uint16_t b;
+    std::uint16_t a;
+    std::uint16_t b;
 };
 
 struct Nested
 {
-    uint16_t a;
+    std::uint16_t a;
     NotEmpty b;
-    uint16_t c;
+    std::uint16_t c;
 };
 
 struct Unsupported
 {
-    uint16_t a;
+    std::uint16_t a;
     float u;
-    uint8_t b;
+    std::uint8_t b;
 };
 
 struct NestedWithUnsupported
 {
-    uint16_t a;
+    std::uint16_t a;
     NotEmpty b;
-    uint16_t c;
+    std::uint16_t c;
     Unsupported d;
 };
 

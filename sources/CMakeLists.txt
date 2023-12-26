@@ -16,6 +16,7 @@ target_sources(rabbit
     include/rabbit/deserialize.h
     include/rabbit/typedefs.h
     include/rabbit/builtin.h
+    include/rabbit/bit_ops.h
   )
 
 target_compile_definitions(rabbit

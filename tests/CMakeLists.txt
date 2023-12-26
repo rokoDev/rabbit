@@ -6,7 +6,7 @@ project(${ProjectName})
 FetchContent_Declare(
   googletest
   GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG        530d5c8c84abd2a46f38583ee817743c9b3a42b4
+  GIT_TAG        9d43b27f7a873596496a2ea70721b3f9eb82df01
   )
 
 FetchContent_MakeAvailable(googletest)
@@ -111,9 +111,22 @@ set(test_src
   src/copy_bits_constexpr_instantiation.cpp
   )
 package_add_test(
-  TEST_TARGET_NAME copy_bits_constexpr_tests
+  TEST_TARGET_NAME copy_bits_v1_constexpr_tests
   TEST_SOURCES ${test_src}
   EXTRA_TARGETS test_helpers tests_main
+  DEFS CORE_V1
+  )
+
+set(test_src
+  include/copy_bits_constexpr_tests.h
+  src/copy_bits_constexpr_tests.cpp
+  src/copy_bits_constexpr_instantiation.cpp
+  )
+package_add_test(
+  TEST_TARGET_NAME copy_bits_v2_constexpr_tests
+  TEST_SOURCES ${test_src}
+  EXTRA_TARGETS test_helpers tests_main
+  DEFS CORE_V2
   )
 
 set(test_src
@@ -122,9 +135,22 @@ set(test_src
   src/copy_bits_instantiation.cpp
   )
 package_add_test(
-  TEST_TARGET_NAME copy_bits_tests
+  TEST_TARGET_NAME copy_bits_v1_tests
   TEST_SOURCES ${test_src}
   EXTRA_TARGETS test_helpers tests_main
+  DEFS CORE_V1
+  )
+
+set(test_src
+  include/copy_bits_tests.h
+  src/copy_bits_tests.cpp
+  src/copy_bits_instantiation.cpp
+  )
+package_add_test(
+  TEST_TARGET_NAME copy_bits_v2_tests
+  TEST_SOURCES ${test_src}
+  EXTRA_TARGETS test_helpers tests_main
+  DEFS CORE_V2
   )
 
 set(test_src
@@ -133,9 +159,46 @@ set(test_src
   src/add_value_instantiation.cpp
   )
 package_add_test(
-  TEST_TARGET_NAME add_value_tests
+  TEST_TARGET_NAME add_value_v1_tests
   TEST_SOURCES ${test_src}
   EXTRA_TARGETS test_helpers tests_main
+  DEFS CORE_V1
+  )
+
+set(test_src
+  include/add_value_constexpr_tests.h
+  src/add_value_constexpr_tests.cpp
+  src/add_value_constexpr_instantiation.cpp
+  )
+package_add_test(
+  TEST_TARGET_NAME add_value_v1_constexpr_tests
+  TEST_SOURCES ${test_src}
+  EXTRA_TARGETS test_helpers tests_main
+  DEFS CORE_V1
+  )
+
+set(test_src
+  include/add_value_tests.h
+  src/add_value_tests.cpp
+  src/add_value_instantiation.cpp
+  )
+package_add_test(
+  TEST_TARGET_NAME add_value_v2_tests
+  TEST_SOURCES ${test_src}
+  EXTRA_TARGETS test_helpers tests_main
+  DEFS CORE_V2
+  )
+
+set(test_src
+  include/add_value_constexpr_tests.h
+  src/add_value_constexpr_tests.cpp
+  src/add_value_constexpr_instantiation.cpp
+  )
+package_add_test(
+  TEST_TARGET_NAME add_value_v2_constexpr_tests
+  TEST_SOURCES ${test_src}
+  EXTRA_TARGETS test_helpers tests_main
+  DEFS CORE_V2
   )
 
 set(test_src
@@ -144,9 +207,46 @@ set(test_src
   src/get_value_instantiation.cpp
   )
 package_add_test(
-  TEST_TARGET_NAME get_value_tests
+  TEST_TARGET_NAME get_value_v1_tests
   TEST_SOURCES ${test_src}
   EXTRA_TARGETS test_helpers tests_main
+  DEFS CORE_V1
+  )
+
+set(test_src
+  include/get_value_constexpr_tests.h
+  src/get_value_constexpr_tests.cpp
+  src/get_value_constexpr_instantiation.cpp
+  )
+package_add_test(
+  TEST_TARGET_NAME get_value_v1_constexpr_tests
+  TEST_SOURCES ${test_src}
+  EXTRA_TARGETS test_helpers tests_main
+  DEFS CORE_V1
+  )
+
+set(test_src
+  include/get_value_tests.h
+  src/get_value_tests.cpp
+  src/get_value_instantiation.cpp
+  )
+package_add_test(
+  TEST_TARGET_NAME get_value_v2_tests
+  TEST_SOURCES ${test_src}
+  EXTRA_TARGETS test_helpers tests_main
+  DEFS CORE_V2
+  )
+
+set(test_src
+  include/get_value_constexpr_tests.h
+  src/get_value_constexpr_tests.cpp
+  src/get_value_constexpr_instantiation.cpp
+  )
+package_add_test(
+  TEST_TARGET_NAME get_value_v2_constexpr_tests
+  TEST_SOURCES ${test_src}
+  EXTRA_TARGETS test_helpers tests_main
+  DEFS CORE_V2
   )
 
 set(test_src
@@ -209,6 +309,15 @@ package_add_test(
   TEST_TARGET_NAME builtin_tests
   TEST_SOURCES ${test_src}
   EXTRA_TARGETS rabbit tests_main gmock
+  )
+
+set(test_src
+  src/v2_details_tests.cpp
+  )
+package_add_test(
+  TEST_TARGET_NAME v2_details_tests
+  TEST_SOURCES ${test_src}
+  EXTRA_TARGETS rabbit tests_main gmock test_helpers
   )
 
 # If use IDE add gtest, gmock, gtest_main and gmock_main targets into deps/googletest group

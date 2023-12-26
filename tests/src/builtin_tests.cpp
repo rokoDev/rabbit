@@ -8,11 +8,11 @@
 
 #include "serialization_tests.h"
 
-using BuiltinTests = Data<uint8_t, 128>;
+using BuiltinTests = Data<std::byte, 128>;
 
-using SimpleBuiltinTests = Data<uint8_t, 128>;
+using SimpleBuiltinTests = Data<std::byte, 128>;
 
-enum class eState : uint8_t
+enum class eState : std::uint8_t
 {
     kFirst = 0,
     kSecond,
@@ -35,25 +35,25 @@ RABBIT_ENUM_MIN_MAX(eCustom, kFirst, kFifth)
 struct Tricky
 {
     bool a;
-    uint16_t b;
+    std::uint16_t b;
     float c;
     eCustom f;
-    int64_t d;
+    std::int64_t d;
     eState e;
 };
 
 inline bool operator==(const Tricky& lhs, const Tricky& rhs)
 {
     return (lhs.a == rhs.a) && (lhs.b == rhs.b) &&
-           (utils::bit_cast<uint32_t>(lhs.c) ==
-            utils::bit_cast<uint32_t>(rhs.c)) &&
+           (utils::bit_cast<std::uint32_t>(lhs.c) ==
+            utils::bit_cast<std::uint32_t>(rhs.c)) &&
            (lhs.f == rhs.f) && (lhs.d == rhs.d) && (lhs.e == rhs.e);
 }
 
 struct WithVectorAndString
 {
-    int32_t a;
-    std::vector<int8_t> b;
+    std::int32_t a;
+    std::vector<std::int8_t> b;
     float c;
     bool d;
     std::string s;
@@ -64,8 +64,8 @@ inline bool operator==(const WithVectorAndString& lhs,
 {
     return (lhs.a == rhs.a) && (lhs.b.size() == rhs.b.size()) &&
            (!std::memcmp(lhs.b.data(), rhs.b.data(), lhs.b.size())) &&
-           (utils::bit_cast<uint32_t>(lhs.c) ==
-            utils::bit_cast<uint32_t>(rhs.c)) &&
+           (utils::bit_cast<std::uint32_t>(lhs.c) ==
+            utils::bit_cast<std::uint32_t>(rhs.c)) &&
            (lhs.d == rhs.d) && (lhs.s == rhs.s);
 }
 
@@ -120,7 +120,7 @@ TEST_F(BuiltinTests, TrickySerialization)
 
 TEST_F(BuiltinTests, VectorSerialization)
 {
-    using VecT = std::vector<int16_t>;
+    using VecT = std::vector<std::int16_t>;
     const VecT vec{-101, 24, 3};
     VecT restored{};
     bit_pos readerPos{};
@@ -148,7 +148,7 @@ TEST_F(BuiltinTests, VectorSerialization)
 
 TEST_F(BuiltinTests, EmptyVectorSerialization)
 {
-    using VecT = std::vector<int16_t>;
+    using VecT = std::vector<std::int16_t>;
     const VecT vec{};
     VecT restored{};
     bit_pos readerPos{};
@@ -174,12 +174,12 @@ TEST_F(BuiltinTests, EmptyVectorSerialization)
 TEST_F(BuiltinTests, VectorOfChars)
 {
     using VecT = std::vector<char>;
-    constexpr std::size_t kSize = 100_uz;
+    constexpr std::size_t kVSize = 100_uz;
     VecT vec;
-    vec.reserve(kSize);
+    vec.reserve(kVSize);
 
     char value = static_cast<char>(-50);
-    for (std::size_t i = 0_uz; i < kSize; ++i)
+    for (std::size_t i = 0_uz; i < kVSize; ++i)
     {
         vec.push_back(value++);
     }
@@ -200,10 +200,10 @@ TEST_F(BuiltinTests, VectorOfChars)
         });
 
     ASSERT_EQ(readerPos, writerPos);
-    ASSERT_EQ(readerPos, bit_pos((kSize + sizeof(uint32_t)) * CHAR_BIT));
+    ASSERT_EQ(readerPos, bit_pos((kVSize + sizeof(std::uint32_t)) * CHAR_BIT));
     ASSERT_EQ(vec.size(), restored.size());
-    ASSERT_EQ(vec.size(), kSize);
-    for (std::size_t i = 0_uz; i < kSize; ++i)
+    ASSERT_EQ(vec.size(), kVSize);
+    for (std::size_t i = 0_uz; i < kVSize; ++i)
     {
         ASSERT_EQ(restored[i], vec[i]);
     }
@@ -230,9 +230,9 @@ TEST_F(BuiltinTests, StructWithVector)
         });
     ASSERT_EQ(readerPos, writerPos);
     const bit_pos expectedBitPos(
-        (sizeof(int32_t) + sizeof(uint32_t) +
+        (sizeof(std::int32_t) + sizeof(std::uint32_t) +
          sizeof(decltype(toSave.b)::value_type) * toSave.b.size() +
-         sizeof(float) + sizeof(uint32_t) +
+         sizeof(float) + sizeof(std::uint32_t) +
          sizeof(decltype(toSave.s)::value_type) * toSave.s.size()) *
             CHAR_BIT +
         1);
@@ -242,12 +242,12 @@ TEST_F(BuiltinTests, StructWithVector)
 
 TEST_F(BuiltinTests, ValarrayOfChars)
 {
-    constexpr std::size_t kSize = 100_uz;
+    constexpr std::size_t kVSize = 100_uz;
     using VecT = std::valarray<char>;
-    VecT vec(kSize);
+    VecT vec(kVSize);
 
     char value = static_cast<char>(-50);
-    for (std::size_t i = 0_uz; i < kSize; ++i)
+    for (std::size_t i = 0_uz; i < kVSize; ++i)
     {
         vec[i] = value++;
     }
@@ -268,10 +268,10 @@ TEST_F(BuiltinTests, ValarrayOfChars)
         });
 
     ASSERT_EQ(readerPos, writerPos);
-    ASSERT_EQ(readerPos, bit_pos((kSize + sizeof(uint32_t)) * CHAR_BIT));
+    ASSERT_EQ(readerPos, bit_pos((kVSize + sizeof(std::uint32_t)) * CHAR_BIT));
     ASSERT_EQ(vec.size(), restored.size());
-    ASSERT_EQ(vec.size(), kSize);
-    for (std::size_t i = 0_uz; i < kSize; ++i)
+    ASSERT_EQ(vec.size(), kVSize);
+    for (std::size_t i = 0_uz; i < kVSize; ++i)
     {
         ASSERT_EQ(restored[i], vec[i]);
     }
@@ -279,7 +279,7 @@ TEST_F(BuiltinTests, ValarrayOfChars)
 
 TEST_F(BuiltinTests, EmptyValarray)
 {
-    using VecT = std::valarray<int16_t>;
+    using VecT = std::valarray<std::int16_t>;
     const VecT vec{};
     VecT restored{};
     bit_pos readerPos{};
@@ -304,13 +304,13 @@ TEST_F(BuiltinTests, EmptyValarray)
 
 TEST_F(BuiltinTests, ValarrayOfInt32)
 {
-    constexpr std::size_t kSize = 10_uz;
-    using DataT = int32_t;
+    constexpr std::size_t kVSize = 10_uz;
+    using DataT = std::int32_t;
     using VecT = std::valarray<DataT>;
-    VecT vec(kSize);
+    VecT vec(kVSize);
 
     DataT value = static_cast<DataT>(-50);
-    for (std::size_t i = 0_uz; i < kSize; ++i)
+    for (std::size_t i = 0_uz; i < kVSize; ++i)
     {
         vec[i] = value++;
     }
@@ -331,11 +331,12 @@ TEST_F(BuiltinTests, ValarrayOfInt32)
         });
 
     ASSERT_EQ(readerPos, writerPos);
-    ASSERT_EQ(readerPos,
-              bit_pos((sizeof(DataT) * kSize + sizeof(uint32_t)) * CHAR_BIT));
+    ASSERT_EQ(
+        readerPos,
+        bit_pos((sizeof(DataT) * kVSize + sizeof(std::uint32_t)) * CHAR_BIT));
     ASSERT_EQ(vec.size(), restored.size());
-    ASSERT_EQ(vec.size(), kSize);
-    for (std::size_t i = 0_uz; i < kSize; ++i)
+    ASSERT_EQ(vec.size(), kVSize);
+    for (std::size_t i = 0_uz; i < kVSize; ++i)
     {
         ASSERT_EQ(restored[i], vec[i]);
     }
@@ -368,7 +369,7 @@ TEST_F(BuiltinTests, EmptyStdString)
 TEST_F(BuiltinTests, NotEmptyStdString)
 {
     const std::string str("Hi! This is test string.");
-    const std::size_t kSize = str.size();
+    const std::size_t kStrSize = str.size();
     std::string restored{};
     bit_pos readerPos{};
     bit_pos writerPos{};
@@ -385,9 +386,10 @@ TEST_F(BuiltinTests, NotEmptyStdString)
         });
 
     ASSERT_EQ(readerPos, writerPos);
-    ASSERT_EQ(readerPos, bit_pos((kSize + sizeof(uint32_t)) * CHAR_BIT));
+    ASSERT_EQ(readerPos,
+              bit_pos((kStrSize + sizeof(std::uint32_t)) * CHAR_BIT));
     ASSERT_EQ(str.size(), restored.size());
-    ASSERT_EQ(str.size(), kSize);
+    ASSERT_EQ(str.size(), kStrSize);
     ASSERT_EQ(restored, str);
 }
 
@@ -408,46 +410,46 @@ TEST_F(BuiltinTests, IsCompileComputableSize)
                   "invalid bit size of bool.");
 
     static_assert(
-        rabbit::is_compile_time_computable_size_v<int8_t>,
-        "serialized size of 'int8_t' must be compile time computable.");
-    static_assert(rabbit::bit_sizeof_v<int8_t> == 8_uz,
-                  "invalid bit size of int8_t.");
+        rabbit::is_compile_time_computable_size_v<std::int8_t>,
+        "serialized size of 'std::int8_t' must be compile time computable.");
+    static_assert(rabbit::bit_sizeof_v<std::int8_t> == 8_uz,
+                  "invalid bit size of std::int8_t.");
     static_assert(
-        rabbit::is_compile_time_computable_size_v<int16_t>,
-        "serialized size of 'int16_t' must be compile time computable.");
-    static_assert(rabbit::bit_sizeof_v<int16_t> == 16_uz,
-                  "invalid bit size of int16_t.");
+        rabbit::is_compile_time_computable_size_v<std::int16_t>,
+        "serialized size of 'std::int16_t' must be compile time computable.");
+    static_assert(rabbit::bit_sizeof_v<std::int16_t> == 16_uz,
+                  "invalid bit size of std::int16_t.");
     static_assert(
-        rabbit::is_compile_time_computable_size_v<int32_t>,
-        "serialized size of 'int32_t' must be compile time computable.");
-    static_assert(rabbit::bit_sizeof_v<int32_t> == 32_uz,
-                  "invalid bit size of int32_t.");
+        rabbit::is_compile_time_computable_size_v<std::int32_t>,
+        "serialized size of 'std::int32_t' must be compile time computable.");
+    static_assert(rabbit::bit_sizeof_v<std::int32_t> == 32_uz,
+                  "invalid bit size of std::int32_t.");
     static_assert(
-        rabbit::is_compile_time_computable_size_v<int64_t>,
-        "serialized size of 'int64_t' must be compile time computable.");
-    static_assert(rabbit::bit_sizeof_v<int64_t> == 64_uz,
-                  "invalid bit size of int64_t.");
+        rabbit::is_compile_time_computable_size_v<std::int64_t>,
+        "serialized size of 'std::int64_t' must be compile time computable.");
+    static_assert(rabbit::bit_sizeof_v<std::int64_t> == 64_uz,
+                  "invalid bit size of std::int64_t.");
 
     static_assert(
-        rabbit::is_compile_time_computable_size_v<uint8_t>,
-        "serialized size of 'uint16_t' must be compile time computable.");
-    static_assert(rabbit::bit_sizeof_v<uint8_t> == 8_uz,
-                  "invalid bit size of uint8_t.");
+        rabbit::is_compile_time_computable_size_v<std::uint8_t>,
+        "serialized size of 'std::uint16_t' must be compile time computable.");
+    static_assert(rabbit::bit_sizeof_v<std::uint8_t> == 8_uz,
+                  "invalid bit size of std::uint8_t.");
     static_assert(
-        rabbit::is_compile_time_computable_size_v<uint16_t>,
-        "serialized size of 'uint16_t' must be compile time computable.");
-    static_assert(rabbit::bit_sizeof_v<uint16_t> == 16_uz,
-                  "invalid bit size of uint16_t.");
+        rabbit::is_compile_time_computable_size_v<std::uint16_t>,
+        "serialized size of 'std::uint16_t' must be compile time computable.");
+    static_assert(rabbit::bit_sizeof_v<std::uint16_t> == 16_uz,
+                  "invalid bit size of std::uint16_t.");
     static_assert(
-        rabbit::is_compile_time_computable_size_v<uint32_t>,
-        "serialized size of 'uint32_t' must be compile time computable.");
-    static_assert(rabbit::bit_sizeof_v<uint32_t> == 32_uz,
-                  "invalid bit size of uint32_t.");
+        rabbit::is_compile_time_computable_size_v<std::uint32_t>,
+        "serialized size of 'std::uint32_t' must be compile time computable.");
+    static_assert(rabbit::bit_sizeof_v<std::uint32_t> == 32_uz,
+                  "invalid bit size of std::uint32_t.");
     static_assert(
-        rabbit::is_compile_time_computable_size_v<uint64_t>,
-        "serialized size of 'uint64_t' must be compile time computable.");
-    static_assert(rabbit::bit_sizeof_v<uint64_t> == 64_uz,
-                  "invalid bit size of uint64_t.");
+        rabbit::is_compile_time_computable_size_v<std::uint64_t>,
+        "serialized size of 'std::uint64_t' must be compile time computable.");
+    static_assert(rabbit::bit_sizeof_v<std::uint64_t> == 64_uz,
+                  "invalid bit size of std::uint64_t.");
 
     static_assert(
         rabbit::is_compile_time_computable_size_v<float>,

@@ -8,7 +8,7 @@ namespace rabbit
 {
 template <typename T>
 using enable_if_uint16_t =
-    std::enable_if_t<std::is_same_v<std::decay_t<T>, uint16_t>, T>;
+    std::enable_if_t<std::is_same_v<std::decay_t<T>, std::uint16_t>, T>;
 
 template <typename T>
 result<void> deserialize(reader &aReader, T &aValue,
@@ -19,16 +19,17 @@ result<void> deserialize(reader &aReader, T &aValue,
 }
 }  // namespace rabbit
 
-using DeserializeTests64 = Data<uint8_t, 64>;
-using DeserializeTests1 = Data<uint8_t, 1>;
+using DeserializeTests64 = Data<std::byte, 64>;
+using DeserializeTests1 = Data<std::byte, 1>;
 
 TEST(DeserializeTests, StaticAsserts)
 {
-    static_assert(rabbit::is_deserializable_v<uint16_t>,
-                  "uint16_t must be deserializable.");
-    static_assert(rabbit::is_deserialize_defined_v<uint16_t>,
-                  "result<uint16_t> deserialize(reader&, tag_t<uint16_t>) "
-                  "noexcept must be defined.");
+    static_assert(rabbit::is_deserializable_v<std::uint16_t>,
+                  "std::uint16_t must be deserializable.");
+    static_assert(
+        rabbit::is_deserialize_defined_v<std::uint16_t>,
+        "result<std::uint16_t> deserialize(reader&, tag_t<std::uint16_t>) "
+        "noexcept must be defined.");
 
     static_assert(rabbit::is_deserializable_v<Empty>,
                   "Empty must be deserializable.");
@@ -64,15 +65,15 @@ TEST(DeserializeTests, StaticAsserts)
 
 TEST_F(DeserializeTests64, UInt16)
 {
-    rawBuf_[0] = 0b01000010;
-    rawBuf_[1] = 0b11000011;
-    uint16_t deserializedValue{};
+    rawBuf_[0] = 0b01000010_b;
+    rawBuf_[1] = 0b11000011_b;
+    std::uint16_t deserializedValue{};
     execute(
         [&]() -> result<void>
         {
-            BOOST_LEAF_AUTO(reader, rabbit::make_bin_reader(rawBuf_));
+            BOOST_LEAF_AUTO(breader, rabbit::make_bin_reader(rawBuf_));
             BOOST_LEAF_ASSIGN(deserializedValue,
-                              rabbit::deserialize<uint16_t>(reader));
+                              rabbit::deserialize<std::uint16_t>(breader));
             return {};
         });
     ASSERT_EQ(deserializedValue, 0b0100001011000011);
@@ -84,8 +85,8 @@ TEST_F(DeserializeTests1, UInt16)
     execute(
         [&]() -> result<void>
         {
-            BOOST_LEAF_AUTO(reader, rabbit::make_bin_reader(rawBuf_));
-            BOOST_LEAF_CHECK(rabbit::deserialize<uint16_t>(reader));
+            BOOST_LEAF_AUTO(breader, rabbit::make_bin_reader(rawBuf_));
+            BOOST_LEAF_CHECK(rabbit::deserialize<std::uint16_t>(breader));
             return {};
         });
 }

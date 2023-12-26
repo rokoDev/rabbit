@@ -11,69 +11,81 @@
 
 namespace
 {
-using namespace rabbit::test;
+using namespace ::test;
 
-TEST_P(CopyBitsWith5Args, TestFor)
+TEST_P(CopyBits5Args, TestFor)
 {
-    const auto [kData, kNBits, kDstOffset, kSrcOffset] = GetParam();
-    const auto [kDstNBytes, kSrcNBytes] = bytesInDstSrc(GetParam());
-    ASSERT_LE(kDstNBytes, kData->maxBytesInDst());
-    ASSERT_LE(kSrcNBytes, kData->maxBytesInSrc());
+    auto [kDstData, kSrcData, kNBits, kDstOffset, kSrcOffset] = GetParam();
 
     // arrange
-    arrangeExpectedActual(GetParam());
+    auto expected_dst_bits =
+        std::vector<char>{kDstData.str.cbegin(), kDstData.str.cend()};
+    test_utils::copy_bits_expected_str(expected_dst_bits.data(),
+                                       expected_dst_bits.size(), kDstOffset,
+                                       kSrcData.str, kSrcOffset, kNBits);
+    auto expected =
+        std::string_view(expected_dst_bits.data(), expected_dst_bits.size());
+    auto actual_dst_buf = to_buf(kDstData);
 
     // act
-    rabbit::Core::copyBits(Dst(actual_.data()), kDstOffset,
-                           Src(kData->srcBits().data()), kSrcOffset, kNBits);
+    core::copy(Dst(actual_dst_buf.data()), kDstOffset, kSrcData.bytes,
+               kSrcOffset, kNBits);
+    auto actual_dst_bits = to_bits_str(actual_dst_buf);
+    auto actual =
+        std::string_view(actual_dst_bits.data(), actual_dst_bits.size());
 
     // assert
-    EXPECT_EQ(std::memcmp(actual_.data(), expected_.data(), expected_.size()),
-              0);
+    ASSERT_EQ(actual, expected);
 }
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(CopyBitsWith5Args);
 
-TEST_P(CopyBitsWith4Args, TestFor)
+TEST_P(CopyBits4Args, TestFor)
 {
-    auto [kData, kNBits, kOffset] = GetParam();
-    const auto kNBytes = bytesInDstSrc(GetParam());
-    ASSERT_LE(kNBytes, kData->maxBytesInDst());
-    ASSERT_LE(kNBytes, kData->maxBytesInSrc());
+    auto [kDstData, kSrcData, kNBits, kOffset] = GetParam();
 
     // arrange
-    const CopyBits5TestDataT kParams{kData, kNBits, DstBitOffset(kOffset.get()),
-                                     SrcBitOffset(kOffset.get())};
-    arrangeExpectedActual(kParams);
+    auto expected_dst_bits =
+        std::vector<char>{kDstData.str.cbegin(), kDstData.str.cend()};
+    test_utils::copy_bits_expected_str(
+        expected_dst_bits.data(), expected_dst_bits.size(), DstOffset{kOffset},
+        kSrcData.str, SrcOffset{kOffset}, kNBits);
+    auto expected =
+        std::string_view(expected_dst_bits.data(), expected_dst_bits.size());
+    auto actual_dst_buf = to_buf(kDstData);
 
     // act
-    rabbit::Core::copyBits(Dst(actual_.data()), Src(kData->srcBits().data()),
-                           kOffset, kNBits);
+    core::copy(Dst(actual_dst_buf.data()), kSrcData.bytes, kOffset, kNBits);
+    auto actual_dst_bits = to_bits_str(actual_dst_buf);
+    auto actual =
+        std::string_view(actual_dst_bits.data(), actual_dst_bits.size());
 
     // assert
-    EXPECT_EQ(std::memcmp(actual_.data(), expected_.data(), expected_.size()),
-              0);
+    ASSERT_EQ(actual, expected);
 }
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(CopyBitsWith4Args);
 
-TEST_P(CopyBitsWith3Args, TestFor)
+TEST_P(CopyBits3Args, TestFor)
 {
-    auto [kData, kNBits] = GetParam();
-    const auto kNBytes = bytesInDstSrc(GetParam());
-    ASSERT_LE(kNBytes, kData->maxBytesInDst());
-    ASSERT_LE(kNBytes, kData->maxBytesInSrc());
+    auto [kDstData, kSrcData, kNBits] = GetParam();
 
     // arrange
-    const CopyBits5TestDataT kParams{kData, kNBits, DstBitOffset(0),
-                                     SrcBitOffset(0)};
-    arrangeExpectedActual(kParams);
+    auto expected_dst_bits =
+        std::vector<char>{kDstData.str.cbegin(), kDstData.str.cend()};
+    test_utils::copy_bits_expected_str(expected_dst_bits.data(),
+                                       expected_dst_bits.size(), DstOffset{0},
+                                       kSrcData.str, SrcOffset{0}, kNBits);
+    auto expected =
+        std::string_view(expected_dst_bits.data(), expected_dst_bits.size());
+    auto actual_dst_buf = to_buf(kDstData);
 
     // act
-    rabbit::Core::copyBits(Dst(actual_.data()), Src(kData->srcBits().data()),
-                           kNBits);
+    core::copy(Dst(actual_dst_buf.data()), kSrcData.bytes, kNBits);
+    auto actual_dst_bits = to_bits_str(actual_dst_buf);
+    auto actual =
+        std::string_view(actual_dst_bits.data(), actual_dst_bits.size());
 
     // assert
-    EXPECT_EQ(std::memcmp(actual_.data(), expected_.data(), expected_.size()),
-              0);
+    ASSERT_EQ(actual, expected);
 }
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(CopyBitsWith3Args);
 }  // namespace

@@ -31,7 +31,7 @@ result<void> validate_args(buf_view aBufView, bit_pos aStartBit) noexcept
 }
 
 template <std::size_t N>
-result<void> validate_args(const uint8_t (&)[N], NumBits aNBits) noexcept
+result<void> validate_args(const std::byte (&)[N], NumBits aNBits) noexcept
 {
     if (aNBits <= N * CHAR_BIT)
     {
@@ -54,7 +54,7 @@ template <typename ImplT>
 class simple_bin_writer
 {
    public:
-    using value_type = uint8_t;
+    using value_type = std::byte;
 
     simple_bin_writer() = delete;
 
@@ -71,14 +71,14 @@ class simple_bin_writer
     }
 
     template <std::size_t N>
-    inline constexpr simple_bin_writer(uint8_t (&aData)[N],
+    inline constexpr simple_bin_writer(std::byte (&aData)[N],
                                        bit_pos aStartBit) noexcept
         : simple_bin_writer(simple_buf_view(aData), aStartBit)
     {
     }
 
     template <std::size_t N>
-    inline constexpr simple_bin_writer(uint8_t (&aData)[N]) noexcept
+    inline constexpr simple_bin_writer(std::byte (&aData)[N]) noexcept
         : simple_bin_writer(aData, bit_pos(0))
     {
     }
@@ -107,8 +107,8 @@ class simple_bin_writer
         if (aNBits < kMaxBits)
         {
             const auto kOffset = pos_.bitOffset();
-            ImplT::addValue(dst(), DstBitOffset(kOffset),
-                            std::forward<T>(aValue), aNBits);
+            ImplT::add_value(dst(), DstOffset(kOffset), std::forward<T>(aValue),
+                             aNBits);
             increment_pos(aNBits);
         }
         else
@@ -124,17 +124,17 @@ class simple_bin_writer
         const auto kOffset = pos_.bitOffset();
         if (!kOffset)
         {
-            ImplT::addValue(dst(), std::forward<T>(aValue));
+            ImplT::add_value(dst(), std::forward<T>(aValue));
         }
         else
         {
-            ImplT::addValue(dst(), DstBitOffset(kOffset),
-                            std::forward<T>(aValue), nBits);
+            ImplT::add_value(dst(), DstOffset(kOffset), std::forward<T>(aValue),
+                             nBits);
         }
         increment_pos(nBits);
     }
 
-    constexpr void addBits(Src aSrc, SrcBitOffset aSrcOffset,
+    constexpr void addBits(Src aSrc, SrcOffset aSrcOffset,
                            NumBits aNBits) noexcept
     {
         assert(aSrc && "aSrc must be not null");
@@ -143,18 +143,17 @@ class simple_bin_writer
         const auto kDstOffset = pos_.bitOffset();
         if (aSrcOffset != kDstOffset)
         {
-            ImplT::copyBits(dst(), DstBitOffset(kDstOffset), aSrc, aSrcOffset,
-                            aNBits);
+            ImplT::copy(dst(), DstOffset(kDstOffset), aSrc, aSrcOffset, aNBits);
         }
         else
         {
             if (kDstOffset)
             {
-                ImplT::copyBits(dst(), aSrc, BitOffset(kDstOffset), aNBits);
+                ImplT::copy(dst(), aSrc, Offset(kDstOffset), aNBits);
             }
             else
             {
-                ImplT::copyBits(dst(), aSrc, aNBits);
+                ImplT::copy(dst(), aSrc, aNBits);
             }
         }
         increment_pos(aNBits);
@@ -166,18 +165,18 @@ class simple_bin_writer
         const auto kDstOffset = pos_.bitOffset();
         if (kDstOffset)
         {
-            ImplT::copyBits(dst(), DstBitOffset(kDstOffset), aSrc,
-                            SrcBitOffset(0), aNBits);
+            ImplT::copy(dst(), DstOffset(kDstOffset), aSrc, SrcOffset(0),
+                        aNBits);
         }
         else
         {
-            ImplT::copyBits(dst(), aSrc, aNBits);
+            ImplT::copy(dst(), aSrc, aNBits);
         }
         increment_pos(aNBits);
     }
 
     template <std::size_t N>
-    constexpr void addBits(const uint8_t (&aSrc)[N],
+    constexpr void addBits(const std::byte (&aSrc)[N],
                            NumBits aNBits) const noexcept
     {
         assert(aNBits <= N * CHAR_BIT &&
@@ -186,7 +185,7 @@ class simple_bin_writer
     }
 
     template <std::size_t N>
-    constexpr void addBits(const uint8_t (&aSrc)[N]) const noexcept
+    constexpr void addBits(const std::byte (&aSrc)[N]) const noexcept
     {
         addBits(Src(aSrc), NumBits(N * CHAR_BIT));
     }
@@ -226,7 +225,7 @@ template <typename ImplT>
 class bin_writer
 {
    public:
-    using value_type = uint8_t;
+    using value_type = std::byte;
 
     friend result<bin_writer<ImplT>> make_bin_writer<>(
         buf_view aBufView, bit_pos aStartBit) noexcept;
@@ -245,8 +244,8 @@ class bin_writer
         {
             BOOST_LEAF_AUTO(nextPos, getNextPos(aNBits));
             const auto kOffset = pos_.bitOffset();
-            ImplT::addValue(dst(), DstBitOffset(kOffset),
-                            std::forward<T>(aValue), aNBits);
+            ImplT::add_value(dst(), DstOffset(kOffset), std::forward<T>(aValue),
+                             aNBits);
             pos_ = nextPos;
             return {};
         }
@@ -268,19 +267,19 @@ class bin_writer
         const auto kOffset = pos_.bitOffset();
         if (!kOffset)
         {
-            ImplT::addValue(dst(), std::forward<T>(aValue));
+            ImplT::add_value(dst(), std::forward<T>(aValue));
         }
         else
         {
-            ImplT::addValue(dst(), DstBitOffset(kOffset),
-                            std::forward<T>(aValue), NumBits(nBits.get()));
+            ImplT::add_value(dst(), DstOffset(kOffset), std::forward<T>(aValue),
+                             NumBits(nBits.get()));
         }
 
         pos_ = nextPos;
         return {};
     }
 
-    result<void> addBits(Src aSrc, SrcBitOffset aSrcOffset,
+    result<void> addBits(Src aSrc, SrcOffset aSrcOffset,
                          NumBits aNBits) noexcept
     {
         BOOST_LEAF_CHECK(details::validate_args(aSrc));
@@ -290,18 +289,17 @@ class bin_writer
         const auto kDstOffset = pos_.bitOffset();
         if (aSrcOffset != kDstOffset)
         {
-            ImplT::copyBits(dst(), DstBitOffset(kDstOffset), aSrc, aSrcOffset,
-                            aNBits);
+            ImplT::copy(dst(), DstOffset(kDstOffset), aSrc, aSrcOffset, aNBits);
         }
         else
         {
             if (kDstOffset)
             {
-                ImplT::copyBits(dst(), aSrc, BitOffset(kDstOffset), aNBits);
+                ImplT::copy(dst(), aSrc, Offset(kDstOffset), aNBits);
             }
             else
             {
-                ImplT::copyBits(dst(), aSrc, aNBits);
+                ImplT::copy(dst(), aSrc, aNBits);
             }
         }
         pos_ = nextPos;
@@ -315,26 +313,26 @@ class bin_writer
         const auto kDstOffset = pos_.bitOffset();
         if (kDstOffset)
         {
-            ImplT::copyBits(dst(), DstBitOffset(kDstOffset), aSrc,
-                            SrcBitOffset(0), aNBits);
+            ImplT::copy(dst(), DstOffset(kDstOffset), aSrc, SrcOffset(0),
+                        aNBits);
         }
         else
         {
-            ImplT::copyBits(dst(), aSrc, aNBits);
+            ImplT::copy(dst(), aSrc, aNBits);
         }
         pos_ = nextPos;
         return {};
     }
 
     template <std::size_t N>
-    result<void> addBits(const uint8_t (&aSrc)[N], NumBits aNBits) noexcept
+    result<void> addBits(const std::byte (&aSrc)[N], NumBits aNBits) noexcept
     {
         BOOST_LEAF_CHECK(details::validate_args(aSrc, aNBits));
         return addBits(Src(aSrc), aNBits);
     }
 
     template <std::size_t N>
-    result<void> addBits(const uint8_t (&aSrc)[N]) noexcept
+    result<void> addBits(const std::byte (&aSrc)[N]) noexcept
     {
         return addBits(Src(aSrc), NumBits(N * CHAR_BIT));
     }
@@ -389,7 +387,7 @@ result<bin_writer<ImplT>> make_bin_writer(buf_view aBufView) noexcept
 }
 
 template <typename ImplT = Core, std::size_t N>
-result<bin_writer<ImplT>> make_bin_writer(uint8_t (&aData)[N],
+result<bin_writer<ImplT>> make_bin_writer(std::byte (&aData)[N],
                                           bit_pos aStartBit) noexcept
 {
     BOOST_LEAF_AUTO(buf, buffer::make_bv(aData));
@@ -397,7 +395,7 @@ result<bin_writer<ImplT>> make_bin_writer(uint8_t (&aData)[N],
 }
 
 template <typename ImplT = Core, std::size_t N>
-result<bin_writer<ImplT>> make_bin_writer(uint8_t (&aData)[N]) noexcept
+result<bin_writer<ImplT>> make_bin_writer(std::byte (&aData)[N]) noexcept
 {
     return make_bin_writer<ImplT>(aData, bit_pos(0));
 }

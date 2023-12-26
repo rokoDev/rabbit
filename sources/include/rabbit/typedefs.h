@@ -6,6 +6,8 @@
 
 #include <boost/leaf.hpp>
 #include <boost/pfr.hpp>
+#include <cstddef>
+#include <cstdint>
 
 namespace rabbit
 {
@@ -36,13 +38,18 @@ struct NecessaryOps
 {
 };
 
-using SrcBitOffset =
-    strong::strong_type<struct SrcBitOffsetTag, uint_fast8_t, NecessaryOps>;
-using DstBitOffset =
-    strong::strong_type<struct DstBitOffsetTag, uint_fast8_t, NecessaryOps>;
-using BitOffset =
-    strong::strong_type<struct BitOffsetTag, uint_fast8_t, NecessaryOps>;
+using SrcOffset =
+    strong::strong_type<struct SrcOffsetTag, std::uint_fast8_t, NecessaryOps>;
+using DstOffset =
+    strong::strong_type<struct DstOffsetTag, std::uint_fast8_t, NecessaryOps>;
+using Offset =
+    strong::strong_type<struct OffsetTag, std::uint_fast8_t, NecessaryOps>;
 using NumBits = buffer::n_bits;
+using BitIndex =
+    strong::strong_type<struct BitIndexTag, std::size_t, NecessaryOps>;
+
+template <typename T>
+inline constexpr NumBits num_bits{sizeof(T) * CHAR_BIT};
 
 template <typename StrongT>
 struct DataPtrOps
@@ -50,16 +57,19 @@ struct DataPtrOps
     , strong::subscription<StrongT>
     , strong::comparisons<StrongT>
     , strong::implicitly_convertible_to_underlying<StrongT>
+    , strong::pointer_plus_value<StrongT>
+    , strong::pointer_plus_assignment<StrongT>
+    , strong::pre_increment<StrongT>
 {
 };
 
-using Src = strong::strong_type<struct SrcTag, uint8_t const *, DataPtrOps>;
-using Dst = strong::strong_type<struct DstTag, uint8_t *, DataPtrOps>;
+using Src = strong::strong_type<struct SrcTag, std::byte const *, DataPtrOps>;
+using Dst = strong::strong_type<struct DstTag, std::byte *, DataPtrOps>;
 
-using simple_buf_view = buffer::simple_buffer_view<uint8_t>;
+using simple_buf_view = buffer::simple_buffer_view<std::byte>;
 using simple_buf_view_const =
     buffer::simple_buffer_view_const<simple_buf_view::value_type>;
-using buf_view = buffer::buffer_view<uint8_t>;
+using buf_view = buffer::buffer_view<std::byte>;
 using buf_view_const = buffer::buffer_view_const<buf_view::value_type>;
 using bit_pos = buffer::bit_pos;
 using n_bytes = buffer::n_bytes;
@@ -72,7 +82,15 @@ enum class eReaderError
     kNonEmptyContainerSizeIsZero,
 };
 
+inline namespace v1
+{
 class Core;
+}
+
+namespace v2
+{
+class Core;
+}
 
 template <typename ImplT>
 class simple_bin_writer;

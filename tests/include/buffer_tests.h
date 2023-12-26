@@ -7,7 +7,7 @@
 #include <iostream>
 #include <string>
 
-template <std::size_t BufSize, typename DataT = uint8_t>
+template <std::size_t BufSize, typename DataT = std::byte>
 class Buffer
 {
    public:

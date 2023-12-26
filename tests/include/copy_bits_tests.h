@@ -9,187 +9,159 @@
 #include "rabbit/bin_ops.h"
 #include "test_helpers.h"
 
-namespace rabbit
-{
 namespace test
 {
 using ::testing::TestWithParam;
 
 using namespace std::string_view_literals;
-using DstBitOffset = rabbit::DstBitOffset;
-using SrcBitOffset = rabbit::SrcBitOffset;
-using NumBits = rabbit::NumBits;
-using BitOffset = rabbit::BitOffset;
-using DataCount =
-    strong::strong_type<struct DataCountTag, std::size_t, rabbit::NecessaryOps>;
-using Src = rabbit::Src;
-using Dst = rabbit::Dst;
-using helpers = rabbit::test_helpers;
+using DstOffset = ::rabbit::DstOffset;
+using SrcOffset = ::rabbit::SrcOffset;
+using NumBits = ::rabbit::NumBits;
+using Offset = ::rabbit::Offset;
+using Src = ::rabbit::Src;
+using Dst = ::rabbit::Dst;
 
-class TestData
+template <std::size_t ByteCount>
+struct bits_data_t
 {
-   public:
-    using RawBits = std::vector<uint8_t>;
-    TestData() = delete;
-    TestData(const TestData&) = delete;
-    const TestData& operator=(const TestData&) = delete;
-
-    template <typename DstT, typename SrcT, typename NameT>
-    TestData(DstT&& aDst, SrcT&& aSrc, NameT&& aName)
-        : name_(std::forward<NameT>(aName))
-        , dstBitsStr_(std::forward<DstT>(aDst))
-        , srcBitsStr_(std::forward<SrcT>(aSrc))
-        , srcBits_(binVectorFromBitStr(srcBitsStr_))
-    {
-    }
-
-    std::string_view name() const { return name_; }
-
-    std::string_view srcBitsStr() const { return srcBitsStr_; }
-
-    std::string_view dstBitsStr() const { return dstBitsStr_; }
-
-    const RawBits& srcBits() const { return srcBits_; }
-
-    std::size_t maxBytesInSrc() const
-    {
-        return rabbit::details::bytesCount(srcBitsStr_.size());
-    }
-
-    std::size_t maxBytesInDst() const
-    {
-        return rabbit::details::bytesCount(dstBitsStr_.size());
-    }
-
-   private:
-    RawBits binVectorFromBitStr(const std::string& aBitStr) const
-    {
-        const auto kNBytes = rabbit::details::bytesCount(aBitStr.size());
-        RawBits result(kNBytes);
-        helpers::to_uint8_buf(result.data(), aBitStr);
-        return result;
-    }
-
-    std::string name_;
-    std::string dstBitsStr_;
-    std::string srcBitsStr_;
-    RawBits srcBits_;
+    std::string_view str;
+    std::array<std::byte, ByteCount> bytes;
 };
 
-class TestDataFactory
+template <std::size_t ByteCount>
+bits_data_t(const std::string_view &, const std::array<std::byte, ByteCount> &)
+    -> bits_data_t<ByteCount>;
+
+struct src_data_t
 {
-   public:
-    using TestDataVectorT = std::vector<std::shared_ptr<TestData>>;
-    using NameGeneratorT = std::function<std::string(const std::size_t)>;
-
-    static TestDataVectorT randomData(const DataCount aDataCount,
-                                      const NumBits aNBits,
-                                      NameGeneratorT aNameGenerator)
-    {
-        TestDataVectorT result;
-        result.reserve(aDataCount.get());
-        for (std::size_t i = 0; i < aDataCount.get(); ++i)
-        {
-            auto srcBitStr = helpers::random_bit_sequence(aNBits.get());
-            auto dstBitStr = helpers::random_bit_sequence(aNBits.get());
-            auto name = aNameGenerator ? aNameGenerator(i)
-                                       : ("Random" + std::to_string(i));
-            auto pData = std::make_shared<TestData>(
-                std::move(dstBitStr), std::move(srcBitStr), std::move(name));
-            result.push_back(std::move(pData));
-        }
-        return result;
-    }
-
-    static TestDataVectorT randomData(const DataCount aDataCount,
-                                      const NumBits aNBits)
-    {
-        return randomData(aDataCount, aNBits, nullptr);
-    }
-
-    static TestDataVectorT presetData()
-    {
-        TestDataVectorT result;
-        static constexpr std::string_view kSrc256 =
-            "1101011011100000001100001110110010100101000111000001000101100111111111000011010110000101000111011110011101110010011111110010110100010010101010000101101100100111101111001010101110110011111010100111010110001101010110001101010010100100100011100110111000110001"sv;
-        static constexpr std::string_view kDst256 =
-            "0100011000101100101011110101001100000011011011110100111010011001010001001100100110111011110101001110011101110010101011011101011011110000000011111111100100001110100100110110011110101101000111100010111111011100110011111001111011110110100000100100111101111010"sv;
-        result.push_back(
-            std::make_shared<TestData>(kDst256, kSrc256, std::string("Data0")));
-        return result;
-    }
+    std::string_view str;
+    Src bytes;
+    std::size_t index;
 };
+
+using src_bits_t = src_data_t;
+using dst_bits_t = src_data_t;
 
 using CopyBits5TestDataT =
-    std::tuple<std::shared_ptr<TestData>, NumBits, DstBitOffset, SrcBitOffset>;
-using CopyBits4TestDataT =
-    std::tuple<std::shared_ptr<TestData>, NumBits, BitOffset>;
-using CopyBits3TestDataT = std::tuple<std::shared_ptr<TestData>, NumBits>;
-using BytesInDstSrcT = std::tuple<std::size_t, std::size_t>;
+    std::tuple<dst_bits_t, src_bits_t, NumBits, DstOffset, SrcOffset>;
+using CopyBits4TestDataT = std::tuple<dst_bits_t, src_bits_t, NumBits, Offset>;
+using CopyBits3TestDataT = std::tuple<dst_bits_t, src_bits_t, NumBits>;
 
+template <typename CoreT>
 class CopyBitsBase
 {
    protected:
-    void arrangeExpectedActual(const CopyBits5TestDataT& aParam)
+    using core = CoreT;
+    using test_utils = ::test_utils::bits<CoreT>;
+
+    std::vector<std::byte> to_buf(dst_bits_t &kDstData)
     {
-        const auto [kData, kNBits, kDstOffset, kSrcOffset] = aParam;
-        const std::size_t kDstNBytes =
-            rabbit::details::bytesCount(kDstOffset.get(), kNBits.get());
-        auto dstBits = kData->dstBitsStr().substr(0, kDstNBytes * CHAR_BIT);
-
-        // expected
-        expected_.assign(kDstNBytes, 0_u8);
-        helpers::copyBitsExpected(expected_.data(), dstBits, kDstOffset,
-                                  kData->srcBitsStr(), kSrcOffset, kNBits);
-
-        // actual
-        actual_.assign(kDstNBytes, 0_u8);
-        helpers::to_uint8_buf(actual_.data(), dstBits);
+        using rabbit::details::bytes_count;
+        std::vector<std::byte> actual_dst_buf(
+            kDstData.bytes.get(),
+            (kDstData.bytes + bytes_count(NumBits{kDstData.str.size()})).get());
+        return actual_dst_buf;
     }
-    std::vector<uint8_t> expected_;
-    std::vector<uint8_t> actual_;
+
+    std::vector<char> to_bits_str(const std::vector<std::byte> &aBuf)
+    {
+        std::vector<char> actual_dst_bits(aBuf.size() * CHAR_BIT);
+        test_utils::to_symbol_buf(actual_dst_bits.data(), Src{aBuf.data()},
+                                  actual_dst_bits.size());
+        return actual_dst_bits;
+    }
 };
 
+template <typename CoreT>
 class CopyBitsWith5Args
-    : public CopyBitsBase
+    : public CopyBitsBase<CoreT>
     , public TestWithParam<CopyBits5TestDataT>
 {
-   protected:
-    static BytesInDstSrcT bytesInDstSrc(const CopyBits5TestDataT& aParam)
-    {
-        const auto [kData, kNBits, kDstOffset, kSrcOffset] = aParam;
-        const std::size_t kDstNBytes =
-            rabbit::details::bytesCount(kDstOffset.get(), kNBits.get());
-        const std::size_t kSrcNBytes =
-            rabbit::details::bytesCount(kSrcOffset.get(), kNBits.get());
-        return {kDstNBytes, kSrcNBytes};
-    }
 };
 
+template <typename CoreT>
 class CopyBitsWith4Args
-    : public CopyBitsBase
+    : public CopyBitsBase<CoreT>
     , public TestWithParam<CopyBits4TestDataT>
 {
-   protected:
-    static std::size_t bytesInDstSrc(const CopyBits4TestDataT& aParam)
-    {
-        auto [kData, kNBits, kOffset] = aParam;
-        return rabbit::details::bytesCount(kOffset.get(), kNBits.get());
-    }
 };
 
+template <typename CoreT>
 class CopyBitsWith3Args
-    : public CopyBitsBase
+    : public CopyBitsBase<CoreT>
     , public TestWithParam<CopyBits3TestDataT>
 {
-   protected:
-    static std::size_t bytesInDstSrc(const CopyBits3TestDataT& aParam)
-    {
-        auto [kData, kNBits] = aParam;
-        return rabbit::details::bytesCount(kNBits.get());
-    }
 };
+
+inline constexpr auto kDstOffsetsArray =
+    utils::make_array_from_range<0_uf8, 7_uf8, 1_uf8, DstOffset>();
+inline constexpr auto kSrcOffsetsArray =
+    utils::make_array_from_range<0_uf8, 7_uf8, 1_uf8, SrcOffset>();
+inline constexpr auto kBitOffsetsArray =
+    utils::make_array_from_range<0_uf8, 7_uf8, 1_uf8, Offset>();
+inline constexpr auto kNBitsArray = utils::concatenate_arrays(
+    utils::make_array_from_range<0_uz, 170_uz, 1_uz, NumBits>(),
+    utils::make_array_from_range<230_uz, 248_uz, 1_uz, NumBits>());
+
+namespace details
+{
+inline constexpr auto kDstBits = utils::make_array(
+    "0100011000101100101011110101001100000011011011110100111010011001010001001100100110111011110101001110011101110010101011011101011011110000000011111111100100001110100100110110011110101101000111100010111111011100110011111001111011110110100000100100111101111010"sv);
+
+inline constexpr auto kSrcBits = utils::make_array(
+    "1101011011100000001100001110110010100101000111000001000101100111111111000011010110000101000111011110011101110010011111110010110100010010101010000101101100100111101111001010101110110011111010100111010110001101010110001101010010100100100011100110111000110001"sv);
+
+template <typename CoreT, auto &BitsStrArrRef, std::size_t... I>
+constexpr decltype(auto) make_bits_data_tuple(
+    std::index_sequence<I...>) noexcept
+{
+    using test_utils = ::test_utils::bits<CoreT>;
+    return std::make_tuple(
+        bits_data_t{BitsStrArrRef[I],
+                    test_utils::template to_byte_array<BitsStrArrRef[I].size()>(
+                        BitsStrArrRef[I])}...);
+}
+
+template <typename CoreT>
+inline constexpr auto kDstBitDatas = make_bits_data_tuple<CoreT, kDstBits>(
+    std::make_index_sequence<kDstBits.size()>{});
+
+template <typename CoreT>
+inline constexpr auto kSrcBitDatas = make_bits_data_tuple<CoreT, kSrcBits>(
+    std::make_index_sequence<kDstBits.size()>{});
+
+template <std::size_t... ByteCounts, std::size_t... I>
+constexpr decltype(auto) make_bits_data_arr(
+    const std::tuple<bits_data_t<ByteCounts>...> &aValue,
+    std::index_sequence<I...>) noexcept
+{
+    return utils::make_array(src_data_t{
+        std::get<I>(aValue).str, Src{std::get<I>(aValue).bytes.data()}, I}...);
+}
+}  // namespace details
+
+#ifdef CORE_V1
+using core_t = ::rabbit::v1::Core;
+#endif
+
+#ifdef CORE_V2
+using core_t = ::rabbit::v2::Core;
+#endif
+using details::kDstBitDatas;
+using details::kSrcBitDatas;
+using details::make_bits_data_arr;
+using DstIndices =
+    std::make_index_sequence<std::tuple_size_v<decltype(kDstBitDatas<core_t>)>>;
+using SrcIndices =
+    std::make_index_sequence<std::tuple_size_v<decltype(kSrcBitDatas<core_t>)>>;
+inline constexpr auto kDstData =
+    make_bits_data_arr(kDstBitDatas<core_t>, DstIndices{});
+inline constexpr auto kSrcData =
+    make_bits_data_arr(kSrcBitDatas<core_t>, SrcIndices{});
+
+using CopyBits5Args = CopyBitsWith5Args<core_t>;
+using CopyBits4Args = CopyBitsWith4Args<core_t>;
+using CopyBits3Args = CopyBitsWith3Args<core_t>;
 }  // namespace test
-}  // namespace rabbit
 
 #endif /* copy_bits_tests_h */

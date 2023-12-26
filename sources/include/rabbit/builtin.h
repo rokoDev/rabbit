@@ -146,7 +146,7 @@ template <typename T>
 void serialize(simple_writer &aWriter, const T &aValue,
                tag_t<enable_if_bool_t<T>>) noexcept
 {
-    uint8_t uValue = static_cast<uint8_t>(aValue);
+    auto uValue = static_cast<std::uint8_t>(aValue);
     aWriter.addValue(std::move(uValue), NumBits(1));
 }
 
@@ -183,7 +183,7 @@ template <typename T>
 enable_if_bool_t<T, eReaderError> deserialize(simple_reader &aReader, T &aValue,
                                               tag_t<T>) noexcept
 {
-    uint8_t interimValue{};
+    std::uint8_t interimValue{};
     const auto retVal = aReader.getValue(interimValue, NumBits(1));
     aValue = static_cast<bool>(interimValue);
     return retVal;
@@ -223,7 +223,7 @@ template <typename T>
 result<void> serialize(writer &aWriter, T &&aValue,
                        tag_t<enable_if_bool_t<T>>) noexcept
 {
-    uint8_t uValue = static_cast<uint8_t>(aValue);
+    auto uValue = static_cast<std::uint8_t>(aValue);
     BOOST_LEAF_CHECK(aWriter.addValue(std::move(uValue), NumBits(1)));
     return {};
 }
@@ -232,7 +232,7 @@ template <typename T>
 result<enable_if_bool_t<T, void>> deserialize(reader &aReader, T &aValue,
                                               tag_t<T>) noexcept
 {
-    BOOST_LEAF_AUTO(uValue, aReader.getValue<uint8_t>(NumBits(1)));
+    BOOST_LEAF_AUTO(uValue, aReader.getValue<std::uint8_t>(NumBits(1)));
     aValue = static_cast<bool>(uValue);
     return {};
 }
@@ -369,21 +369,21 @@ void serialize_vector_like(simple_writer &aWriter, const T &aValue) noexcept
     using VectorT = utils::remove_cvref_t<T>;
     using ValueT = typename VectorT::value_type;
     const std::size_t kSize = aValue.size();
-    constexpr uint32_t kMaxSize =
-        static_cast<uint32_t>(std::numeric_limits<uint32_t>::max() >> 1);
+    constexpr std::uint32_t kMaxSize = static_cast<std::uint32_t>(
+        std::numeric_limits<std::uint32_t>::max() >> 1);
     if (kSize)
     {
-        const uint32_t kSize32 = static_cast<uint32_t>(kSize);
-        const uint32_t kNonEmptyFlag = static_cast<uint32_t>(~kMaxSize);
-        const uint32_t kValueToSave =
-            static_cast<uint32_t>(kSize32 | kNonEmptyFlag);
+        const std::uint32_t kSize32 = static_cast<std::uint32_t>(kSize);
+        const std::uint32_t kNonEmptyFlag =
+            static_cast<std::uint32_t>(~kMaxSize);
+        const std::uint32_t kValueToSave =
+            static_cast<std::uint32_t>(kSize32 | kNonEmptyFlag);
         aWriter.addValue(std::move(kValueToSave));
         if constexpr ((std::alignment_of_v<ValueT> ==
-                       std::alignment_of_v<uint8_t>)&&(sizeof(ValueT) ==
-                                                       sizeof(uint8_t)))
+                       std::alignment_of_v<std::byte>)&&(sizeof(ValueT) ==
+                                                         sizeof(std::byte)))
         {
-            uint8_t const *firstPtr =
-                reinterpret_cast<uint8_t const *>(&(aValue[0]));
+            auto firstPtr = reinterpret_cast<std::byte const *>(&(aValue[0]));
             aWriter.addBits(Src(firstPtr), NumBits(kSize * CHAR_BIT));
         }
         else
@@ -405,13 +405,13 @@ eReaderError deserialize_vector_like(simple_reader &aReader, T &aValue) noexcept
 {
     using VectorT = T;
     using ValueT = typename VectorT::value_type;
-    uint8_t nonEmptyFlag{};
+    std::uint8_t nonEmptyFlag{};
     auto retVal = aReader.getValue(nonEmptyFlag, NumBits(1));
     if (retVal == eReaderError::kSuccess)
     {
         if (nonEmptyFlag)
         {
-            uint32_t kSize{};
+            std::uint32_t kSize{};
             retVal = aReader.getValue(kSize, NumBits(31));
             if (retVal == eReaderError::kSuccess)
             {
@@ -419,13 +419,13 @@ eReaderError deserialize_vector_like(simple_reader &aReader, T &aValue) noexcept
                 {
                     if constexpr ((std::alignment_of_v<ValueT> ==
                                    std::alignment_of_v<
-                                       uint8_t>)&&(sizeof(ValueT) ==
-                                                   sizeof(uint8_t)))
+                                       std::byte>)&&(sizeof(ValueT) ==
+                                                     sizeof(std::byte)))
                     {
                         aValue.resize(kSize);
                         retVal = aReader.getBits(
-                            Dst(reinterpret_cast<uint8_t *>(aValue.data())),
-                            DstBitOffset(0), NumBits(kSize * CHAR_BIT));
+                            Dst(reinterpret_cast<std::byte *>(aValue.data())),
+                            DstOffset(0), NumBits(kSize * CHAR_BIT));
                     }
                     else
                     {
@@ -504,25 +504,26 @@ result<void> serialize(writer &aWriter, T &&aValue,
     using VectorT = utils::remove_cvref_t<T>;
     using ValueT = typename VectorT::value_type;
     const std::size_t kSize = aValue.size();
-    constexpr uint32_t kMaxSize =
-        static_cast<uint32_t>(std::numeric_limits<uint32_t>::max() >> 1);
+    constexpr std::uint32_t kMaxSize = static_cast<std::uint32_t>(
+        std::numeric_limits<std::uint32_t>::max() >> 1);
     if (kSize > kMaxSize)
     {
         return leaf::new_error(writer_error::vector_size_is_too_big);
     }
     if (kSize)
     {
-        const uint32_t kSize32 = static_cast<uint32_t>(kSize);
-        const uint32_t kNonEmptyFlag = static_cast<uint32_t>(~kMaxSize);
-        const uint32_t kValueToSave =
-            static_cast<uint32_t>(kSize32 | kNonEmptyFlag);
+        const std::uint32_t kSize32 = static_cast<std::uint32_t>(kSize);
+        const std::uint32_t kNonEmptyFlag =
+            static_cast<std::uint32_t>(~kMaxSize);
+        const std::uint32_t kValueToSave =
+            static_cast<std::uint32_t>(kSize32 | kNonEmptyFlag);
         BOOST_LEAF_CHECK(aWriter.addValue(std::move(kValueToSave)));
         if constexpr ((std::alignment_of_v<ValueT> ==
-                       std::alignment_of_v<uint8_t>)&&(sizeof(ValueT) ==
-                                                       sizeof(uint8_t)))
+                       std::alignment_of_v<std::byte>)&&(sizeof(ValueT) ==
+                                                         sizeof(std::byte)))
         {
             BOOST_LEAF_CHECK(aWriter.addBits(
-                Src(reinterpret_cast<uint8_t const *>(aValue.data())),
+                Src(reinterpret_cast<std::byte const *>(aValue.data())),
                 NumBits(kSize * CHAR_BIT)));
         }
         else
@@ -546,20 +547,20 @@ result<enable_if_vector_t<T, void>> deserialize(reader &aReader, T &aValue,
 {
     using VectorT = utils::remove_cvref_t<T>;
     using ValueT = typename VectorT::value_type;
-    BOOST_LEAF_AUTO(nonEmptyFlag, aReader.getValue<uint8_t>(NumBits(1)));
+    BOOST_LEAF_AUTO(nonEmptyFlag, aReader.getValue<std::uint8_t>(NumBits(1)));
     if (nonEmptyFlag)
     {
-        BOOST_LEAF_AUTO(kSize, aReader.getValue<uint32_t>(NumBits(31)));
+        BOOST_LEAF_AUTO(kSize, aReader.getValue<std::uint32_t>(NumBits(31)));
         if (kSize > 0)
         {
             aValue.resize(kSize);
             if constexpr ((std::alignment_of_v<ValueT> ==
-                           std::alignment_of_v<uint8_t>)&&(sizeof(ValueT) ==
-                                                           sizeof(uint8_t)))
+                           std::alignment_of_v<std::byte>)&&(sizeof(ValueT) ==
+                                                             sizeof(std::byte)))
             {
                 BOOST_LEAF_CHECK(aReader.getBits(
-                    Dst(reinterpret_cast<uint8_t *>(aValue.data())),
-                    DstBitOffset(0), NumBits(kSize * CHAR_BIT)));
+                    Dst(reinterpret_cast<std::byte *>(aValue.data())),
+                    DstOffset(0), NumBits(kSize * CHAR_BIT)));
             }
             else
             {
@@ -588,25 +589,25 @@ result<void> serialize(writer &aWriter, T &&aValue,
     using ValarrayT = utils::remove_cvref_t<T>;
     using ValueT = typename ValarrayT::value_type;
     const std::size_t kSize = aValue.size();
-    constexpr uint32_t kMaxSize =
-        static_cast<uint32_t>(std::numeric_limits<uint32_t>::max() >> 1);
+    constexpr std::uint32_t kMaxSize = static_cast<std::uint32_t>(
+        std::numeric_limits<std::uint32_t>::max() >> 1);
     if (kSize > kMaxSize)
     {
         return leaf::new_error(writer_error::vector_size_is_too_big);
     }
     if (kSize)
     {
-        const uint32_t kSize32 = static_cast<uint32_t>(kSize);
-        const uint32_t kNonEmptyFlag = static_cast<uint32_t>(~kMaxSize);
-        const uint32_t kValueToSave =
-            static_cast<uint32_t>(kSize32 | kNonEmptyFlag);
+        const std::uint32_t kSize32 = static_cast<std::uint32_t>(kSize);
+        const std::uint32_t kNonEmptyFlag =
+            static_cast<std::uint32_t>(~kMaxSize);
+        const std::uint32_t kValueToSave =
+            static_cast<std::uint32_t>(kSize32 | kNonEmptyFlag);
         BOOST_LEAF_CHECK(aWriter.addValue(std::move(kValueToSave)));
         if constexpr ((std::alignment_of_v<ValueT> ==
-                       std::alignment_of_v<uint8_t>)&&(sizeof(ValueT) ==
-                                                       sizeof(uint8_t)))
+                       std::alignment_of_v<std::byte>)&&(sizeof(ValueT) ==
+                                                         sizeof(std::byte)))
         {
-            uint8_t const *firstPtr =
-                reinterpret_cast<uint8_t const *>(&(aValue[0]));
+            auto firstPtr = reinterpret_cast<std::byte const *>(&(aValue[0]));
             BOOST_LEAF_CHECK(
                 aWriter.addBits(Src(firstPtr), NumBits(kSize * CHAR_BIT)));
         }
@@ -631,19 +632,19 @@ result<enable_if_valarray_t<T, void>> deserialize(reader &aReader, T &aValue,
 {
     using ValarrayT = utils::remove_cvref_t<T>;
     using ValueT = typename ValarrayT::value_type;
-    BOOST_LEAF_AUTO(nonEmptyFlag, aReader.getValue<uint8_t>(NumBits(1)));
+    BOOST_LEAF_AUTO(nonEmptyFlag, aReader.getValue<std::uint8_t>(NumBits(1)));
     if (nonEmptyFlag)
     {
-        BOOST_LEAF_AUTO(kSize, aReader.getValue<uint32_t>(NumBits(31)));
+        BOOST_LEAF_AUTO(kSize, aReader.getValue<std::uint32_t>(NumBits(31)));
         if (kSize > 0)
         {
             aValue.resize(kSize);
             if constexpr ((std::alignment_of_v<ValueT> ==
-                           std::alignment_of_v<uint8_t>)&&(sizeof(ValueT) ==
-                                                           sizeof(uint8_t)))
+                           std::alignment_of_v<std::byte>)&&(sizeof(ValueT) ==
+                                                             sizeof(std::byte)))
             {
-                uint8_t *firstPtr = reinterpret_cast<uint8_t *>(&(aValue[0]));
-                BOOST_LEAF_CHECK(aReader.getBits(Dst(firstPtr), DstBitOffset(0),
+                auto firstPtr = reinterpret_cast<std::byte *>(&(aValue[0]));
+                BOOST_LEAF_CHECK(aReader.getBits(Dst(firstPtr), DstOffset(0),
                                                  NumBits(kSize * CHAR_BIT)));
             }
             else
@@ -671,21 +672,22 @@ result<void> serialize(writer &aWriter, T &&aValue,
                        tag_t<enable_if_std_string_t<T>>) noexcept
 {
     const std::size_t kSize = aValue.size();
-    constexpr uint32_t kMaxSize =
-        static_cast<uint32_t>(std::numeric_limits<uint32_t>::max() >> 1);
+    constexpr std::uint32_t kMaxSize = static_cast<std::uint32_t>(
+        std::numeric_limits<std::uint32_t>::max() >> 1);
     if (kSize > kMaxSize)
     {
         return leaf::new_error(writer_error::vector_size_is_too_big);
     }
     if (kSize)
     {
-        const uint32_t kSize32 = static_cast<uint32_t>(kSize);
-        const uint32_t kNonEmptyFlag = static_cast<uint32_t>(~kMaxSize);
-        const uint32_t kValueToSave =
-            static_cast<uint32_t>(kSize32 | kNonEmptyFlag);
+        const std::uint32_t kSize32 = static_cast<std::uint32_t>(kSize);
+        const std::uint32_t kNonEmptyFlag =
+            static_cast<std::uint32_t>(~kMaxSize);
+        const std::uint32_t kValueToSave =
+            static_cast<std::uint32_t>(kSize32 | kNonEmptyFlag);
         BOOST_LEAF_CHECK(aWriter.addValue(std::move(kValueToSave)));
         BOOST_LEAF_CHECK(aWriter.addBits(
-            Src(reinterpret_cast<uint8_t const *>(aValue.data())),
+            Src(reinterpret_cast<std::byte const *>(aValue.data())),
             NumBits(kSize * CHAR_BIT)));
     }
     else
@@ -699,16 +701,16 @@ template <typename T>
 result<enable_if_std_string_t<T, void>> deserialize(reader &aReader, T &aValue,
                                                     tag_t<T>)
 {
-    BOOST_LEAF_AUTO(nonEmptyFlag, aReader.getValue<uint8_t>(NumBits(1)));
+    BOOST_LEAF_AUTO(nonEmptyFlag, aReader.getValue<std::uint8_t>(NumBits(1)));
     if (nonEmptyFlag)
     {
-        BOOST_LEAF_AUTO(kSize, aReader.getValue<uint32_t>(NumBits(31)));
+        BOOST_LEAF_AUTO(kSize, aReader.getValue<std::uint32_t>(NumBits(31)));
         if (kSize > 0)
         {
             aValue.resize(kSize);
-            BOOST_LEAF_CHECK(
-                aReader.getBits(Dst(reinterpret_cast<uint8_t *>(aValue.data())),
-                                DstBitOffset(0), NumBits(kSize * CHAR_BIT)));
+            BOOST_LEAF_CHECK(aReader.getBits(
+                Dst(reinterpret_cast<std::byte *>(aValue.data())), DstOffset(0),
+                NumBits(kSize * CHAR_BIT)));
             return {};
         }
         else
@@ -749,11 +751,12 @@ static constexpr std::size_t vector_like_bit_size(const T &aValue) noexcept
     {
         if constexpr (is_compile_time_computable_size_v<ValueT>)
         {
-            return utils::num_bits<uint32_t>() + kSize * bit_sizeof_v<ValueT>;
+            return utils::num_bits<std::uint32_t>() +
+                   kSize * bit_sizeof_v<ValueT>;
         }
         else
         {
-            std::size_t retVal{utils::num_bits<uint32_t>()};
+            std::size_t retVal{utils::num_bits<std::uint32_t>()};
             for (const auto &element: aValue)
             {
                 retVal += bit_sizeof(element);

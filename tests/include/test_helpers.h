@@ -7,74 +7,131 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdlib>
 #include <limits>
 #include <random>
 #include <string>
+#include <tuple>
 
 #include "rabbit/bin_ops.h"
 #include "rabbit/details.h"
 
-namespace rabbit
+namespace test_utils
 {
-class test_helpers
+std::string random_bit_sequence(const std::size_t aNBits);
+template <typename T>
+T random_value()
+{
+    static_assert(std::is_arithmetic_v<T>, "T must be arithmetic type.");
+    std::random_device rd;
+    std::mt19937 mt(rd());
+    if constexpr (std::is_integral_v<T>)
+    {
+        std::uniform_int_distribution<T> dist(std::numeric_limits<T>::min(),
+                                              std::numeric_limits<T>::max());
+        return dist(mt);
+    }
+    else
+    {
+        std::uniform_real_distribution<T> dist(std::numeric_limits<T>::min(),
+                                               std::numeric_limits<T>::max());
+        return dist(mt);
+    }
+}
+
+template <typename CoreOpsT>
+class bits;
+
+template <>
+class bits<::rabbit::v1::Core>
 {
    public:
-    using DstBitOffset = rabbit::DstBitOffset;
-    using SrcBitOffset = rabbit::SrcBitOffset;
-    using NumBits = rabbit::NumBits;
-    using BitOffset = rabbit::BitOffset;
+    using core = ::rabbit::v1::Core;
+    using DstOffset = ::rabbit::DstOffset;
+    using SrcOffset = ::rabbit::SrcOffset;
+    using NumBits = ::rabbit::NumBits;
+    using Offset = ::rabbit::Offset;
+    using BitIndex = ::rabbit::BitIndex;
+    using Dst = ::rabbit::Dst;
+    using Src = ::rabbit::Src;
+    using n_bytes = ::rabbit::n_bytes;
 
-    static std::string random_bit_sequence(const std::size_t aNBits);
-    template <typename T>
-    static T random_value()
+    struct bb_index_t
     {
-        static_assert(std::is_arithmetic_v<T>, "T must be arithmetic type.");
-        std::random_device rd;
-        std::mt19937 mt(rd());
-        if constexpr (std::is_integral_v<T>)
+        std::size_t byte{};
+        std::uint8_t bit{};
+
+        bb_index_t(const bb_index_t &) = default;
+        bb_index_t &operator=(const bb_index_t &) = default;
+        bb_index_t(bb_index_t &&) = default;
+        bb_index_t &operator=(bb_index_t &&) = default;
+
+        template <typename BytePos, typename BitPos>
+        inline constexpr bb_index_t(BytePos &&aByte, BitPos &&aBit) noexcept
+            : byte{static_cast<std::size_t>(aByte)}
+            , bit{static_cast<std::uint8_t>(aBit)}
         {
-            std::uniform_int_distribution<T> dist(
-                std::numeric_limits<T>::min(), std::numeric_limits<T>::max());
-            return dist(mt);
+            if (!__builtin_is_constant_evaluated())
+            {
+                assert(aBit < CHAR_BIT);
+            }
         }
-        else
+
+        inline constexpr bb_index_t(BitIndex aBitIndex) noexcept
+            : bb_index_t(
+                  [aBitIndex]()
+                  {
+                      constexpr auto kCharBit =
+                          static_cast<BitIndex::value_type>(CHAR_BIT);
+                      if (__builtin_is_constant_evaluated())
+                      {
+                          return bb_index_t{
+                              aBitIndex / kCharBit,
+                              kCharBit - 1 - aBitIndex % kCharBit};
+                      }
+                      else
+                      {
+                          const auto divided =
+                              std::div(static_cast<int>(aBitIndex), CHAR_BIT);
+                          return bb_index_t{divided.quot,
+                                            CHAR_BIT - 1 - divided.rem};
+                      }
+                  }())
         {
-            std::uniform_real_distribution<T> dist(
-                std::numeric_limits<T>::min(), std::numeric_limits<T>::max());
-            return dist(mt);
         }
+    };
+
+    static inline constexpr std::byte bitAtIndex(std::size_t aBitPos) noexcept
+    {
+        return std::byte{1} << aBitPos;
     }
 
-    static constexpr uint8_t bitAtIndex(std::size_t aPos) noexcept
+    static constexpr void setBit(Dst aData, std::size_t aPos) noexcept
     {
-        return static_cast<uint8_t>(1_u8 << (CHAR_BIT - 1 - aPos % CHAR_BIT));
+        auto [byte, bit] = bb_index_t(BitIndex{aPos});
+        aData[byte] |= bitAtIndex(bit);
     }
 
-    static constexpr void setBit(uint8_t *const aData,
-                                 std::size_t aPos) noexcept
+    static constexpr void resetBit(Dst aData, std::size_t aPos) noexcept
     {
-        aData[aPos / CHAR_BIT] |= bitAtIndex(aPos);
+        auto [byte, bit] = bb_index_t(BitIndex{aPos});
+        aData[byte] &= ~bitAtIndex(bit);
     }
 
-    static constexpr void resetBit(uint8_t *const aData,
-                                   std::size_t aPos) noexcept
+    static constexpr bool isBitSet(Src aData, std::size_t aPos) noexcept
     {
-        aData[aPos / CHAR_BIT] &= static_cast<uint8_t>(~bitAtIndex(aPos));
+        auto [byte, bit] = bb_index_t(BitIndex{aPos});
+        return (aData[byte] & bitAtIndex(bit)) != std::byte{0};
     }
 
-    static constexpr bool isBitSet(uint8_t const *const aData,
-                                   std::size_t aPos) noexcept
+    static constexpr void to_byte_buf(Dst aDst, const std::size_t aDstOffset,
+                                      std::string_view aBitStr) noexcept
     {
-        return aData[aPos / CHAR_BIT] & bitAtIndex(aPos);
-    }
-
-    static constexpr void to_uint8_buf(uint8_t *const aDst,
-                                       const std::size_t aDstOffset,
-                                       std::string_view aBitStr) noexcept
-    {
-        for (std::size_t i = 0; i < aBitStr.size(); ++i)
+        const auto kNumBits = aBitStr.size();
+        for (std::size_t i = 0; i < kNumBits; ++i)
         {
-            if (aBitStr[i] == '0')
+            const auto index = i;
+            if (aBitStr[index] == '0')
             {
                 resetBit(aDst, aDstOffset + i);
             }
@@ -85,22 +142,22 @@ class test_helpers
         }
     }
 
-    static constexpr void to_uint8_buf(uint8_t *const aDst,
-                                       std::string_view aBitStr) noexcept
+    static constexpr void to_byte_buf(Dst aDst,
+                                      std::string_view aBitStr) noexcept
     {
-        to_uint8_buf(aDst, 0, aBitStr);
+        to_byte_buf(aDst, 0, aBitStr);
     }
 
     template <std::size_t NBits>
-    static constexpr auto to_uint8_array(std::string_view aBitStr) noexcept
+    static constexpr auto to_byte_array(const std::string_view aBitStr) noexcept
     {
-        std::array<uint8_t, rabbit::details::bytesCount(NBits)> result{};
-        to_uint8_buf(result.data(), aBitStr);
+        std::array<std::byte, rabbit::details::bytes_count(NumBits{NBits})>
+            result{};
+        to_byte_buf(Dst{result.data()}, aBitStr);
         return result;
     }
 
-    static constexpr void to_symbol_buf(char *const aDst,
-                                        uint8_t const *const aSrc,
+    static constexpr void to_symbol_buf(char *const aDst, Src aSrc,
                                         const std::size_t aNBits) noexcept
     {
         for (std::size_t i = 0; i < aNBits; ++i)
@@ -112,12 +169,13 @@ class test_helpers
     template <std::size_t NBits, typename ArrayT>
     static constexpr decltype(auto) to_symbol_array(ArrayT &&aArray) noexcept
     {
-        static_assert(std::is_same_v<utils::std_array_data_t<ArrayT>, uint8_t>,
-                      "Elements of aArray must belong to uint8_t type.");
+        static_assert(
+            std::is_same_v<utils::std_array_data_t<ArrayT>, std::byte>,
+            "Elements of aArray must belong to std::uint8_t type.");
         constexpr std::size_t kMaxNBytes = utils::std_array_size_v<ArrayT>;
         static_assert(NBits <= kMaxNBytes * CHAR_BIT, "Invalid NBits.");
         std::array<char, NBits> result{};
-        to_symbol_buf(result.data(), aArray.data(), NBits);
+        to_symbol_buf(result.data(), Src{aArray.data()}, NBits);
         return result;
     }
 
@@ -129,90 +187,68 @@ class test_helpers
             std::forward<ArrayT>(aArray));
     }
 
-    class BitAccumulator
+    static constexpr void copy_bits_expected_str(
+        char *const aDst, [[maybe_unused]] std::size_t aDstSize,
+        const DstOffset aDstOffset, std::string_view aSrc,
+        const SrcOffset aSrcOffset, const NumBits aNBits) noexcept
     {
-       public:
-        BitAccumulator() = delete;
-        constexpr BitAccumulator(uint8_t *const aData,
-                                 std::size_t aStartIndex) noexcept
-            : data_(aData), bitIndex_(aStartIndex)
+        assert(aDst != nullptr);
+        assert(aDstOffset < CHAR_BIT);
+        assert(aSrcOffset < CHAR_BIT);
+        assert(aDstOffset.get() + aNBits.get() <= aDstSize);
+        assert(aSrcOffset.get() + aNBits.get() <= aSrc.size());
+
+        if (!aNBits)
         {
+            return;
         }
 
-        constexpr BitAccumulator(uint8_t *const aData) noexcept
-            : BitAccumulator(aData, 0)
+        char *dstBegin = aDst + aDstOffset;
+        char const *srcBegin = aSrc.data() + aSrcOffset;
+
+        if (__builtin_is_constant_evaluated())
         {
+            for (std::size_t i = 0; i < aNBits; ++i)
+            {
+                *(dstBegin + i) = *(srcBegin + i);
+            }
         }
-
-        constexpr void add(std::string_view aBitStr) noexcept
+        else
         {
-            to_uint8_buf(data_, bitIndex_, aBitStr);
-            bitIndex_ += aBitStr.size();
+            std::memcpy(dstBegin, srcBegin, aNBits);
         }
-
-       private:
-        uint8_t *const data_{};
-        std::size_t bitIndex_{};
-    };
-
-    static constexpr void copyBitsExpected(uint8_t *const aResult,
-                                           std::string_view aDst,
-                                           const DstBitOffset aDstOffset,
-                                           std::string_view aSrc,
-                                           const SrcBitOffset aSrcOffset,
-                                           const NumBits aNBits) noexcept
-    {
-        assert(aDstOffset.get() + aNBits.get() <= aDst.size() &&
-               "Invalid arguments.");
-        assert(aSrcOffset.get() + aNBits.get() <= aSrc.size() &&
-               "Invalid arguments.");
-
-        BitAccumulator accumulator(aResult);
-
-        auto prefix = aDst.substr(0, aDstOffset.get());
-        accumulator.add(prefix);
-
-        auto content = aSrc.substr(aSrcOffset.get(), aNBits.get());
-        accumulator.add(content);
-
-        auto suffix = aDst.substr(aDstOffset.get() + aNBits.get());
-        accumulator.add(suffix);
     }
 
-    template <typename DataT>
-    static auto addValueExpected(const DataT &aData) noexcept
+    template <std::size_t BitCount, typename T>
+    constexpr static std::array<char, BitCount> addValueExpected(
+        std::string_view aDstBitStr, DstOffset aDstOffset, T aValue,
+        NumBits aNumBits) noexcept
     {
-        const auto [aDstBitStr, aValue, aOffset, aNBits] = aData;
-        using T = std::decay_t<decltype(aValue)>;
-        static_assert(endian::is_uint_v<T>, "Invalid T");
+        static_assert(endian::is_uint_v<T>);
         constexpr auto kValueBitSize = utils::num_bits<T>();
-        assert(aNBits.get() <= kValueBitSize && "Invalid aNBits");
-        assert(aOffset.get() + aNBits.get() <= aDstBitStr.size());
+        assert(aNumBits <= kValueBitSize);
+        assert(aDstOffset + aNumBits <= aDstBitStr.size());
+        assert(aDstOffset < CHAR_BIT);
+        assert(BitCount == aDstBitStr.size());
 
-        std::vector<char> etalonBitArr(aDstBitStr.cbegin(), aDstBitStr.cend());
+        auto etalonBitArr = utils::make_array<BitCount, char>(aDstBitStr);
 
-        const auto kValueBitsArray =
-            to_symbol_array(rabbit::details::to_uint8_array(aValue));
+        const auto kValueBitsArray = to_symbol_array(value_to_bytes(aValue));
         std::string_view valueBitStr{kValueBitsArray.data(), kValueBitSize};
 
         std::string_view bitsStrToAdd =
-            valueBitStr.substr(valueBitStr.size() - aNBits.get());
+            valueBitStr.substr(valueBitStr.size() - aNumBits.get());
 
-        auto posToPaste = etalonBitArr.begin();
-        std::advance(posToPaste, aOffset.get());
+        auto posToPaste = etalonBitArr.data() + aDstOffset.get();
 
-        std::copy_n(bitsStrToAdd.cbegin(), aNBits.get(), posToPaste);
+        copy(posToPaste, bitsStrToAdd.data(), n_bytes{aNumBits});
 
-        std::vector<uint8_t> result(
-            rabbit::details::bytesCount(etalonBitArr.size()));
-        std::string_view resultStr{etalonBitArr.data(), etalonBitArr.size()};
-        to_uint8_buf(result.data(), resultStr);
-        return result;
+        return etalonBitArr;
     }
 
     template <typename T>
     constexpr static T getValueExpected(std::string_view aSrcBitStr,
-                                        SrcBitOffset aSrcOffset,
+                                        SrcOffset aSrcOffset,
                                         NumBits aNBits) noexcept
     {
         static_assert(endian::is_uint_v<T>, "Invalid T");
@@ -222,22 +258,353 @@ class test_helpers
         assert(aSrcOffset.get() + aNBits.get() <= aSrcBitStr.size());
 
         auto valueBitsArr = utils::make_array<char, kBitsInValue>('0');
-        std::string_view valueBitStr{aSrcBitStr.data() + aSrcOffset.get(),
-                                     aNBits.get()};
 
-        for (std::size_t i = 0; i < valueBitStr.size(); ++i)
+        auto src = aSrcBitStr.cbegin() + aSrcOffset;
+        auto dst = valueBitsArr.begin() + kBitsInValue - aNBits;
+
+        for (std::size_t i = 0; i < aNBits; ++i)
         {
-            valueBitsArr[kBitsInValue - aNBits.get() + i] = valueBitStr[i];
+            *(dst + i) = *(src + i);
         }
         std::string_view allValueBitsStr{valueBitsArr.data(),
                                          valueBitsArr.size()};
 
-        std::array<uint8_t, sizeof(T)> resultByteArray =
-            to_uint8_array<kBitsInValue>(allValueBitsStr);
-        T result = details::uint8_buf_to_value<T>(resultByteArray.data());
+        std::array<std::byte, sizeof(T)> resultByteArray =
+            to_byte_array<kBitsInValue>(allValueBitsStr);
+        using ::rabbit::details::bytes_to_value;
+        T result = bytes_to_value<T>(Src{resultByteArray.data()});
         return result;
     }
+
+   private:
+    template <typename T, std::size_t... I>
+    constexpr static T bytes_to_value(Src aBytes,
+                                      std::index_sequence<I...>) noexcept
+    {
+        static_assert(endian::is_uint_v<T>, "Invalid T");
+        T result{
+            (... | static_cast<T>(static_cast<T>(aBytes[I]) << I * CHAR_BIT))};
+        return result;
+    }
+
+    template <typename Destination, typename Source>
+    static inline constexpr void copy(Destination aDst, Source aSrc,
+                                      n_bytes aNBytes) noexcept
+    {
+        if (__builtin_is_constant_evaluated())
+        {
+            for (std::size_t i = 0; i < aNBytes; ++i)
+            {
+                aDst[i] = aSrc[i];
+            }
+        }
+        else
+        {
+            assert(aDst);
+            assert(aSrc);
+            std::memcpy(aDst, aSrc, aNBytes);
+        }
+    }
+
+    template <typename T, std::size_t... I>
+    static inline constexpr decltype(auto) value_to_bytes_impl(
+        T aValue, std::index_sequence<I...>) noexcept
+    {
+        return utils::make_array(
+            static_cast<std::byte>(aValue >> I * CHAR_BIT)...);
+    }
+
+    template <typename T>
+    static inline constexpr decltype(auto) value_to_bytes(T aValue) noexcept
+    {
+        static_assert(endian::is_uint_v<T>, "Invalid T");
+        return rabbit::details::to_byte_array(aValue);
+    }
 };
-}  // namespace rabbit
+
+template <>
+class bits<::rabbit::v2::Core>
+{
+   public:
+    using DstOffset = ::rabbit::DstOffset;
+    using SrcOffset = ::rabbit::SrcOffset;
+    using NumBits = ::rabbit::NumBits;
+    using Offset = ::rabbit::Offset;
+    using BitIndex = ::rabbit::BitIndex;
+    using Dst = ::rabbit::Dst;
+    using Src = ::rabbit::Src;
+    using n_bytes = ::rabbit::n_bytes;
+
+    struct bb_index_t
+    {
+        std::size_t byte{};
+        std::uint8_t bit{};
+
+        bb_index_t(const bb_index_t &) = default;
+        bb_index_t &operator=(const bb_index_t &) = default;
+        bb_index_t(bb_index_t &&) = default;
+        bb_index_t &operator=(bb_index_t &&) = default;
+
+        template <typename BytePos, typename BitPos>
+        inline constexpr bb_index_t(BytePos &&aByte, BitPos &&aBit) noexcept
+            : byte{static_cast<std::size_t>(aByte)}
+            , bit{static_cast<std::uint8_t>(aBit)}
+        {
+            if (!__builtin_is_constant_evaluated())
+            {
+                assert(aBit < CHAR_BIT);
+            }
+        }
+
+        inline constexpr bb_index_t(BitIndex aBitIndex) noexcept
+            : bb_index_t(
+                  [aBitIndex]()
+                  {
+                      constexpr auto kCharBit =
+                          static_cast<BitIndex::value_type>(CHAR_BIT);
+                      if (__builtin_is_constant_evaluated())
+                      {
+                          return bb_index_t{aBitIndex / kCharBit,
+                                            aBitIndex % kCharBit};
+                      }
+                      else
+                      {
+                          const auto divided =
+                              std::div(static_cast<int>(aBitIndex), CHAR_BIT);
+                          return bb_index_t{divided.quot, divided.rem};
+                      }
+                  }())
+        {
+        }
+    };
+
+    static inline constexpr std::byte bitAtIndex(std::size_t aBitPos) noexcept
+    {
+        return std::byte{1} << aBitPos;
+    }
+
+    static constexpr void setBit(Dst aData, std::size_t aPos) noexcept
+    {
+        auto [byte, bit] = bb_index_t(BitIndex{aPos});
+        aData[byte] |= bitAtIndex(bit);
+    }
+
+    static constexpr void resetBit(Dst aData, std::size_t aPos) noexcept
+    {
+        auto [byte, bit] = bb_index_t(BitIndex{aPos});
+        aData[byte] &= ~bitAtIndex(bit);
+    }
+
+    static constexpr bool isBitSet(Src aData, std::size_t aPos) noexcept
+    {
+        auto [byte, bit] = bb_index_t(BitIndex{aPos});
+        return (aData[byte] & bitAtIndex(bit)) != std::byte{0};
+    }
+
+    static constexpr void to_byte_buf(Dst aDst, const std::size_t aDstOffset,
+                                      std::string_view aBitStr) noexcept
+    {
+        const auto kNumBits = aBitStr.size();
+        for (std::size_t i = 0; i < kNumBits; ++i)
+        {
+            const auto index = kNumBits - i - 1;
+            if (aBitStr[index] == '0')
+            {
+                resetBit(aDst, aDstOffset + i);
+            }
+            else
+            {
+                setBit(aDst, aDstOffset + i);
+            }
+        }
+    }
+
+    static constexpr void to_byte_buf(Dst aDst,
+                                      std::string_view aBitStr) noexcept
+    {
+        to_byte_buf(aDst, 0, aBitStr);
+    }
+
+    template <std::size_t NBits>
+    static constexpr auto to_byte_array(std::string_view aBitStr) noexcept
+    {
+        std::array<std::byte, rabbit::details::bytes_count(NumBits{NBits})>
+            result{};
+        to_byte_buf(Dst{result.data()}, aBitStr);
+        return result;
+    }
+
+    static constexpr void to_symbol_buf(char *const aDst, Src aSrc,
+                                        const std::size_t aNBits) noexcept
+    {
+        for (std::size_t i = 0; i < aNBits; ++i)
+        {
+            const auto index = aNBits - i - 1;
+            aDst[i] = isBitSet(aSrc, index) ? '1' : '0';
+        }
+    }
+
+    template <std::size_t NBits, typename ArrayT>
+    static constexpr decltype(auto) to_symbol_array(ArrayT &&aArray) noexcept
+    {
+        static_assert(
+            std::is_same_v<utils::std_array_data_t<ArrayT>, std::byte>,
+            "Elements of aArray must belong to std::uint8_t type.");
+        constexpr std::size_t kMaxNBytes = utils::std_array_size_v<ArrayT>;
+        static_assert(NBits <= kMaxNBytes * CHAR_BIT, "Invalid NBits.");
+        std::array<char, NBits> result{};
+        to_symbol_buf(result.data(), Src{aArray.data()}, NBits);
+        return result;
+    }
+
+    template <typename ArrayT>
+    static constexpr decltype(auto) to_symbol_array(ArrayT &&aArray) noexcept
+    {
+        constexpr std::size_t kNBytes = utils::std_array_size_v<ArrayT>;
+        return to_symbol_array<kNBytes * CHAR_BIT>(
+            std::forward<ArrayT>(aArray));
+    }
+
+    static constexpr void copy_bits_expected_str(char *const aDst,
+                                                 std::size_t aDstSize,
+                                                 const DstOffset aDstOffset,
+                                                 std::string_view aSrc,
+                                                 const SrcOffset aSrcOffset,
+                                                 const NumBits aNBits) noexcept
+    {
+        assert(aDst != nullptr);
+        assert(aDstOffset < CHAR_BIT);
+        assert(aSrcOffset < CHAR_BIT);
+        assert(aDstOffset.get() + aNBits.get() <= aDstSize);
+        assert(aSrcOffset.get() + aNBits.get() <= aSrc.size());
+
+        if (!aNBits)
+        {
+            return;
+        }
+
+        char *dstBegin = aDst + aDstSize - aDstOffset - aNBits;
+        char const *srcBegin = aSrc.data() + aSrc.size() - aSrcOffset - aNBits;
+
+        if (__builtin_is_constant_evaluated())
+        {
+            for (std::size_t i = 0; i < aNBits; ++i)
+            {
+                *(dstBegin + i) = *(srcBegin + i);
+            }
+        }
+        else
+        {
+            std::memcpy(dstBegin, srcBegin, aNBits);
+        }
+    }
+
+    template <std::size_t BitCount, typename T>
+    constexpr static std::array<char, BitCount> addValueExpected(
+        std::string_view aDstBitStr, DstOffset aDstOffset, T aValue,
+        NumBits aNumBits) noexcept
+    {
+        static_assert(endian::is_uint_v<T>);
+        constexpr auto kValueBitSize = utils::num_bits<T>();
+        assert(aNumBits <= kValueBitSize);
+        assert(aDstOffset + aNumBits <= aDstBitStr.size());
+        assert(aDstOffset < CHAR_BIT);
+        assert(BitCount == aDstBitStr.size());
+
+        auto etalonBitArr = utils::make_array<BitCount, char>(aDstBitStr);
+
+        const auto kValueBitsArray = to_symbol_array(value_to_bytes(aValue));
+        std::string_view valueBitStr{kValueBitsArray.data(), kValueBitSize};
+
+        std::string_view bitsStrToAdd =
+            valueBitStr.substr(valueBitStr.size() - aNumBits.get());
+
+        auto posToPaste =
+            etalonBitArr.data() + etalonBitArr.size() - aDstOffset - aNumBits;
+
+        copy(posToPaste, bitsStrToAdd.data(), n_bytes{aNumBits});
+
+        return etalonBitArr;
+    }
+
+    template <typename T>
+    constexpr static T getValueExpected(std::string_view aSrcBitStr,
+                                        SrcOffset aSrcOffset,
+                                        NumBits aNBits) noexcept
+    {
+        static_assert(endian::is_uint_v<T>, "Invalid T");
+        constexpr auto kBitsInValue = utils::num_bits<T>();
+        assert(aNBits.get() <= kBitsInValue);
+        assert(aSrcOffset.get() <= CHAR_BIT);
+        const std::size_t kTotalBits = aSrcOffset.get() + aNBits.get();
+        assert(kTotalBits <= aSrcBitStr.size());
+
+        auto valueBitsArr = utils::make_array<char, kBitsInValue>('0');
+
+        auto src = aSrcBitStr.cbegin() + aSrcBitStr.size() - kTotalBits;
+        auto dst = valueBitsArr.begin() + kBitsInValue - aNBits;
+
+        for (std::size_t i = 0; i < aNBits; ++i)
+        {
+            *(dst + i) = *(src + i);
+        }
+        std::string_view allValueBitsStr{valueBitsArr.data(),
+                                         valueBitsArr.size()};
+
+        std::array<std::byte, sizeof(T)> resultByteArray =
+            to_byte_array<kBitsInValue>(allValueBitsStr);
+
+        using Indices = std::make_index_sequence<sizeof(T)>;
+        T result = bytes_to_value<T>(Src{resultByteArray.data()}, Indices{});
+        return result;
+    }
+
+   private:
+    template <typename T, std::size_t... I>
+    constexpr static T bytes_to_value(Src aBytes,
+                                      std::index_sequence<I...>) noexcept
+    {
+        static_assert(endian::is_uint_v<T>, "Invalid T");
+        T result =
+            (... | static_cast<T>(static_cast<T>(aBytes[I]) << I * CHAR_BIT));
+        return result;
+    }
+
+    template <typename Destination, typename Source>
+    static inline constexpr void copy(Destination aDst, Source aSrc,
+                                      n_bytes aNBytes) noexcept
+    {
+        if (__builtin_is_constant_evaluated())
+        {
+            for (std::size_t i = 0; i < aNBytes; ++i)
+            {
+                aDst[i] = aSrc[i];
+            }
+        }
+        else
+        {
+            assert(aDst);
+            assert(aSrc);
+            std::memcpy(aDst, aSrc, aNBytes);
+        }
+    }
+
+    template <typename T, std::size_t... I>
+    static inline constexpr decltype(auto) value_to_bytes_impl(
+        T aValue, std::index_sequence<I...>) noexcept
+    {
+        return utils::make_array(
+            static_cast<std::byte>(aValue >> I * CHAR_BIT)...);
+    }
+
+    template <typename T>
+    static inline constexpr decltype(auto) value_to_bytes(T aValue) noexcept
+    {
+        static_assert(endian::is_uint_v<T>, "Invalid T");
+        return value_to_bytes_impl(aValue,
+                                   std::make_index_sequence<sizeof(T)>{});
+    }
+};
+}  // namespace test_utils
 
 #endif /* rabbit_test_helpers_h */

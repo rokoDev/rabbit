@@ -10,13 +10,13 @@ FetchContent_Declare(
 FetchContent_Declare(
 	strong_type
 	GIT_REPOSITORY https://github.com/rokoDev/strong_type.git
-	GIT_TAG        512cdd6470a658f508a6fc9938de6dae28ff2b23
+	GIT_TAG        6595bf31a842374fd0187d6ef4318caa74947f6e
 )
 
 FetchContent_Declare(
 	user_literals
 	GIT_REPOSITORY https://github.com/rokoDev/user_literals.git
-	GIT_TAG        e750e9879bfe717a8b64601a2a1d0a76e47916cd
+	GIT_TAG        4064baa2bacba91eb424a4fa5bbdb9ae019c0e0b
 )
 
 FetchContent_Declare(
@@ -28,13 +28,13 @@ FetchContent_Declare(
 FetchContent_Declare(
 	utils
 	GIT_REPOSITORY https://github.com/rokoDev/utils.git
-	GIT_TAG        4fdd621eebcd9e0109a715bcce7c9b9c6fb8b347
+	GIT_TAG        f5263cc2e3fb0cf3cd82da1ead1689b0f74971e6
 )
 
 FetchContent_Declare(
 	buffer
 	GIT_REPOSITORY https://github.com/rokoDev/buffer.git
-	GIT_TAG        f228c39f8c456e0700cd629360a35e81c300c6a5
+	GIT_TAG        161b543f7e5ced778498a6f3f51c7e6592fb7c66
 )
 
 FetchContent_Declare(

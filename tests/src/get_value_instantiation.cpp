@@ -9,28 +9,28 @@
 namespace
 {
 using namespace std::string_view_literals;
-using namespace rabbit::test;
+using namespace ::test;
 using ::testing::Combine;
 using ::testing::Values;
 using ::testing::ValuesIn;
 
-constexpr auto kSrcBitOffsetsArray =
-    utils::make_array_from_range<0_uf8, 7_uf8, 1_uf8, SrcBitOffset>();
+constexpr auto kSrcOffsetsArray =
+    utils::make_array_from_range<0_uf8, 7_uf8, 1_uf8, SrcOffset>();
 
 static inline constexpr auto k80SrcBits =
     "11001110110100010101100100001010011001011001101111100010101001111111010101100110"sv;
 
 static inline constexpr auto kNBitsArray8 =
-    utils::make_array_from_range<0_uz, 8_uz, 1_uz, NumBits>();
+    utils::make_array_from_range<1_uz, 8_uz, 1_uz, NumBits>();
 
 static inline constexpr auto kNBitsArray16 =
-    utils::make_array_from_range<0_uz, 16_uz, 1_uz, NumBits>();
+    utils::make_array_from_range<1_uz, 16_uz, 1_uz, NumBits>();
 
 static inline constexpr auto kNBitsArray32 =
-    utils::make_array_from_range<0_uz, 32_uz, 1_uz, NumBits>();
+    utils::make_array_from_range<1_uz, 32_uz, 1_uz, NumBits>();
 
 static inline constexpr auto kNBitsArray64 =
-    utils::make_array_from_range<0_uz, 64_uz, 1_uz, NumBits>();
+    utils::make_array_from_range<1_uz, 64_uz, 1_uz, NumBits>();
 
 // getValue tests instantiation
 template <typename T>
@@ -49,26 +49,22 @@ std::string GetValue3ArgsDataName(
 }
 
 INSTANTIATE_TEST_SUITE_P(Rabbit, Args3U8,
-                         Combine(Values(k80SrcBits),
-                                 ValuesIn(kSrcBitOffsetsArray),
+                         Combine(Values(k80SrcBits), ValuesIn(kSrcOffsetsArray),
                                  ValuesIn(kNBitsArray8)),
                          &GetValue3ArgsDataName<Args3U8>);
 
 INSTANTIATE_TEST_SUITE_P(Rabbit, Args3U16,
-                         Combine(Values(k80SrcBits),
-                                 ValuesIn(kSrcBitOffsetsArray),
+                         Combine(Values(k80SrcBits), ValuesIn(kSrcOffsetsArray),
                                  ValuesIn(kNBitsArray16)),
                          &GetValue3ArgsDataName<Args3U16>);
 
 INSTANTIATE_TEST_SUITE_P(Rabbit, Args3U32,
-                         Combine(Values(k80SrcBits),
-                                 ValuesIn(kSrcBitOffsetsArray),
+                         Combine(Values(k80SrcBits), ValuesIn(kSrcOffsetsArray),
                                  ValuesIn(kNBitsArray32)),
                          &GetValue3ArgsDataName<Args3U32>);
 
 INSTANTIATE_TEST_SUITE_P(Rabbit, Args3U64,
-                         Combine(Values(k80SrcBits),
-                                 ValuesIn(kSrcBitOffsetsArray),
+                         Combine(Values(k80SrcBits), ValuesIn(kSrcOffsetsArray),
                                  ValuesIn(kNBitsArray64)),
                          &GetValue3ArgsDataName<Args3U64>);
 
