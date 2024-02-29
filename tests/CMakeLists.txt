@@ -11,6 +11,8 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(googletest)
 
+
+
 add_library(tests_main STATIC)
 target_sources(tests_main
   PRIVATE
@@ -281,32 +283,22 @@ package_add_test(
 
 set(test_src
   include/serialization_tests.h
+  include/result_adapter_specs.h
   src/serialize_tests.cpp
   )
 package_add_test(
   TEST_TARGET_NAME serialize_tests
   TEST_SOURCES ${test_src}
   EXTRA_TARGETS rabbit tests_main gmock
-  DEFS RABBIT_DISABLE_BUILTIN
   )
 
 set(test_src
   include/serialization_tests.h
+  include/result_adapter_specs.h
   src/deserialize_tests.cpp
   )
 package_add_test(
   TEST_TARGET_NAME deserialize_tests
-  TEST_SOURCES ${test_src}
-  EXTRA_TARGETS rabbit tests_main gmock
-  DEFS RABBIT_DISABLE_BUILTIN
-  )
-
-set(test_src
-  include/serialization_tests.h
-  src/builtin_tests.cpp
-  )
-package_add_test(
-  TEST_TARGET_NAME builtin_tests
   TEST_SOURCES ${test_src}
   EXTRA_TARGETS rabbit tests_main gmock
   )

@@ -12,11 +12,11 @@
 namespace test
 {
 #ifdef CORE_V1
-using core_t = ::rabbit::v1::Core;
+using core_t = ::rabbit::v1::core;
 #endif
 
 #ifdef CORE_V2
-using core_t = ::rabbit::v2::Core;
+using core_t = ::rabbit::v2::core;
 #endif
 using ::testing::TestWithParam;
 using namespace std::string_view_literals;

@@ -43,10 +43,10 @@ template <typename CoreOpsT>
 class bits;
 
 template <>
-class bits<::rabbit::v1::Core>
+class bits<::rabbit::v1::core>
 {
    public:
-    using core = ::rabbit::v1::Core;
+    using core = ::rabbit::v1::core;
     using DstOffset = ::rabbit::DstOffset;
     using SrcOffset = ::rabbit::SrcOffset;
     using NumBits = ::rabbit::NumBits;
@@ -323,7 +323,7 @@ class bits<::rabbit::v1::Core>
 };
 
 template <>
-class bits<::rabbit::v2::Core>
+class bits<::rabbit::v2::core>
 {
    public:
     using DstOffset = ::rabbit::DstOffset;

@@ -2,65 +2,224 @@
 #include <rabbit/deserialize.h>
 #include <user_literals/user_literals.h>
 
+#include <boost/leaf.hpp>
+
+#include "result_adapter_specs.h"
 #include "serialization_tests.h"
+
+template <class T>
+using result = boost::leaf::result<T>;
+
+using reader = rabbit::simple_bin_reader<
+    rabbit::core, rabbit::tag_t,
+    rabbit::result_adapter<boost::leaf::result<void>>>;
+
+enum class eValidMinMax1
+{
+    kMin,
+    kMax = kMin
+};
+
+enum class eValidMinMax2
+{
+    kMin = 1,
+    kMax = 2
+};
+
+enum class eValidMinMax3
+{
+    kMin = 1,
+    kValue1 = 3,
+    kMax = 2
+};
+
+enum class eValidMinMax4
+{
+    kMin = -10,
+    kValue1 = 3,
+    kMax = -1
+};
+
+enum class eValidMinMax5
+{
+    kMax = 0,
+    kValue1 = 3,
+    kMin = -10,
+};
+
+enum class eInvalidMinMax1
+{
+};
+
+enum class eInvalidMinMax2
+{
+    kMin
+};
+
+enum class eInvalidMinMax3
+{
+    kMax
+};
+
+enum class eInvalidMinMax4
+{
+    kMax
+};
+
+enum class eInvalidMinMax5
+{
+    kMin = 2,
+    kMax = 1
+};
+
+enum class eInvalidMinMax6
+{
+    kMin = 2,
+    kValue = 0,
+    kMax = 1
+};
 
 namespace rabbit
 {
 template <typename T>
 using enable_if_uint16_t =
     std::enable_if_t<std::is_same_v<std::decay_t<T>, std::uint16_t>, T>;
-
-template <typename T>
-result<void> deserialize(reader &aReader, T &aValue,
-                         tag_t<enable_if_uint16_t<T>>) noexcept
-{
-    BOOST_LEAF_ASSIGN(aValue, aReader.getValue<T>());
-    return {};
-}
 }  // namespace rabbit
+
+using reader2 = rabbit::simple_bin_reader<
+    rabbit::core, tag_t, rabbit::result_adapter<boost::leaf::result<void>>>;
+
+decltype(auto) deserialize(reader2 &aReader, std::uint16_t &aValue,
+                           tag_t<std::uint16_t>) noexcept
+{
+    aValue = aReader.template getValue<std::uint16_t>();
+    return reader2::result_adapter_t::template success();
+}
+
+using reader3 = rabbit::simple_bin_reader<rabbit::core, tag_t,
+                                          rabbit::result_adapter<reader_error>>;
+
+constexpr decltype(auto) deserialize(reader3 &aReader, std::uint16_t &aValue,
+                                     tag_t<std::uint16_t>) noexcept
+{
+    aValue = aReader.template getValue<std::uint16_t>();
+    return reader3::result_adapter_t::template success();
+}
 
 using DeserializeTests64 = Data<std::byte, 64>;
 using DeserializeTests1 = Data<std::byte, 1>;
 
+struct with_vec
+{
+    bool b;
+    std::uint8_t u8;
+    std::uint16_t u16;
+    std::vector<int> v;
+};
+
+struct with_string
+{
+    bool b1;
+    std::string s;
+    std::uint8_t u8;
+    bool b2;
+};
+
+struct with_vec_and_string
+{
+    bool b;
+    std::vector<int> v;
+    with_string ws;
+};
+
+struct with_vec_and_string2
+{
+    with_vec wv;
+    with_string ws;
+};
+
+TEST(Validate, IsSizeDefinedByType)
+{
+    static_assert(rabbit::is_size_defined_by_type_v<Empty, rabbit::tag_t>);
+    static_assert(rabbit::is_size_defined_by_type_v<NotEmpty, rabbit::tag_t>);
+    static_assert(rabbit::is_size_defined_by_type_v<Nested, rabbit::tag_t>);
+    static_assert(
+        rabbit::is_size_defined_by_type_v<Unsupported, rabbit::tag_t>);
+    static_assert(rabbit::is_size_defined_by_type_v<NestedWithUnsupported,
+                                                    rabbit::tag_t>);
+    static_assert(
+        not rabbit::is_size_defined_by_type_v<with_vec, rabbit::tag_t>);
+    static_assert(
+        not rabbit::is_size_defined_by_type_v<with_string, rabbit::tag_t>);
+    static_assert(not rabbit::is_size_defined_by_type_v<with_vec_and_string,
+                                                        rabbit::tag_t>);
+    static_assert(not rabbit::is_size_defined_by_type_v<with_vec_and_string2,
+                                                        rabbit::tag_t>);
+}
+
+TEST(Validate, SizeDefinedByType)
+{
+    static_assert(rabbit::size_defined_by_type_v<Empty, rabbit::tag_t> == 0);
+    static_assert(rabbit::size_defined_by_type_v<NotEmpty, rabbit::tag_t> ==
+                  32);
+    static_assert(rabbit::size_defined_by_type_v<Nested, rabbit::tag_t> == 64);
+    static_assert(rabbit::size_defined_by_type_v<Unsupported, rabbit::tag_t> ==
+                  56);
+    static_assert(
+        rabbit::size_defined_by_type_v<NestedWithUnsupported, rabbit::tag_t> ==
+        120);
+    static_assert(rabbit::size_defined_by_type_v<with_vec, rabbit::tag_t> ==
+                  33);
+    static_assert(rabbit::size_defined_by_type_v<with_string, rabbit::tag_t> ==
+                  18);
+    static_assert(
+        rabbit::size_defined_by_type_v<with_vec_and_string, rabbit::tag_t> ==
+        27);
+    static_assert(
+        rabbit::size_defined_by_type_v<with_vec_and_string2, rabbit::tag_t> ==
+        51);
+}
+
 TEST(DeserializeTests, StaticAsserts)
 {
-    static_assert(rabbit::is_deserializable_v<std::uint16_t>,
-                  "std::uint16_t must be deserializable.");
+    static_assert(rabbit::is_deserializable_v<std::uint16_t, reader>);
+    static_assert(rabbit::is_deserialize_defined_v<std::uint16_t, reader>);
+
+    static_assert(rabbit::is_deserializable_v<Empty, reader>);
+    static_assert(not rabbit::is_deserialize_defined_v<Empty, reader>);
+
+    static_assert(rabbit::is_deserializable_v<NotEmpty, reader>);
+    static_assert(not rabbit::is_deserialize_defined_v<NotEmpty, reader>);
+
+    static_assert(rabbit::is_deserializable_v<Nested, reader>);
+    static_assert(not rabbit::is_deserialize_defined_v<Nested, reader>);
+
+    static_assert(rabbit::is_deserializable_v<Unsupported, reader>);
+    static_assert(not rabbit::is_deserialize_defined_v<Unsupported, reader>);
+
+    static_assert(rabbit::is_deserializable_v<NestedWithUnsupported, reader>);
     static_assert(
-        rabbit::is_deserialize_defined_v<std::uint16_t>,
-        "result<std::uint16_t> deserialize(reader&, tag_t<std::uint16_t>) "
-        "noexcept must be defined.");
+        not rabbit::is_deserialize_defined_v<NestedWithUnsupported, reader>);
+}
 
-    static_assert(rabbit::is_deserializable_v<Empty>,
-                  "Empty must be deserializable.");
-    static_assert(not rabbit::is_deserialize_defined_v<Empty>,
-                  "result<Empty> deserialize(reader&, tag_t<Empty>) noexcept "
-                  "must be not defined.");
+TEST(Validate, IsMinMaxEnum)
+{
+    static_assert(rabbit::is_min_max_enum_v<eValidMinMax1>);
+    static_assert(rabbit::is_min_max_enum_v<eValidMinMax2>);
+    static_assert(rabbit::is_min_max_enum_v<eValidMinMax3>);
+    static_assert(rabbit::is_min_max_enum_v<eValidMinMax4>);
+    static_assert(rabbit::is_min_max_enum_v<eValidMinMax5>);
 
-    static_assert(rabbit::is_deserializable_v<NotEmpty>,
-                  "NotEmpty must be deserializable.");
-    static_assert(not rabbit::is_deserialize_defined_v<NotEmpty>,
-                  "result<NotEmpty> deserialize(reader&, tag_t<NotEmpty>) "
-                  "noexcept must be not defined.");
-
-    static_assert(rabbit::is_deserializable_v<Nested>,
-                  "Nested must be deserializable.");
-    static_assert(not rabbit::is_deserialize_defined_v<Nested>,
-                  "result<Nested> deserialize(reader&, tag_t<Nested>) noexcept "
-                  "must be not defined.");
-
-    static_assert(not rabbit::is_deserializable_v<Unsupported>,
-                  "Unsupported must be not deserializable.");
-    static_assert(not rabbit::is_deserialize_defined_v<Unsupported>,
-                  "result<Unsupported> deserialize(reader&, "
-                  "tag_t<Unsupported>) noexcept must be not defined.");
-
-    static_assert(not rabbit::is_deserializable_v<NestedWithUnsupported>,
-                  "NestedWithUnsupported must be not deserializable.");
-    static_assert(
-        not rabbit::is_deserialize_defined_v<NestedWithUnsupported>,
-        "result<NestedWithUnsupported> deserialize(reader&, "
-        "tag_t<NestedWithUnsupported>) noexcept must be not defined.");
+    static_assert(not rabbit::is_min_max_enum_v<eInvalidMinMax1>);
+    static_assert(not rabbit::is_min_max_enum_v<eInvalidMinMax2>);
+    static_assert(not rabbit::is_min_max_enum_v<eInvalidMinMax3>);
+    static_assert(not rabbit::is_min_max_enum_v<eInvalidMinMax4>);
+    static_assert(not rabbit::is_min_max_enum_v<eInvalidMinMax5>);
+    static_assert(not rabbit::is_min_max_enum_v<eInvalidMinMax6>);
+    static_assert(not rabbit::is_min_max_enum_v<int>);
+    static_assert(not rabbit::is_min_max_enum_v<double>);
+    static_assert(not rabbit::is_min_max_enum_v<void>);
+    static_assert(not rabbit::is_min_max_enum_v<float>);
 }
 
 TEST_F(DeserializeTests64, UInt16)
@@ -69,24 +228,34 @@ TEST_F(DeserializeTests64, UInt16)
     rawBuf_[1] = 0b11000011_b;
     std::uint16_t deserializedValue{};
     execute(
-        [&]() -> result<void>
+        [&]() -> decltype(auto)
         {
-            BOOST_LEAF_AUTO(breader, rabbit::make_bin_reader(rawBuf_));
-            BOOST_LEAF_ASSIGN(deserializedValue,
-                              rabbit::deserialize<std::uint16_t>(breader));
-            return {};
+            auto breader = reader{rawBuf_};
+            return rabbit::deserialize<std::uint16_t>(breader,
+                                                      deserializedValue);
         });
     ASSERT_EQ(deserializedValue, 0b0100001011000011);
 }
 
 TEST_F(DeserializeTests1, UInt16)
 {
-    expectError(reader_error::not_enough_buffer_size);
+    expectError(reader_error::run_out_of_data_source);
     execute(
-        [&]() -> result<void>
+        [&]() -> decltype(auto)
         {
-            BOOST_LEAF_AUTO(breader, rabbit::make_bin_reader(rawBuf_));
-            BOOST_LEAF_CHECK(rabbit::deserialize<std::uint16_t>(breader));
-            return {};
+            std::uint16_t value{};
+            auto r = reader2{rawBuf_};
+            static_assert(
+                rabbit::is_size_defined_by_type_v<std::uint16_t, tag_t>);
+            return rabbit::deserialize<std::uint16_t>(r, value);
         });
+}
+
+TEST_F(DeserializeTests1, UInt162)
+{
+    std::uint16_t value{};
+    auto r = reader3{rawBuf_};
+    static_assert(rabbit::is_size_defined_by_type_v<std::uint16_t, tag_t>);
+    reader_error err = rabbit::deserialize<std::uint16_t>(r, value);
+    ASSERT_EQ(err, reader_error::run_out_of_data_source);
 }

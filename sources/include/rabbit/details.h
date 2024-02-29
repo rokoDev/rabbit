@@ -13,69 +13,6 @@ namespace rabbit
 {
 namespace details
 {
-template <typename ImplT>
-class IndexBase
-{
-   public:
-    template <typename T, std::size_t I>
-    static constexpr std::size_t get() noexcept
-    {
-        return ImplT::template getImpl<T>(I);
-    }
-
-    template <typename T>
-    static constexpr std::size_t get(std::size_t I) noexcept
-    {
-        return ImplT::template getImpl<T>(I);
-    }
-};
-
-template <endian::eEndian>
-class IndexImpl;
-
-template <>
-class IndexImpl<endian::eEndian::kLittle>
-    : public IndexBase<IndexImpl<endian::eEndian::kLittle>>
-{
-    friend class IndexBase<IndexImpl<endian::eEndian::kLittle>>;
-
-   private:
-    template <typename U>
-    static constexpr std::size_t getImpl(std::size_t I) noexcept
-    {
-        using T = std::decay_t<U>;
-        static_assert(endian::is_uint_v<T>,
-                      "T must be unsigned integer but not bool");
-        assert(I < sizeof(T) && "Invalid I");
-        return sizeof(T) - 1 - I;
-    }
-};
-
-template <>
-class IndexImpl<endian::eEndian::kBig>
-    : public IndexBase<IndexImpl<endian::eEndian::kBig>>
-{
-    friend class IndexBase<IndexImpl<endian::eEndian::kBig>>;
-
-   private:
-    template <typename T>
-    static constexpr std::size_t getImpl(std::size_t I) noexcept
-    {
-        assert(I < sizeof(T) && "Invalid I");
-        return I;
-    }
-};
-
-template <typename T, std::size_t I>
-inline constexpr std::size_t CIndex =
-    details::IndexImpl<endian::kValue>::get<T, I>();
-
-template <typename T>
-constexpr std::size_t Index(std::size_t I) noexcept
-{
-    return details::IndexImpl<endian::kValue>::get<T>(I);
-}
-
 template <typename U>
 constexpr auto to_byte_array(U &&aValue) noexcept
 {

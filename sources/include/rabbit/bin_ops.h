@@ -14,7 +14,7 @@ namespace rabbit
 {
 inline namespace v1
 {
-class Core final
+class core final
 {
    public:
     static constexpr void copy(Dst aDst, Src aSrc, NumBits aNBits) noexcept
@@ -440,7 +440,7 @@ constexpr inline T get_value_impl(Src aSrc, SrcOffset aSrcOffset,
 }
 }  // namespace details
 
-class Core final
+class core final
 {
    public:
     static constexpr void copy(Dst aDst, Src aSrc, NumBits aNumBits) noexcept
@@ -498,7 +498,7 @@ class Core final
             ++aSrc;
         }
 
-        Core::copy(aDst, aSrc, aNumBits);
+        core::copy(aDst, aSrc, aNumBits);
     }
 
     static constexpr void copy(const Dst aDst, const DstOffset aDstOffset,

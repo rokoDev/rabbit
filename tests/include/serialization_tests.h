@@ -5,9 +5,6 @@
 #include <gtest/gtest.h>
 #include <rabbit/rabbit.h>
 
-template <class T>
-using result = rabbit::result<T>;
-
 namespace leaf = boost::leaf;
 using buffer_error = buffer::error;
 using reader_error = rabbit::reader_error;
@@ -18,9 +15,7 @@ using NumBits = rabbit::NumBits;
 using bit_pos = buffer::bit_pos;
 using Dst = rabbit::Dst;
 using Src = rabbit::Src;
-using Core = rabbit::Core;
-using reader = rabbit::bin_reader<Core>;
-using writer = rabbit::bin_writer<Core>;
+using core = rabbit::core;
 using DstOffset = rabbit::DstOffset;
 using SrcOffset = rabbit::SrcOffset;
 using Offset = rabbit::Offset;
@@ -87,6 +82,8 @@ class Data : public ::testing::Test
                 mDetails->handleError(
                     reader_error::non_empty_vector_size_is_zero);
             },
+            [](leaf::match<reader_error, reader_error::run_out_of_data_source>)
+            { mDetails->handleError(reader_error::run_out_of_data_source); },
             [](leaf::match<writer_error, writer_error::invalid_start_pos>)
             { mDetails->handleError(writer_error::invalid_start_pos); },
             [](leaf::match<writer_error, writer_error::not_enough_buffer_size>)

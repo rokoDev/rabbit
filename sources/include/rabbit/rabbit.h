@@ -1,11 +1,9 @@
-#ifndef RABBIT_DISABLE_BUILTIN
-#include "builtin.h"
-#else
-#include "deserialize.h"
-#include "serialize.h"
-#endif
+#ifndef rabbit_rabbit_h
+#define rabbit_rabbit_h
 
+#include "deserialize.h"
 #include "rabbit/version_info.h"
+#include "serialize.h"
 
 #ifdef BOOST_LEAF_NO_EXCEPTIONS
 
@@ -28,5 +26,5 @@ struct source_location;
     throw_exception(e);
 }
 }  // namespace boost
-
-#endif
+#endif /* BOOST_LEAF_NO_EXCEPTIONS */
+#endif /* rabbit_rabbit_h */

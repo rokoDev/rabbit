@@ -54,15 +54,15 @@ using AddValueExpected64 = AddValueExpected<
     CoreT, std::uint64_t,
     0b11100100'11110100'11001100'10011010'01000011'01010110'01001101'10100011>;
 
-using AddValueExpected8V1 = AddValueExpected8<::rabbit::v1::Core>;
-using AddValueExpected16V1 = AddValueExpected16<::rabbit::v1::Core>;
-using AddValueExpected32V1 = AddValueExpected32<::rabbit::v1::Core>;
-using AddValueExpected64V1 = AddValueExpected64<::rabbit::v1::Core>;
+using AddValueExpected8V1 = AddValueExpected8<::rabbit::v1::core>;
+using AddValueExpected16V1 = AddValueExpected16<::rabbit::v1::core>;
+using AddValueExpected32V1 = AddValueExpected32<::rabbit::v1::core>;
+using AddValueExpected64V1 = AddValueExpected64<::rabbit::v1::core>;
 
-using AddValueExpected8V2 = AddValueExpected8<::rabbit::v2::Core>;
-using AddValueExpected16V2 = AddValueExpected16<::rabbit::v2::Core>;
-using AddValueExpected32V2 = AddValueExpected32<::rabbit::v2::Core>;
-using AddValueExpected64V2 = AddValueExpected64<::rabbit::v2::Core>;
+using AddValueExpected8V2 = AddValueExpected8<::rabbit::v2::core>;
+using AddValueExpected16V2 = AddValueExpected16<::rabbit::v2::core>;
+using AddValueExpected32V2 = AddValueExpected32<::rabbit::v2::core>;
+using AddValueExpected64V2 = AddValueExpected64<::rabbit::v2::core>;
 
 template <typename T>
 class CopyExpected : public Test
@@ -88,8 +88,8 @@ class CopyExpected : public Test
     }
 };
 
-using CopyExpectedV1 = CopyExpected<::rabbit::v1::Core>;
-using CopyExpectedV2 = CopyExpected<::rabbit::v2::Core>;
+using CopyExpectedV1 = CopyExpected<::rabbit::v1::core>;
+using CopyExpectedV2 = CopyExpected<::rabbit::v2::core>;
 
 TEST_F(CopyExpectedV1, Dst0Src0NBits0True)
 {
