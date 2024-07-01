@@ -28,23 +28,21 @@ decltype(auto) deserialize_std_size(Reader &aReader, SizeType &aValue) noexcept
         NumBits{default_size_traits::descr_bit_size});
     const auto num_bits_to_take =
         num_steps_minus_1 * default_size_traits::bits_per_step;
-    using result_adapter = typename Reader::result_adapter_t;
     if (aReader.bits_taken() + num_bits_to_take > aReader.bits_size())
     {  // not taken bits are not enough to store size of elements in container
-        return result_adapter::template new_error<void>(
-            reader_error::run_out_of_data_source);
+        return Reader::new_error(reader_error::run_out_of_data_source);
     }
     const std::size_t num_steps = num_steps_minus_1 + 1;
     if (num_steps * default_size_traits::bits_per_step >
         utils::num_bits<SizeType>())
     {  // stored count of elements are not representable via std::size_t
-        return result_adapter::template new_error<void>(
+        return Reader::new_error(
             reader_error::value_is_not_representable_via_std_size_t);
     }
     aReader.take_bits(num_bits_to_take);
     aValue = aReader.template getValue<SizeType>(
         NumBits{num_bits_to_take + default_size_traits::bits_per_step});
-    return result_adapter::template success();
+    return Reader::success();
 }
 
 template <typename Reader, typename Container, typename DeserializeElements>
@@ -82,19 +80,19 @@ decltype(auto) deserialize_each_element_to_container(Reader &aReader,
                                                      SizeType aSize,
                                                      Add &&aAddOp) noexcept
 {
-    using result_adapter = typename Reader::result_adapter_t;
     using value_type = ValueType;
+    auto success{Reader::success()};
     for (SizeType i = 0; i < aSize; ++i)
     {
         value_type element;
         auto r = deserialize_impl<value_type, Reader, false>(aReader, element);
-        if (r != result_adapter::template success())
+        if (r != success)
         {
             return r;
         }
         aAddOp(aContainer, std::move(element));
     }
-    return result_adapter::template success();
+    return std::move(success);
 }
 
 template <typename Reader, typename T>
@@ -123,8 +121,7 @@ decltype(auto) deserialize(
                 Dst{reinterpret_cast<std::byte *>(argContainer.data())},
                 DstOffset{0}, NumBits{aSize * CHAR_BIT});
 
-            using result_adapter = typename Reader::result_adapter_t;
-            return result_adapter::template success();
+            return Reader::success();
         }
         else
         {
@@ -157,18 +154,17 @@ decltype(auto) deserialize(Reader &aReader, T &aContainer,
         // TODO: add error handling
         argContainer.resize(aSize);
 
-        using result_adapter = typename Reader::result_adapter_t;
-
+        auto success{Reader::success()};
         for (auto &element: argContainer)
         {
             auto r =
                 deserialize_impl<value_type, Reader, false>(argReader, element);
-            if (r != result_adapter::template success())
+            if (r != success)
             {
                 return r;
             }
         }
-        return result_adapter::template success();
+        return std::move(success);
     };
     return deserialize_container(aReader, aContainer,
                                  std::move(deserialize_elements_to_container));
@@ -205,11 +201,12 @@ template <typename T, typename Reader, typename... Ts>
 decltype(auto) deserialize_aggregate_impl(Reader &aReader,
                                           Ts &...aArgs) noexcept
 {
-    static_assert(std::is_aggregate_v<T>, "T must be aggregate type.");
-    using R = typename Reader::result_adapter_t::template result_t<void>;
-    R r;
+    static_assert(std::is_aggregate_v<T>);
+    using result = typename Reader::base::result;
+    result r;
     [[maybe_unused]] const bool success =
-        (... && (r = deserialize_impl<Ts, Reader, false>(aReader, aArgs)));
+        (... && Reader::is_success(
+                    r = deserialize_impl<Ts, Reader, false>(aReader, aArgs)));
     return std::move(r);
 }
 
@@ -217,7 +214,7 @@ template <typename T, typename Reader, std::size_t... I>
 decltype(auto) deserialize_aggregate(Reader &aReader, T &aValue,
                                      std::index_sequence<I...>) noexcept
 {
-    static_assert(std::is_aggregate_v<T>, "T must be aggregate type.");
+    static_assert(std::is_aggregate_v<T>);
     return deserialize_aggregate_impl<T>(aReader, pfr::get<I>(aValue)...);
 }
 
@@ -226,28 +223,25 @@ constexpr decltype(auto) deserialize_impl(Reader &aReader, T &aValue) noexcept
 {
     if constexpr (CheckSize)
     {
-        using result_adapter = typename Reader::result_adapter_t;
         constexpr auto size_by_type = Reader::template size_by_type<T>;
         if constexpr (!size_by_type)
         {
-            return result_adapter::template success();
+            return Reader::success();
         }
         static_assert(size_by_type > 0,
                       "undefined function: constexpr std::size_t "
                       "rabbit_bit_size(tag_t<T>)");
         if (aReader.bits_taken() + size_by_type > aReader.bits_size())
         {
-            return result_adapter::template new_error(
-                reader_error::run_out_of_data_source);
+            return Reader::new_error(reader_error::run_out_of_data_source);
         }
         aReader.take_bits(size_by_type);
     }
-    static_assert(is_deserializable_v<T, Reader>,
-                  "T is not deserializable type.");
+    static_assert(is_deserializable_v<T, Reader>);
     if constexpr (is_deserialize_defined_v<T, Reader>)
     {
-        using tag_type = typename Reader::template tag_t<T>;
-        return deserialize(aReader, aValue, tag_type{});
+        using tag_t = typename Reader::template tag_t<T>;
+        return deserialize(aReader, aValue, tag_t{});
     }
     else
     {

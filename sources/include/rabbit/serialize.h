@@ -26,17 +26,15 @@ decltype(auto) serialize_std_size(Writer &aWriter, SizeType aValue) noexcept
     const auto num_bits_to_take =
         size_type_traits::descr_bit_size + num_bits_for_value;
 
-    using result_adapter = typename Writer::result_adapter_t;
     if (aWriter.bits_taken() + num_bits_to_take > aWriter.bits_size())
     {  // not taken bits are not enough to store size of elements in container
-        return result_adapter::template new_error<void>(
-            writer_error::not_enough_buffer_size);
+        return Writer::new_error(writer_error::not_enough_buffer_size);
     }
 
     aWriter.take_bits(num_bits_to_take);
     aWriter.addValue(step_count - 1, NumBits{size_type_traits::descr_bit_size});
     aWriter.addValue(aValue, NumBits{num_bits_for_value});
-    return result_adapter::template success();
+    return Writer::success();
 }
 
 template <typename Writer, typename Container, typename SerializeElements>
@@ -48,7 +46,6 @@ decltype(auto) serialize_container(
     //  T (&)[N]
 
     //    static_assert(has_type_size_type_v<Container>);
-    using value_type = typename Container::value_type;
     using size_type = typename Container::size_type;
 
     size_type num_elements = aContainer.size();
@@ -65,17 +62,6 @@ decltype(auto) serialize_container(
         return r;
     }
 
-    using result_adapter = typename Writer::result_adapter_t;
-    for (const auto &element: aContainer)
-    {
-        auto r = serialize_impl<value_type, Writer, false>(aWriter, element);
-        if (r != result_adapter::template success())
-        {
-            return r;
-        }
-    }
-    return result_adapter::template success();
-
     return aSerializeElements(aWriter, aContainer, num_elements);
 }
 
@@ -83,17 +69,17 @@ template <typename Writer, typename Container>
 decltype(auto) serialize_container_ordinary(Writer &aWriter,
                                             Container &aContainer) noexcept
 {
-    using result_adapter = typename Writer::result_adapter_t;
     using value_type = typename Container::value_type;
+    auto success{Writer::success()};
     for (const auto &element: aContainer)
     {
         auto r = serialize_impl<value_type, Writer, false>(aWriter, element);
-        if (r != result_adapter::template success())
+        if (r != success)
         {
             return r;
         }
     }
-    return result_adapter::template success();
+    return std::move(success);
 }
 
 template <typename Writer, typename T>
@@ -117,8 +103,7 @@ decltype(auto) serialize(
                 Src{reinterpret_cast<std::byte *>(argContainer.data())},
                 NumBits{argContainer.size() * CHAR_BIT});
 
-            using result_adapter = typename Writer::result_adapter_t;
-            return result_adapter::template success();
+            return Writer::success();
         };
         return serialize_container(aWriter, aContainer,
                                    std::move(serialize_elements_to_container));
@@ -146,14 +131,13 @@ decltype(auto) serialize(
 template <typename T, typename Writer, typename... Ts>
 decltype(auto) serialize_aggregate_impl(Writer &aWriter, Ts &...aArgs) noexcept
 {
-    static_assert(std::is_aggregate_v<T>, "T must be aggregate type.");
-    using result_adapter = typename Writer::result_adapter_t;
-    using R = typename result_adapter::result_t;
+    static_assert(std::is_aggregate_v<T>);
+    using R = typename Writer::base::result;
     R r{};
     [[maybe_unused]] const bool success =
         (... && (r = std::move(serialize_impl<decltype(aArgs), Writer, false>(
                      aWriter, aArgs)),
-                 result_adapter::is_success(r)));
+                 Writer::is_success(r)));
     return r;
 }
 
@@ -162,7 +146,7 @@ decltype(auto) serialize_aggregate(Writer &aWriter, T &&aValue,
                                    std::index_sequence<I...>) noexcept
 {
     using V = utils::remove_cvref_t<T>;
-    static_assert(std::is_aggregate_v<V>, "T must be aggregate type.");
+    static_assert(std::is_aggregate_v<V>);
     return serialize_aggregate_impl<V>(aWriter, pfr::get<I>(aValue)...);
 }
 
@@ -172,23 +156,20 @@ constexpr decltype(auto) serialize_impl(Writer &aWriter, T &&aValue) noexcept
     using V = utils::remove_cvref_t<T>;
     if constexpr (CheckSize)
     {
-        using result_adapter = typename Writer::result_adapter_t;
         constexpr auto size_by_type = Writer::template size_by_type<V>;
         if constexpr (!size_by_type)
         {
-            return result_adapter::template success();
+            return Writer::success();
         }
         //        static_assert(size_by_type > 0, "undefined function: constexpr
         //        std::size_t rabbit_bit_size(tag_t<T>)");
         if (aWriter.bits_taken() + size_by_type > aWriter.bits_size())
         {
-            return result_adapter::template new_error(
-                writer_error::not_enough_buffer_size);
+            return Writer::new_error(writer_error::not_enough_buffer_size);
         }
         aWriter.take_bits(size_by_type);
     }
-    static_assert(is_serializable_v<V, Writer>,
-                  "T is not deserializable type.");
+    static_assert(is_serializable_v<V, Writer>);
     if constexpr (is_serialize_defined_v<V, Writer>)
     {
         using tag_type = typename Writer::template tag_t<V>;

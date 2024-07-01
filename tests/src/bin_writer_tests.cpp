@@ -9,50 +9,11 @@
 
 #include "serialization_tests.h"
 
-namespace rabbit
-{
-template <>
-struct result_adapter<reader_error>
-{
-    using result_t = reader_error;
-
-    template <typename... Args>
-    constexpr static decltype(auto) new_error(Args&&... aArgs) noexcept
-    {
-        return result_t{std::forward<Args>(aArgs)...};
-    }
-
-    template <typename... Args>
-    constexpr static decltype(auto) success(Args&&...) noexcept
-    {
-        return result_t{reader_error::success};
-    }
-};
-
-template <>
-struct result_adapter<boost::leaf::result<void>>
-{
-    using result_t = boost::leaf::result<void>;
-
-    template <typename... Args>
-    static decltype(auto) new_error(Args&&... aArgs) noexcept
-    {
-        return result_t{boost::leaf::new_error(std::forward<Args>(aArgs)...)};
-    }
-
-    template <typename... Args>
-    static decltype(auto) success(Args&&... aArgs) noexcept
-    {
-        return result_t{std::forward<Args>(aArgs)...};
-    }
-};
-}  // namespace rabbit
-
 using BinWriter = Data<std::byte, 64>;
 using SimpleBinWriter = Data<std::byte, 64>;
 using simple_writer =
     rabbit::simple_bin_writer<rabbit::core, rabbit::tag_t,
-                              rabbit::result_adapter<rabbit::reader_error>>;
+                              rabbit::writer_error_result_adapter>;
 
 TEST_F(SimpleBinWriter, SerializeUInt8)
 {

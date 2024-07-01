@@ -39,7 +39,7 @@ inline constexpr tag_t<T> tag{};
 enum class reader_error
 {
     success = 0,
-    invalid_start_pos = 1,
+    invalid_start_pos,
     not_enough_buffer_size,
     num_bits_exceed_type_size,
     null_dst_bits_array,
@@ -55,7 +55,7 @@ enum class reader_error
 enum class writer_error
 {
     success = 0,
-    invalid_start_pos = 1,
+    invalid_start_pos,
     not_enough_buffer_size,
     num_bits_exceed_type_size,
     null_src_bits_array,
@@ -114,8 +114,81 @@ using buf_view_const = buffer::buffer_view_const<buf_view::value_type>;
 using bit_pos = buffer::bit_pos;
 using n_bytes = buffer::n_bytes;
 
-template <typename Result>
-struct result_adapter;
+template <typename Derived, typename Result>
+struct result_adapter_base
+{
+    using derived = Derived;
+
+    result_adapter_base() = delete;
+    result_adapter_base(const result_adapter_base &) = delete;
+    result_adapter_base &operator=(const result_adapter_base &) = delete;
+    result_adapter_base(result_adapter_base &&) = delete;
+    result_adapter_base &operator=(result_adapter_base &&) = delete;
+    ~result_adapter_base() = delete;
+
+    template <typename... Args>
+    static constexpr decltype(auto) new_error(Args &&...aArgs) noexcept
+    {
+        return derived::new_error(std::forward<Args>(aArgs)...);
+    }
+
+    static constexpr decltype(auto) success() noexcept
+    {
+        return derived::success();
+    }
+
+    template <typename R>
+    static constexpr bool is_success(R &&aResult) noexcept
+    {
+        static_assert(std::is_same_v<utils::remove_cvref_t<R>, Result>);
+        return derived::is_success(std::forward<R>(aResult));
+    }
+
+    template <typename R>
+    static constexpr bool is_error(R &&aResult) noexcept
+    {
+        return derived::is_error(std::forward<R>(aResult));
+    }
+};
+
+template <typename E,
+          typename = std::enable_if_t<std::disjunction_v<
+              std::is_same<E, reader_error>, std::is_same<E, writer_error>>>>
+struct enum_result_adapter
+    : public result_adapter_base<enum_result_adapter<E>, E>
+{
+   public:
+    using result = E;
+    using base = result_adapter_base<enum_result_adapter<result>, result>;
+    friend base;
+
+   private:
+    template <typename... Args>
+    static constexpr decltype(auto) new_error(Args &&...aArgs) noexcept
+    {
+        return result{std::forward<Args>(aArgs)...};
+    }
+
+    static constexpr decltype(auto) success() noexcept
+    {
+        return result::success;
+    }
+
+    template <typename R>
+    static constexpr bool is_success(R &&aResult) noexcept
+    {
+        return aResult == result::success;
+    }
+
+    template <typename R>
+    static constexpr bool is_error(R &&aResult) noexcept
+    {
+        return !is_success(std::forward<R>(aResult));
+    }
+};
+
+using reader_error_result_adapter = enum_result_adapter<reader_error>;
+using writer_error_result_adapter = enum_result_adapter<writer_error>;
 
 template <typename CoreT, template <typename> class Tag, typename ResultAdapter,
           typename BufView = simple_buf_view>
@@ -536,16 +609,14 @@ struct Interval<interval::Interval<interval::Min<MinV>, interval::Max<MaxV>>>
                                                 E &aValue) noexcept
     {
         auto index = aReader.template getValue<UIntT>(NumBits(kNumBits));
-        using result_adapter = typename Reader::result_adapter_t;
         if (index <= interval_type::kMaxIndex)
         {
             aValue = static_cast<E>(interval_type::valueAt(index));
-            return result_adapter::template success<void>();
+            return Reader::success();
         }
         else
         {
-            return result_adapter::template new_error<void>(
-                reader_error::invalid_interval_index);
+            return Reader::new_error(reader_error::invalid_interval_index);
         }
     }
 };
@@ -556,8 +627,7 @@ constexpr decltype(auto) deserialize(Reader &aReader, T &aValue,
                                      tag_t<enable_if_u_int_t<T>>) noexcept
 {
     aValue = aReader.template getValue<T>();
-    using result_adapter = typename Reader::result_adapter_t;
-    return result_adapter::template success();
+    return Reader::success();
 }
 
 template <typename T, typename Reader>
@@ -566,8 +636,7 @@ constexpr decltype(auto) deserialize(Reader &aReader, T &aValue,
 {
     using UIntT = utils::uint_from_nbits_t<utils::num_bits<T>()>;
     aValue = utils::bit_cast<T>(aReader.template getValue<UIntT>());
-    using result_adapter = typename Reader::result_adapter_t;
-    return result_adapter::template success();
+    return Reader::success();
 }
 
 template <typename T, typename Reader>
@@ -576,8 +645,7 @@ constexpr decltype(auto) deserialize(Reader &aReader, T &aValue,
 {
     auto tmp = aReader.template getValue<std::uint8_t>(NumBits(1));
     aValue = static_cast<bool>(tmp);
-    using result_adapter = typename Reader::result_adapter_t;
-    return result_adapter::template success();
+    return Reader::success();
 }
 
 template <typename Reader, typename T>
@@ -595,8 +663,7 @@ constexpr decltype(auto) serialize(Writer &aWriter, const T aValue,
                                    tag_t<enable_if_u_int_t<T>>) noexcept
 {
     aWriter.addValue(std::move(aValue));
-    using result_adapter = typename Writer::result_adapter_t;
-    return result_adapter::template success();
+    return Writer::success();
 }
 
 template <typename T, typename Writer>
@@ -607,8 +674,7 @@ constexpr decltype(auto) serialize(Writer &aWriter, const T aValue,
     using UIntT = utils::UInt<sizeof(CoreT)>;
     UIntT uValue = utils::bit_cast<UIntT>(aValue);
     aWriter.addValue(std::move(uValue));
-    using result_adapter = typename Writer::result_adapter_t;
-    return result_adapter::template success();
+    return Writer::success();
 }
 
 template <typename T, typename Writer>
@@ -617,8 +683,7 @@ constexpr decltype(auto) serialize(Writer &aWriter, const T aValue,
 {
     auto uValue = static_cast<std::uint8_t>(aValue);
     aWriter.addValue(uValue, NumBits(1));
-    using result_adapter = typename Writer::result_adapter_t;
-    return result_adapter::template success();
+    return Writer::success();
 }
 
 template <typename Writer, typename T>
@@ -631,8 +696,7 @@ constexpr decltype(auto) serialize(Writer &aWriter, const T aValue,
     auto underlyingValue = utils::to_underlying(aValue);
     details::Interval<IntervalT>::template serialize(
         aWriter, std::move(underlyingValue));
-    using result_adapter = typename Writer::result_adapter_t;
-    return result_adapter::template success();
+    return Writer::success();
 }
 
 // enable if bool
@@ -860,16 +924,6 @@ rabbit_bit_size(const T &aValue, tag_t<T>) noexcept
 
 namespace details
 {
-template <typename T, typename Writer>
-using tagged_serialize_result_t =
-    decltype(serialize(std::declval<Writer &>(), std::declval<const T>(),
-                       typename Writer::template tag_t<T>{}));
-
-template <typename T, typename Reader>
-using tagged_deserialize_result_t =
-    decltype(deserialize(std::declval<Reader &>(), std::declval<T &>(),
-                         typename Reader::template tag_t<T>{}));
-
 template <typename T>
 using tagged_bit_size_result_t = decltype(bit_size(tag<T>));
 
@@ -880,17 +934,22 @@ inline constexpr bool is_tagged_bit_size_defined_v =
 template <typename T>
 using bit_size_result_t =
     decltype(SizeChecker<T>::bit_size(std::declval<const T &>()));
+
+CREATE_FREE_FUNCTION_CHECKERS(serialize);
+CREATE_FREE_FUNCTION_CHECKERS(deserialize);
 }  // namespace details
 
 template <typename T, typename Writer>
 inline constexpr bool is_serialize_defined_v =
-    utils::is_detected_exact_v<typename Writer::result_adapter_t::result_t,
-                               details::tagged_serialize_result_t, T, Writer>;
+    details::is_serialize_noexcept_invocable_r_v<
+        typename Writer::base::result, Writer &, const T &,
+        typename Writer::template tag_t<T>>;
 
 template <typename T, typename Reader>
 inline constexpr bool is_deserialize_defined_v =
-    utils::is_detected_exact_v<typename Reader::result_adapter_t::result_t,
-                               details::tagged_deserialize_result_t, T, Reader>;
+    details::is_deserialize_noexcept_invocable_r_v<
+        typename Reader::base::result, Reader &, T &,
+        typename Reader::template tag_t<T>>;
 
 template <typename T>
 inline constexpr bool is_bit_size_defined_v =

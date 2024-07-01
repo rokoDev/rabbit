@@ -7,12 +7,8 @@
 #include "result_adapter_specs.h"
 #include "serialization_tests.h"
 
-template <class T>
-using result = boost::leaf::result<T>;
-
-using reader = rabbit::simple_bin_reader<
-    rabbit::core, rabbit::tag_t,
-    rabbit::result_adapter<boost::leaf::result<void>>>;
+using reader =
+    rabbit::simple_bin_reader<rabbit::core, rabbit::tag_t, leaf_result_adapter>;
 
 enum class eValidMinMax1
 {
@@ -79,31 +75,24 @@ enum class eInvalidMinMax6
     kMax = 1
 };
 
-namespace rabbit
-{
-template <typename T>
-using enable_if_uint16_t =
-    std::enable_if_t<std::is_same_v<std::decay_t<T>, std::uint16_t>, T>;
-}  // namespace rabbit
-
-using reader2 = rabbit::simple_bin_reader<
-    rabbit::core, tag_t, rabbit::result_adapter<boost::leaf::result<void>>>;
+using reader2 =
+    rabbit::simple_bin_reader<rabbit::core, tag_t, leaf_result_adapter>;
 
 decltype(auto) deserialize(reader2 &aReader, std::uint16_t &aValue,
                            tag_t<std::uint16_t>) noexcept
 {
     aValue = aReader.template getValue<std::uint16_t>();
-    return reader2::result_adapter_t::template success();
+    return reader2::success();
 }
 
 using reader3 = rabbit::simple_bin_reader<rabbit::core, tag_t,
-                                          rabbit::result_adapter<reader_error>>;
+                                          rabbit::reader_error_result_adapter>;
 
 constexpr decltype(auto) deserialize(reader3 &aReader, std::uint16_t &aValue,
                                      tag_t<std::uint16_t>) noexcept
 {
     aValue = aReader.template getValue<std::uint16_t>();
-    return reader3::result_adapter_t::template success();
+    return reader3::success();
 }
 
 using DeserializeTests64 = Data<std::byte, 64>;

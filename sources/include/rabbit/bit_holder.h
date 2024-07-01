@@ -21,7 +21,8 @@ class bit_holder
     template <typename T>
     using tag_t = Tag<T>;
 
-    using result_adapter_t = ResultAdapter;
+    using result_adapter = ResultAdapter;
+    using result = typename ResultAdapter::result;
 
     bit_holder() = delete;
 
@@ -78,6 +79,29 @@ class bit_holder
         bits_taken_ += aNumBits;
     }
 
+    template <typename... Args>
+    static constexpr decltype(auto) new_error(Args &&...aArgs) noexcept
+    {
+        return result_adapter::base::new_error(std::forward<Args>(aArgs)...);
+    }
+
+    static constexpr decltype(auto) success() noexcept
+    {
+        return result_adapter::base::success();
+    }
+
+    template <typename R>
+    static constexpr bool is_success(R &&aResult) noexcept
+    {
+        return result_adapter::base::is_success(std::forward<R>(aResult));
+    }
+
+    template <typename R>
+    static constexpr bool is_error(R &&aResult) noexcept
+    {
+        return result_adapter::base::is_error(std::forward<R>(aResult));
+    }
+
    protected:
     constexpr void inc_pos(NumBits aNBits) noexcept { pos_ += bit_pos(aNBits); }
 
@@ -92,7 +116,6 @@ template <typename Container, auto ErrorValue, typename Bitholder,
 decltype(auto) take_minimum_bits_for_container_elements(
     Bitholder &aBitholder, SizeType aNumElements) noexcept
 {
-    using result_adapter = typename Bitholder::result_adapter_t;
     using value_type = typename Container::value_type;
 
     const std::size_t min_bit_size_of_elements =
@@ -101,10 +124,10 @@ decltype(auto) take_minimum_bits_for_container_elements(
     if (aBitholder.bits_taken() + min_bit_size_of_elements >
         aBitholder.bits_size())
     {  // not taken bits are not enough to store container' elements
-        return result_adapter::template new_error(ErrorValue);
+        return Bitholder::new_error(ErrorValue);
     }
     aBitholder.take_bits(min_bit_size_of_elements);
-    return result_adapter::template success();
+    return Bitholder::success();
 }
 }  // namespace details
 }  // namespace rabbit
