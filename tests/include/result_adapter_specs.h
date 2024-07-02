@@ -3,37 +3,6 @@
 
 #include <rabbit/rabbit.h>
 
-#include <boost/leaf.hpp>
-
-struct leaf_result_adapter
-    : rabbit::result_adapter_base<leaf_result_adapter,
-                                  boost::leaf::result<void>>
-{
-   public:
-    using result = boost::leaf::result<void>;
-    using base = rabbit::result_adapter_base<leaf_result_adapter, result>;
-    friend base;
-
-   private:
-    template <typename... Args>
-    static decltype(auto) new_error(Args &&...aArgs) noexcept
-    {
-        return result{boost::leaf::new_error(std::forward<Args>(aArgs)...)};
-    }
-
-    static decltype(auto) success() noexcept { return result{}; }
-
-    static bool is_success(const result &aResult) noexcept
-    {
-        return static_cast<bool>(aResult);
-    }
-
-    static bool is_error(const result &aResult) noexcept
-    {
-        return !is_success(aResult);
-    }
-};
-
 template <typename T>
 struct tag_t
 {

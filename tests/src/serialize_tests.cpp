@@ -9,10 +9,10 @@
 #include "result_adapter_specs.h"
 #include "serialization_tests.h"
 
-using writer = rabbit::simple_bin_writer<rabbit::core, rabbit::tag_t,
-                                         rabbit::writer_error_result_adapter>;
-using reader = rabbit::simple_bin_reader<rabbit::core, rabbit::tag_t,
-                                         rabbit::reader_error_result_adapter>;
+using writer = rabbit::writer<rabbit::core, rabbit::tag_t,
+                              rabbit::writer_error_result_adapter>;
+using reader = rabbit::reader<rabbit::core, rabbit::tag_t,
+                              rabbit::reader_error_result_adapter>;
 
 std::ostream& operator<<(std::ostream& os, std::byte b)
 {

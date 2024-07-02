@@ -2,13 +2,8 @@
 #include <rabbit/deserialize.h>
 #include <user_literals/user_literals.h>
 
-#include <boost/leaf.hpp>
-
 #include "result_adapter_specs.h"
 #include "serialization_tests.h"
-
-using reader =
-    rabbit::simple_bin_reader<rabbit::core, rabbit::tag_t, leaf_result_adapter>;
 
 enum class eValidMinMax1
 {
@@ -75,24 +70,14 @@ enum class eInvalidMinMax6
     kMax = 1
 };
 
-using reader2 =
-    rabbit::simple_bin_reader<rabbit::core, tag_t, leaf_result_adapter>;
+using reader =
+    rabbit::reader<rabbit::core, tag_t, rabbit::reader_error_result_adapter>;
 
-decltype(auto) deserialize(reader2 &aReader, std::uint16_t &aValue,
-                           tag_t<std::uint16_t>) noexcept
-{
-    aValue = aReader.template getValue<std::uint16_t>();
-    return reader2::success();
-}
-
-using reader3 = rabbit::simple_bin_reader<rabbit::core, tag_t,
-                                          rabbit::reader_error_result_adapter>;
-
-constexpr decltype(auto) deserialize(reader3 &aReader, std::uint16_t &aValue,
+constexpr decltype(auto) deserialize(reader &aReader, std::uint16_t &aValue,
                                      tag_t<std::uint16_t>) noexcept
 {
     aValue = aReader.template getValue<std::uint16_t>();
-    return reader3::success();
+    return reader::success();
 }
 
 using DeserializeTests64 = Data<std::byte, 64>;
@@ -183,10 +168,11 @@ TEST(DeserializeTests, StaticAsserts)
     static_assert(rabbit::is_deserializable_v<Nested, reader>);
     static_assert(not rabbit::is_deserialize_defined_v<Nested, reader>);
 
-    static_assert(rabbit::is_deserializable_v<Unsupported, reader>);
+    static_assert(not rabbit::is_deserializable_v<Unsupported, reader>);
     static_assert(not rabbit::is_deserialize_defined_v<Unsupported, reader>);
 
-    static_assert(rabbit::is_deserializable_v<NestedWithUnsupported, reader>);
+    static_assert(
+        not rabbit::is_deserializable_v<NestedWithUnsupported, reader>);
     static_assert(
         not rabbit::is_deserialize_defined_v<NestedWithUnsupported, reader>);
 }
@@ -211,39 +197,10 @@ TEST(Validate, IsMinMaxEnum)
     static_assert(not rabbit::is_min_max_enum_v<float>);
 }
 
-TEST_F(DeserializeTests64, UInt16)
-{
-    rawBuf_[0] = 0b01000010_b;
-    rawBuf_[1] = 0b11000011_b;
-    std::uint16_t deserializedValue{};
-    execute(
-        [&]() -> decltype(auto)
-        {
-            auto breader = reader{rawBuf_};
-            return rabbit::deserialize<std::uint16_t>(breader,
-                                                      deserializedValue);
-        });
-    ASSERT_EQ(deserializedValue, 0b0100001011000011);
-}
-
-TEST_F(DeserializeTests1, UInt16)
-{
-    expectError(reader_error::run_out_of_data_source);
-    execute(
-        [&]() -> decltype(auto)
-        {
-            std::uint16_t value{};
-            auto r = reader2{rawBuf_};
-            static_assert(
-                rabbit::is_size_defined_by_type_v<std::uint16_t, tag_t>);
-            return rabbit::deserialize<std::uint16_t>(r, value);
-        });
-}
-
 TEST_F(DeserializeTests1, UInt162)
 {
     std::uint16_t value{};
-    auto r = reader3{rawBuf_};
+    auto r = reader{rawBuf_};
     static_assert(rabbit::is_size_defined_by_type_v<std::uint16_t, tag_t>);
     reader_error err = rabbit::deserialize<std::uint16_t>(r, value);
     ASSERT_EQ(err, reader_error::run_out_of_data_source);

@@ -263,20 +263,20 @@ package_add_test(
 
 set(test_src
   include/serialization_tests.h
-  src/bin_writer_tests.cpp
+  src/writer_tests.cpp
   )
 package_add_test(
-  TEST_TARGET_NAME bin_writer_tests
+  TEST_TARGET_NAME writer_tests
   TEST_SOURCES ${test_src}
   EXTRA_TARGETS rabbit tests_main gmock
   )
 
 set(test_src
   include/serialization_tests.h
-  src/bin_reader_tests.cpp
+  src/reader_tests.cpp
   )
 package_add_test(
-  TEST_TARGET_NAME bin_reader_tests
+  TEST_TARGET_NAME reader_tests
   TEST_SOURCES ${test_src}
   EXTRA_TARGETS rabbit tests_main gmock
   )

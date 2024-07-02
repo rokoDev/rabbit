@@ -34,13 +34,7 @@ FetchContent_Declare(
 FetchContent_Declare(
 	buffer
 	GIT_REPOSITORY https://github.com/rokoDev/buffer.git
-	GIT_TAG        74093278c80555456194d2180b6861c3d2e99f9b
-)
-
-FetchContent_Declare(
-	boost_leaf
-	GIT_REPOSITORY https://github.com/boostorg/leaf.git
-	GIT_TAG        d8aae791332a1307ee5a14561a9f7636649e62b9
+	GIT_TAG        16a9fa259e1082ca9540b63fcb1267a4b88b714a
 )
 
 FetchContent_Declare(
@@ -59,11 +53,11 @@ FetchContent_Declare(
 # string(TOUPPER VersionHelper UP_VersionHelper)
 # set(FETCHCONTENT_SOURCE_DIR_${UP_VersionHelper} ${CMAKE_SOURCE_DIR}/../VersionHelper)
 
-FetchContent_MakeAvailable(VersionHelper strong_type user_literals endian utils buffer boost_leaf boost_pfr interval)
-target_link_libraries(rabbit INTERFACE strong_type user_literals endian utils buffer boost_leaf boost_pfr interval)
+FetchContent_MakeAvailable(VersionHelper strong_type user_literals endian utils buffer boost_pfr interval)
+target_link_libraries(rabbit INTERFACE strong_type user_literals endian utils buffer boost_pfr interval)
 
 # If use IDE add strong_type target into deps source group
-set_target_properties(strong_type user_literals endian utils buffer boost_leaf boost_pfr interval PROPERTIES FOLDER deps)
+set_target_properties(strong_type user_literals endian utils buffer boost_pfr interval PROPERTIES FOLDER deps)
 
 # Generate sources with information about rabbit version
 list(APPEND CMAKE_MODULE_PATH "${versionhelper_SOURCE_DIR}")

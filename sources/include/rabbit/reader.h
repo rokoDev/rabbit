@@ -1,5 +1,5 @@
-#ifndef rabbit_bin_reader_h
-#define rabbit_bin_reader_h
+#ifndef rabbit_reader_h
+#define rabbit_reader_h
 
 #include <utility>
 
@@ -10,46 +10,43 @@ namespace rabbit
 {
 template <typename Core, template <typename> class Tag, typename ResultAdapter,
           typename BufView>
-class simple_bin_reader
-    : public details::bit_holder<BufView, Tag, ResultAdapter>
+class reader : public details::bit_holder<BufView, Tag, ResultAdapter>
 {
    public:
     using base = details::bit_holder<BufView, Tag, ResultAdapter>;
 
-    simple_bin_reader() = delete;
+    reader() = delete;
 
-    inline constexpr simple_bin_reader(BufView aBufView,
-                                       bit_pos aStartBit) noexcept
+    inline constexpr reader(BufView aBufView, bit_pos aStartBit) noexcept
         : base(aBufView, aStartBit)
     {
     }
 
-    inline constexpr simple_bin_reader(BufView aBufView) noexcept
-        : simple_bin_reader(aBufView, bit_pos(0))
+    inline constexpr reader(BufView aBufView) noexcept
+        : reader(aBufView, bit_pos(0))
     {
     }
 
     template <std::size_t N>
-    inline constexpr simple_bin_reader(const std::byte (&aData)[N],
-                                       bit_pos aStartBit) noexcept
-        : simple_bin_reader(BufView(aData), aStartBit)
+    inline constexpr reader(const std::byte (&aData)[N],
+                            bit_pos aStartBit) noexcept
+        : reader(BufView(aData), aStartBit)
     {
     }
 
     template <std::size_t N>
-    inline constexpr simple_bin_reader(const std::byte (&aData)[N]) noexcept
-        : simple_bin_reader(BufView(aData), bit_pos(0))
+    inline constexpr reader(const std::byte (&aData)[N]) noexcept
+        : reader(BufView(aData), bit_pos(0))
     {
     }
 
-    inline constexpr simple_bin_reader(Src aSrc, n_bytes aSize,
-                                       bit_pos aStartBit) noexcept
-        : simple_bin_reader(BufView(aSrc.get(), aSize), aStartBit)
+    inline constexpr reader(Src aSrc, n_bytes aSize, bit_pos aStartBit) noexcept
+        : reader(BufView(aSrc.get(), aSize), aStartBit)
     {
     }
 
-    inline constexpr simple_bin_reader(Src aSrc, n_bytes aSize) noexcept
-        : simple_bin_reader(aSrc, aSize, bit_pos(0))
+    inline constexpr reader(Src aSrc, n_bytes aSize) noexcept
+        : reader(aSrc, aSize, bit_pos(0))
     {
     }
 
@@ -174,4 +171,4 @@ class simple_bin_reader
 };
 }  // namespace rabbit
 
-#endif /* rabbit_bin_reader_h */
+#endif /* rabbit_reader_h */

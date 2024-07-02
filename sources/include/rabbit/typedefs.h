@@ -106,11 +106,8 @@ struct DataPtrOps
 using Src = strong::strong_type<struct SrcTag, std::byte const *, DataPtrOps>;
 using Dst = strong::strong_type<struct DstTag, std::byte *, DataPtrOps>;
 
-using simple_buf_view = buffer::simple_buffer_view<std::byte>;
-using simple_buf_view_const =
-    buffer::simple_buffer_view_const<simple_buf_view::value_type>;
-using buf_view = buffer::buffer_view<std::byte>;
-using buf_view_const = buffer::buffer_view_const<buf_view::value_type>;
+using buffer_view = buffer::buffer_view<std::byte>;
+using buffer_view_const = buffer::buffer_view_const<buffer_view::value_type>;
 using bit_pos = buffer::bit_pos;
 using n_bytes = buffer::n_bytes;
 
@@ -191,18 +188,12 @@ using reader_error_result_adapter = enum_result_adapter<reader_error>;
 using writer_error_result_adapter = enum_result_adapter<writer_error>;
 
 template <typename CoreT, template <typename> class Tag, typename ResultAdapter,
-          typename BufView = simple_buf_view>
-class simple_bin_writer;
+          typename BufView = buffer_view>
+class writer;
 
 template <typename CoreT, template <typename> class Tag, typename ResultAdapter,
-          typename BufView = simple_buf_view_const>
-class simple_bin_reader;
-
-template <typename CoreT, template <typename, typename...> class Result>
-class bin_writer;
-
-template <typename CoreT>
-class bin_reader;
+          typename BufView = buffer_view_const>
+class reader;
 
 template <typename T, typename Writer>
 constexpr decltype(auto) serialize(Writer &aWriter, T &&aValue) noexcept;

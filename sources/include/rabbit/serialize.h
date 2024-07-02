@@ -6,7 +6,7 @@
 #include <type_traits>
 #include <utility>
 
-#include "bin_writer.h"
+#include "writer.h"
 
 namespace rabbit
 {

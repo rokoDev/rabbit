@@ -6,7 +6,7 @@
 #include <type_traits>
 #include <utility>
 
-#include "bin_reader.h"
+#include "reader.h"
 
 namespace rabbit
 {
